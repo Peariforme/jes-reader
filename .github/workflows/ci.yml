@@ -34,6 +34,22 @@ jobs:
           fi
           exit $status
 
+  vscode:
+    name: Extension VS Code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+
   fmt:
     name: Formatage
     runs-on: ubuntu-latest

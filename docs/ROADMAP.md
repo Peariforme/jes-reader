@@ -77,6 +77,12 @@ Objectif : ouvrir une sysout dans VS Code et voir tout de suite quel step a plan
 
 **Sortie** : sur tout le corpus, le step fautif apparaît en tête du panneau Problems et l'outline est juste.
 
+**État (25/11/2026)** : les six points sont implémentés. Reste à vérifier le critère de sortie à la main dans VS Code sur tout le corpus. Les semantic tokens (sévérité portée par le serveur) ne sont pas faits : la grammaire TextMate colore déjà les messages d'erreur connus. Constats :
+
+- La gravité ne se lit pas sur le suffixe : `IEF453I`, `IEF472I`, `IEFA107I` finissent par `I`. Le moteur de règles (`analysis.rs`) et la grammaire partagent une liste de messages connus, à garder synchronisées.
+- La sévérité vient des steps (abend, RC, non exécuté), puis de cette liste, puis du suffixe `E`/`S`/`W`.
+- `IDI0078E` (Fault Analyzer sans accès à son historique) sort en erreur alors qu'il ne concerne pas le job : cas typique pour les règles maison de la phase 3.
+
 ## Phase 2 — Zowe Explorer et hovers (≈ 3 semaines)
 
 Objectif : l'outil s'utilise sur les jobs du quotidien, sans télécharger de fichier.
