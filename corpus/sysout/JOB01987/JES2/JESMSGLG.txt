@@ -1,0 +1,24 @@
+1                   J E S 2  J O B  L O G  --  S Y S T E M  S 0 W 1  --  N O D E  S V S C J E S 2
+0
+ 10.30.13 JOB01987 ---- WEDNESDAY, 25 NOV 2026 ----
+ 10.30.13 JOB01987  IRR010I  USERID Z99999   IS ASSIGNED TO THIS JOB.
+ 10.30.13 JOB01987  IEF677I WARNING MESSAGE(S) FOR JOB JCL2     ISSUED
+ 10.30.15 JOB01987  ICH70001I Z99999   LAST ACCESS AT 10:26:40 ON WEDNESDAY, NOVEMBER 25, 2026
+ 10.30.15 JOB01987  $HASP373 JCL2     STARTED - INIT 1    - CLASS A        - SYS S0W1
+ 10.30.15 JOB01987  -                                      -----TIMINGS (MINS.)------                          -----PAGING COUNTS----
+ 10.30.15 JOB01987  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV  WORKLOAD  PAGE  SWAP   VIO SWAPS
+ 10.30.15 JOB01987  -BEFORE               00     36      4       .00       .00     .0             6  BATCH        0     0     0     0
+ 10.30.20 JOB01987  -COBRUN   COBOL       00  17291    317       .00       .00     .0            78  BATCH        0     0     0     0
+ 10.30.20 JOB01987  -COBRUN   LKED        00    297     33       .00       .00     .0            67  BATCH        0     0     0     0
+ 10.30.20 JOB01987  IEF450I JCL2 RUN - ABEND=S000 U4038 REASON=00000001
+ 10.30.20 JOB01987  -RUN               U4038    303     33       .00       .00     .0           112  BATCH        0     0     0     0
+ 10.30.20 JOB01987  -AFTER             FLUSH      0      0       .00       .00     .0                BATCH        0     0     0     0
+ 10.30.20 JOB01987  -JCL2     ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
+ 10.30.20 JOB01987  $HASP395 JCL2     ENDED - ABEND=U4038
+0------ JES2 JOB STATISTICS ------
+-  25 NOV 2026 JOB EXECUTION DATE
+-           37 CARDS READ
+-          477 SYSOUT PRINT RECORDS
+-            0 SYSOUT PUNCH RECORDS
+-           22 SYSOUT SPOOL KBYTES
+-         0.12 MINUTES EXECUTION TIME

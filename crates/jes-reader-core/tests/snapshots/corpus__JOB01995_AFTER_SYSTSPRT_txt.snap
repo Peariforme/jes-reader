@@ -1,0 +1,7 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01995/AFTER/SYSTSPRT.txt
+DD SYSTSPRT (Other), ASA: yes, 11 lines
+job: ? JOB01995

@@ -146,6 +146,12 @@ impl<'a> StepNames<'a> {
     fn from_names(head: &'a str) -> Option<Self> {
         let names: Vec<&str> = head.split_whitespace().collect();
         match names[..] {
+            // Unnamed step (`// EXEC PGM=…` without a label): job name only.
+            [job] => Some(Self {
+                job,
+                step: "",
+                proc_step: None,
+            }),
             [job, step] => Some(Self {
                 job,
                 step,
@@ -189,6 +195,9 @@ mod tests {
         let n = StepNames::parse("JRIDC8 STEP020 - STEP WAS NOT EXECUTED.").unwrap();
         assert_eq!((n.job, n.proc_step, n.step), ("JRIDC8", None, "STEP020"));
         assert!(StepNames::parse("NO DASH HERE").is_none());
+        // Unnamed step: only the job name before ` - `.
+        let n = StepNames::parse("JCLSETUP - STEP WAS EXECUTED - COND CODE 0000").unwrap();
+        assert_eq!((n.job, n.proc_step, n.step), ("JCLSETUP", None, ""));
     }
 
     #[test]

@@ -1,0 +1,212 @@
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922                 Date 11/25/2026  Time 10:31:34   Page     1
+0Options in effect:
+  NOADATA
+    ADV
+    AFP(NOVOLATILE)
+    QUOTE
+    ARCH(11)
+    ARITH(COMPAT)
+  NOAWO
+  NOBLOCK0
+    BUFSIZE(4096)
+  NOCICS
+    CODEPAGE(1140)
+  NOCOMPILE(S)
+    CONDCOMP(NOSKIPSRC)
+  NOCOPYLOC
+  NOCOPYRIGHT
+  NOCURRENCY
+    DATA(31)
+    DBCS
+  NODECK
+  NODEFINE
+  NODIAGTRUNC
+    DISPSIGN(COMPAT)
+  NODLL
+  NODUMP
+  NODYNAM
+  NOEXIT
+  NOEXPORTALL
+  NOFASTSRT
+    FLAG(I,I)
+  NOFLAGSTD
+    HGPR(PRESERVE)
+  NOINITCHECK
+  NOINITIAL
+    INLINE
+    INTDATE(ANSI)
+  NOINVDATA
+  NOJAVAIOP
+    LANGUAGE(EN)
+    LINECOUNT(60)
+  NOLIST
+    LP(32)
+  NOLSACHECK
+  NOMAP
+    MAXPCF(100000)
+  NOMDECK
+  NONAME
+    NSYMBOL(NATIONAL)
+  NONUMBER
+  NONUMCHECK
+    NUMPROC(NOPFD)
+    OBJECT
+  NOOFFSET
+    OPTIMIZE(0)
+    OUTDD(SYSOUT)
+  NOPARMCHECK
+    PGMNAME(COMPAT)
+    QUALIFY(COMPAT)
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922                 Date 11/25/2026  Time 10:31:34   Page     2
+0   RENT
+    RMODE(AUTO)
+  NORULES
+  NOSERVICE
+    SEQUENCE
+    SMARTBIN(NONAMES)
+    SOURCE(DEC)
+    SPACE(1)
+  NOSQL
+    SQLCCSID
+  NOSQLIMS
+  NOSSRANGE
+  NOSTGOPT
+    SUPPRESS
+  NOTERM
+  NOTEST(NODWARF,NOSOURCE,NOSEPARATE)
+  NOTHREAD
+    TRUNC(STD)
+    TUNE(11)
+  NOVBREF
+    VLR(STANDARD)
+    VSAMOPENFS(COMPAT)
+  NOWORD
+    XMLPARSE(XMLSS)
+    XREF(FULL)
+    ZWB
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922       NAMES     Date 11/25/2026  Time 10:31:34   Page     3
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-|--+----8 Map and Cross Reference
+0  000001               *-----------------------
+   000002                IDENTIFICATION DIVISION.
+   000003               *-----------------------
+   000004                PROGRAM-ID.    NAMES
+   000005                AUTHOR.        Otto B. Named
+   000006               *--------------------
+   000007                ENVIRONMENT DIVISION.
+   000008               *--------------------
+   000009                INPUT-OUTPUT SECTION.
+   000010                FILE-CONTROL.
+   000011                    SELECT FIRST-NAME ASSIGN TO FNAMES.                                   18
+   000012                    SELECT LAST-NAME  ASSIGN TO LNAMES.                                   23
+   000013                    SELECT FIRST-LAST ASSIGN TO COMBINED.                                 28
+   000014               *-------------
+   000015                DATA DIVISION.
+   000016               *-------------
+   000017                FILE SECTION.
+   000018                FD  FIRST-NAME RECORDING MODE F.
+   000019                01  FIRST-REC.
+   000020                    05  FIRST-IN       PIC X(10).
+   000021                    05  FILLER         PIC X(70).
+   000022               *
+   000023                FD  LAST-NAME RECORDING MODE F.
+   000024                01  LAST-REC.
+   000025                    05  LAST-IN        PIC X(15).
+   000026                    05  FILLER         PIC X(65).
+   000027               *
+   000028                FD  FIRST-LAST RECORDING MODE F.
+   000029                01  FIRST-LAST-REC.
+   000030                    05  FIRST-OUT      PIC X(10).
+   000031                    05  LAST-OUT       PIC X(15).
+   000032                    05  FILLER         PIC X(55).
+   000033               *
+   000034                WORKING-STORAGE SECTION.
+   000035                01 FLAGS.
+   000036                  05 LASTREC           PIC X VALUE SPACE.                                 IMP
+   000037               *------------------
+   000038                PROCEDURE DIVISION.
+   000039               *------------------
+   000040                OPEN-FILES.
+   000041                    OPEN INPUT  FIRST-NAME.                                               18
+   000042                    OPEN INPUT  LAST-NAME.                                                23
+   000043                    OPEN OUTPUT FIRST-LAST.                                               28
+   000044               *
+   000045                READ-WRITE-UNTIL-LASTREC.
+   000046                     PERFORM READ-FIRST-NAME                                              60
+   000047                     PERFORM READ-LAST-NAME                                               65
+   000048                     PERFORM UNTIL LASTREC = 'Y'                                          36
+   000049      1              PERFORM WRITE-COMBINED                                               69
+   000050      1              PERFORM READ-FIRST-NAME                                              60
+   000051      1              PERFORM READ-LAST-NAME                                               65
+   000052                     END-PERFORM.
+   000053               *
+   000054                CLOSE-STOP.
+   000055                    CLOSE FIRST-NAME.                                                     18
+   000056                    CLOSE LAST-NAME.                                                      23
+   000057                    CLOSE FIRST-LAST.                                                     28
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922       NAMES     Date 11/25/2026  Time 10:31:34   Page     4
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-|--+----8 Map and Cross Reference
+0  000058                    GOBACK.
+   000059               *
+   000060                READ-FIRST-NAME.
+   000061                    READ FIRST-NAME                                                       18
+   000062      1             AT END MOVE 'Y' TO LASTREC                                            36
+   000063                    END-READ.
+   000064               *
+   000065                READ-LAST-NAME.
+   000066                    READ LAST-NAME                                                        23
+   000067                    END-READ.
+   000068               *
+   000069                WRITE-COMBINED.
+   000070                    MOVE SPACES       TO  FIRST-LAST-REC                                  IMP 29
+   000071                    MOVE FIRST-IN     TO  FIRST-OUT                                       20 30
+   000072                    MOVE LAST-IN      TO  LAST-OUT                                        25 31
+   000073                    WRITE FIRST-LAST-REC.                                                 29
+   000074               *
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922       NAMES     Date 11/25/2026  Time 10:31:34   Page     5
+0An "M" preceding a data-name reference indicates that the data-name is modified by this reference.
+
+  Defined   Cross-reference of data names   References
+
+       20   FIRST-IN . . . . . . . . . . .  71
+       28   FIRST-LAST . . . . . . . . . .  13 43 57
+       29   FIRST-LAST-REC . . . . . . . .  M70 73
+       18   FIRST-NAME . . . . . . . . . .  11 41 55 61
+       30   FIRST-OUT. . . . . . . . . . .  M71
+       19   FIRST-REC
+       35   FLAGS
+       25   LAST-IN. . . . . . . . . . . .  72
+       23   LAST-NAME. . . . . . . . . . .  12 42 56 66
+       31   LAST-OUT . . . . . . . . . . .  M72
+       24   LAST-REC
+       36   LASTREC. . . . . . . . . . . .  48 M62
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922       NAMES     Date 11/25/2026  Time 10:31:34   Page     6
+0Context usage is indicated by the letter preceding a procedure-name reference.
+ These letters and their meanings are:
+     A = ALTER (procedure-name)
+     D = GO TO (procedure-name) DEPENDING ON
+     E = End of range of (PERFORM) through (procedure-name)
+     G = GO TO (procedure-name)
+     P = PERFORM (procedure-name)
+     T = (ALTER) TO PROCEED TO (procedure-name)
+     U = USE FOR DEBUGGING (procedure-name)
+
+  Defined   Cross-reference of procedures   References
+
+       54   CLOSE-STOP
+       40   OPEN-FILES
+       60   READ-FIRST-NAME. . . . . . . .  P46 P50
+       65   READ-LAST-NAME . . . . . . . .  P47 P51
+       45   READ-WRITE-UNTIL-LASTREC
+       69   WRITE-COMBINED . . . . . . . .  P49
+1PP 5655-EC6 IBM Enterprise COBOL for z/OS  6.5.0 P260922       NAMES     Date 11/25/2026  Time 10:31:34   Page     7
+0 Defined   Cross-reference of programs     References
+
+        4   NAMES
+-* Statistics for COBOL program NAMES:
+ *    Source records = 74
+ *    Data Division statements = 9
+ *    Procedure Division statements = 20
+ *    Generated COBOL statements = 0
+ *    Program complexity factor = 20
+0End of compilation 1,  program NAMES,  no statements flagged.
+0Return code 0

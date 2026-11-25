@@ -1,0 +1,13 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01987/RUN/SYSOUT.txt
+DD SYSOUT (Other), ASA: yes, 4 lines
+job: ? JOB01987
+
+messages:
+  L1-4 col.2-9 IGZ0035S There was an unsuccessful OPEN or CLOSE of file COMBINED in program NAMES at relative location X'230'. Neither FILE STATUS nor an ERROR declarative were specified. The status code was 96. From compile unit NAMES at entry point NAMES at compile unit offset +00000230 at entry offset +00000230 at address 1B200230.
+
+findings:
+  L1 error [IGZ0035S] COBOL OPEN failed: There was an unsuccessful OPEN or CLOSE of file COMBINED in program NAMES at relative location X'230'. Neither FILE STATUS nor an ERROR declarative were specified. The status code was 96. From compile unit NAMES at entry point NAMES at compile unit offset +00000230 at entry offset +00000230 at address 1B200230.

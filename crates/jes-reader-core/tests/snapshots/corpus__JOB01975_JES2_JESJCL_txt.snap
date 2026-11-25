@@ -1,0 +1,24 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01975/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA: yes, 15 lines
+job: JCL1 JOB01975
+
+statements:
+    1 L1-1 Job JCL1 JOB
+    2 L2-2 Job COPYJCL2 EXEC
+    3 L3-3 Job SYSPRINT DD
+    4 L4-4 Job SYSIN DD
+    5 L5-5 Job SYSUT1 DD
+    6 L6-8 Job SYSUT2 DD
+    7 L9-9 Job COPYJCL3 EXEC
+    8 L10-10 Job SYSPRINT DD
+    9 L11-11 Job SYSIN DD
+   10 L12-12 Job SYSUT1 DD
+   11 L13-15 Job SYSUT2 DD
+
+messages:
+  L8 col.11-18 IEFC653I SUBSTITUTION JCL - DISP=SHR,DSN=Z99999.JCL(JCL2)
+  L15 col.11-18 IEFC653I SUBSTITUTION JCL - DISP=SHR,DSN=Z99999.JCL(JCL3)

@@ -1,0 +1,27 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01987/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 24 lines
+job: JCL2 JOB01987
+end of job: Abend("U4038")
+
+steps:
+  L10-10 BEFORE: Completed { return_code: 0 } (L10)
+  L11-11 COBRUN.COBOL: Completed { return_code: 0 } (L11)
+  L12-12 COBRUN.LKED: Completed { return_code: 0 } (L12)
+  L14-14 RUN: Abended { code: "U4038", reason: None } (L14)
+  L15-15 AFTER: NotRun (L15)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-27 IEF677I WARNING MESSAGE(S) FOR JOB JCL2     ISSUED
+  L6 col.21-29 ICH70001I Z99999   LAST ACCESS AT 10:26:40 ON WEDNESDAY, NOVEMBER 25, 2026
+  L7 col.21-28 $HASP373 JCL2     STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L13 col.21-27 IEF450I JCL2 RUN - ABEND=S000 U4038 REASON=00000001
+  L17 col.21-28 $HASP395 JCL2     ENDED - ABEND=U4038
+
+findings:
+  L14 error [U4038] Step RUN: abend U4038 (Language Environment abend)
+  L15 info [FLUSH] Step AFTER did not run

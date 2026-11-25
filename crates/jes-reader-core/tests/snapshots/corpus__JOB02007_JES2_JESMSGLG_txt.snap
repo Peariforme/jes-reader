@@ -1,0 +1,29 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB02007/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 30 lines
+job: JCL3 JOB02007
+end of job: ReturnCode(0)
+
+steps:
+  L9-9 HEADER: Completed { return_code: 0 } (L9)
+  L10-10 POK: Completed { return_code: 0 } (L10)
+  L11-11 NHB: Completed { return_code: 0 } (L11)
+  L12-12 BEACON: Completed { return_code: 0 } (L12)
+  L13-13 CLDSPRNG: Completed { return_code: 0 } (L13)
+  L14-14 GARRISON: Completed { return_code: 0 } (L14)
+  L15-15 PEEKSKL: Completed { return_code: 0 } (L15)
+  L16-16 CORTLNDT: Completed { return_code: 0 } (L16)
+  L17-17 CORTLNDT: Completed { return_code: 0 } (L17)
+  L18-18 CROTONH: Completed { return_code: 0 } (L18)
+  L19-19 H125: Completed { return_code: 0 } (L19)
+  L20-20 GCT: Completed { return_code: 0 } (L20)
+  L21-21 PEAKINFO: Completed { return_code: 0 } (L21)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 10:31:32 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 JCL3     STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L23 col.21-28 $HASP395 JCL3     ENDED - RC=0000

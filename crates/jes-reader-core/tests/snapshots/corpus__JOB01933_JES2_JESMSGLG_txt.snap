@@ -1,0 +1,19 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01933/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 20 lines
+job: PDSBUILD JOB01933
+end of job: ReturnCode(0)
+
+steps:
+  L9-9 DELETE: Completed { return_code: 0 } (L9)
+  L10-10 ALLOC: Completed { return_code: 0 } (L10)
+  L11-11 POPULATE: Completed { return_code: 0 } (L11)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 09:30:13 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 PDSBUILD STARTED - INIT 1    - CLASS 7        - SYS S0W1
+  L13 col.21-28 $HASP395 PDSBUILD ENDED - RC=0000

@@ -95,10 +95,13 @@ pub enum StepStatus {
     Unknown,
 }
 
+/// Display name of a step without a name (`// EXEC PGM=…` without a label).
+pub const UNNAMED_STEP: &str = "(unnamed step)";
+
 /// Job step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
-    /// Job step name (`COBRUN`, `STEP010`).
+    /// Job step name (`COBRUN`, `STEP010`); empty for an unnamed step.
     pub name: String,
     /// Step name inside the called procedure (`COBOL`, `GO`), if any.
     pub proc_step: Option<String>,
@@ -116,6 +119,7 @@ impl Step {
     pub fn display_name(&self) -> String {
         match &self.proc_step {
             Some(proc_step) => format!("{}.{}", self.name, proc_step),
+            None if self.name.is_empty() => UNNAMED_STEP.to_owned(),
             None => self.name.clone(),
         }
     }

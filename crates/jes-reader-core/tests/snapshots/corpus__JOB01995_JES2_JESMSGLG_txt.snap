@@ -1,0 +1,22 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01995/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 23 lines
+job: JCL2 JOB01995
+end of job: ReturnCode(0)
+
+steps:
+  L10-10 BEFORE: Completed { return_code: 0 } (L10)
+  L11-11 COBRUN.COBOL: Completed { return_code: 0 } (L11)
+  L12-12 COBRUN.LKED: Completed { return_code: 0 } (L12)
+  L13-13 RUN: Completed { return_code: 0 } (L13)
+  L14-14 AFTER: Completed { return_code: 0 } (L14)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-27 IEF677I WARNING MESSAGE(S) FOR JOB JCL2     ISSUED
+  L6 col.21-29 ICH70001I Z99999   LAST ACCESS AT 10:30:15 ON WEDNESDAY, NOVEMBER 25, 2026
+  L7 col.21-28 $HASP373 JCL2     STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L16 col.21-28 $HASP395 JCL2     ENDED - RC=0000

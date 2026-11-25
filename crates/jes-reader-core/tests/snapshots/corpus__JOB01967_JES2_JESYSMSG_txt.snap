@@ -1,0 +1,18 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01967/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 11 lines
+job: JCLSETUP JOB01967
+
+steps:
+  L2-8 (unnamed step): Completed { return_code: 0 } (L2)
+
+messages:
+  L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 10:19:01 ON WEDNESDAY, NOVEMBER 25, 2026
+  L2 col.2-8 IEF142I JCLSETUP - STEP WAS EXECUTED - COND CODE 0000
+  L3 col.2-8 IEF373I STEP/        /START 2026329.1023
+  L4-8 col.2-8 IEF032I STEP/        /STOP  2026329.1023 CPU:     0 HR  00 MIN  00.00 SEC    SRB:     0 HR  00 MIN  00.00 SEC VIRT:     8K  SYS:   272K  EXT:        0K  SYS:    11408K ATB- REAL:                  1256K  SLOTS:                     0K VIRT- ALLOC:      14M SHRD:       0M
+  L9 col.2-8 IEF375I JOB/JCLSETUP/START 2026329.1023
+  L10-11 col.2-8 IEF033I JOB/JCLSETUP/STOP  2026329.1023 CPU:     0 HR  00 MIN  00.00 SEC    SRB:     0 HR  00 MIN  00.00 SEC

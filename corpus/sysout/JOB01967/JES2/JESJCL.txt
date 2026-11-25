@@ -1,0 +1,22 @@
+        1 //JCLSETUP JOB ,MSGLEVEL=(0,0),CLASS=7                                  JOB01967
+          //*-----------------------------------------------------------
+          //*
+          //* WHY ARE YOU PLANNING TO RUN THIS JOB?
+          //*
+          //* IT IS INTENDED ONLY TO CREATE NEW DATASETS
+          //*
+          //* IT *WILL* FAIL IF ANY OF THE DATASETS ALREADY EXIST
+          //*
+          //* THIS WILL HAPPEN IF YOU HAVE RUN THIS JOB BEFORE
+          //*
+          //* IF YOU ARE DOING THIS BECAUSE YOU ARE HAVING DIFFICULTY
+          //* WITH THE JCL1 CHALLENGE, IT IS BETTER TO CONCENTRATE ON
+          //* UNDERSTANDING THE LINK BETWEEN:
+          //*
+          //* +  COBOL FILE-CONTROL ASSIGN NAME (PROGRAM INTERNAL NAME)
+          //* +  JCL DD NAME                    (FILENAME TO MATCH COBOL)
+          //* +  JCL DD DSN NAME                (CURRENT DATASET TO USE)
+          //*
+          //* IF YOU REALLY *REALLY* WANT TO START AGAIN, SUBMIT JCLRESET
+          //*
+          //*-----------------------------------------------------------
