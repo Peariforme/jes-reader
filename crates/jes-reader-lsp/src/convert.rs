@@ -45,7 +45,7 @@ impl<'a> Lines<'a> {
     }
 
     /// Content of line `n`, without the ASA character and leading spaces.
-    fn content(&self, n: usize) -> LspRange {
+    pub fn content(&self, n: usize) -> LspRange {
         let line = self.line(n);
         let start = line
             .char_indices()
@@ -53,6 +53,18 @@ impl<'a> Lines<'a> {
             .find(|(_, c)| !c.is_whitespace())
             .map_or(0, |(i, _)| i);
         self.span(n, start..line.len())
+    }
+
+    /// Byte offset of the UTF-16 column `character` in line `n`.
+    pub fn byte_column(&self, n: usize, character: u32) -> usize {
+        let mut units = 0;
+        for (i, c) in self.line(n).char_indices() {
+            if units >= character as usize {
+                return i;
+            }
+            units += c.len_utf16();
+        }
+        self.line(n).len()
     }
 
     /// Whole lines `lines` (exclusive upper bound).

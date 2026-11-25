@@ -185,6 +185,36 @@ pub struct Dd {
     pub job_end: Option<JobEnd>,
 }
 
+impl Dd {
+    /// JCL statement with this number (JESJCL).
+    pub fn statement(&self, number: u32) -> Option<&Statement> {
+        self.statements.iter().find(|st| st.number == number)
+    }
+
+    /// EXEC statement that runs `step` (JESJCL).
+    ///
+    /// A plain step is the job-level EXEC with its name. A procedure step
+    /// (`COBRUN.GO`) is the EXEC named `GO` expanded under the job-level
+    /// EXEC `COBRUN`; if the procedure is not expanded, the job-level EXEC.
+    pub fn exec_statement(&self, step: &Step) -> Option<&Statement> {
+        let is_exec = |st: &&Statement| st.operation.as_deref() == Some("EXEC");
+        let job_exec = self.statements.iter().position(|st| {
+            is_exec(&st)
+                && st.origin == StatementOrigin::Job
+                && st.name.as_deref() == Some(step.name.as_str())
+        })?;
+        let Some(proc_step) = step.proc_step.as_deref() else {
+            return Some(&self.statements[job_exec]);
+        };
+        let expanded = self.statements[job_exec + 1..]
+            .iter()
+            .filter(is_exec)
+            .take_while(|st| st.origin != StatementOrigin::Job)
+            .find(|st| st.name.as_deref() == Some(proc_step));
+        Some(expanded.unwrap_or(&self.statements[job_exec]))
+    }
+}
+
 /// Whole sysout of a job: aggregate of the open DDs with the same JES job ID.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Job {
@@ -233,5 +263,62 @@ mod tests {
         assert_eq!(step.display_name(), "COBRUN.GO");
         step.proc_step = None;
         assert_eq!(step.display_name(), "COBRUN");
+    }
+
+    fn statement(number: u32, origin: StatementOrigin, name: &str, operation: &str) -> Statement {
+        Statement {
+            number,
+            origin,
+            name: Some(name.into()),
+            operation: Some(operation.into()),
+            lines: 0..1,
+        }
+    }
+
+    fn step(name: &str, proc_step: Option<&str>) -> Step {
+        Step {
+            name: name.into(),
+            proc_step: proc_step.map(Into::into),
+            status: StepStatus::Unknown,
+            lines: 0..1,
+            status_line: 0,
+        }
+    }
+
+    #[test]
+    fn exec_statement_of_steps() {
+        use StatementOrigin::{Job, Procedure};
+        let dd = Dd {
+            name: Some("JESJCL".into()),
+            kind: DdKind::JesJcl,
+            job_name: None,
+            job_id: None,
+            has_asa: true,
+            line_count: 0,
+            messages: Vec::new(),
+            steps: Vec::new(),
+            statements: vec![
+                statement(1, Job, "JRS0C7", "JOB"),
+                statement(2, Job, "COBRUN", "EXEC"),
+                statement(3, Procedure, "IGYWCLG", "PROC"),
+                statement(4, Procedure, "COBOL", "EXEC"),
+                statement(46, Procedure, "GO", "EXEC"),
+                statement(50, Job, "STEP2", "EXEC"),
+                statement(51, Procedure, "GO", "EXEC"),
+            ],
+            job_end: None,
+        };
+        let number = |s: &Step| dd.exec_statement(s).map(|st| st.number);
+        assert_eq!(number(&step("COBRUN", Some("GO"))), Some(46));
+        assert_eq!(number(&step("STEP2", Some("GO"))), Some(51));
+        assert_eq!(number(&step("STEP2", None)), Some(50));
+        // Procedure not expanded: falls back on the job-level EXEC.
+        assert_eq!(number(&step("COBRUN", Some("LKED"))), Some(2));
+        assert_eq!(number(&step("MISSING", None)), None);
+        assert_eq!(
+            dd.statement(46).map(|st| st.name.as_deref()),
+            Some(Some("GO"))
+        );
+        assert!(dd.statement(99).is_none());
     }
 }

@@ -1,7 +1,8 @@
 //! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
 //! Each open document is a DD, analysed on every change: diagnostics are
-//! pushed to the client, Outline and folding are served on request.
+//! pushed to the client; Outline, folding and Go to Definition are served
+//! on request.
 //!
 //! Initialization options (`initializationOptions`):
 //!
@@ -10,6 +11,7 @@
 //! ```
 
 mod convert;
+mod navigate;
 
 use std::collections::HashMap;
 
@@ -20,11 +22,14 @@ use lsp_types::notification::{
     DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument,
     Notification as LspNotification, PublishDiagnostics,
 };
-use lsp_types::request::{DocumentSymbolRequest, FoldingRangeRequest, Request as LspRequest};
+use lsp_types::request::{
+    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, Request as LspRequest,
+};
 use lsp_types::{
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
-    FoldingRangeProviderCapability, InitializeParams, OneOf, PublishDiagnosticsParams,
-    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
+    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams,
+    Location, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
+    TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
@@ -35,12 +40,14 @@ pub fn capabilities() -> ServerCapabilities {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
         document_symbol_provider: Some(OneOf::Left(true)),
         folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+        definition_provider: Some(OneOf::Left(true)),
         ..ServerCapabilities::default()
     }
 }
 
-/// Open document: its text and its analysis.
+/// Open document: its URI, its text and its analysis.
 struct Document {
+    uri: Uri,
     text: String,
     dd: Dd,
 }
@@ -124,8 +131,14 @@ impl Server<'_> {
             .iter()
             .map(|f| convert::diagnostic(f, &lines))
             .collect();
-        self.documents
-            .insert(uri.as_str().to_owned(), Document { text, dd });
+        self.documents.insert(
+            uri.as_str().to_owned(),
+            Document {
+                uri: uri.clone(),
+                text,
+                dd,
+            },
+        );
         self.publish(uri, diagnostics)
     }
 
@@ -156,6 +169,12 @@ impl Server<'_> {
                     .map(|doc| convert::folding_ranges(&doc.dd));
                 Response::new_ok(req.id, ranges)
             }
+            GotoDefinition::METHOD => {
+                let params: GotoDefinitionParams = serde_json::from_value(req.params)?;
+                let at = params.text_document_position_params;
+                let location = self.definition(&at.text_document.uri, at.position);
+                Response::new_ok(req.id, location.map(GotoDefinitionResponse::Scalar))
+            }
             method => Response::new_err(
                 req.id,
                 ErrorCode::MethodNotFound as i32,
@@ -168,6 +187,39 @@ impl Server<'_> {
 
     fn document(&self, uri: &Uri) -> Option<&Document> {
         self.documents.get(uri.as_str())
+    }
+
+    /// JCL statement behind the cursor, in the JESJCL of the same job: an
+    /// open document first (the VS Code extension opens it in the background
+    /// for Zowe documents), otherwise `JESJCL.txt` next to a downloaded file.
+    fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
+        let doc = self.document(uri)?;
+        let line = usize::try_from(position.line).ok()?;
+        let column = Lines::new(&doc.text).byte_column(line, position.character);
+        let target = navigate::target_at(&doc.dd, line, column)?;
+
+        if let Some(jcl) = self
+            .documents
+            .values()
+            .find(|other| navigate::is_jcl_of(&other.dd, &doc.dd))
+        {
+            let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
+            let range = Lines::new(&jcl.text).content(statement.lines.start);
+            return Some(Location::new(jcl.uri.clone(), range));
+        }
+
+        if !uri.as_str().starts_with("file:") {
+            return None;
+        }
+        let path = navigate::file_path(&decode_path(uri.path().as_str()));
+        let sibling = navigate::sibling_jcl(&path)?;
+        let text = String::from_utf8_lossy(&std::fs::read(&sibling).ok()?).into_owned();
+        let jcl = parse_file(&sibling.to_string_lossy(), &text);
+        let statement = navigate::resolve(target, &doc.dd, &jcl)?;
+        let (directory, _) = uri.as_str().rsplit_once('/')?;
+        let sibling_uri: Uri = format!("{directory}/JESJCL.txt").parse().ok()?;
+        let range = Lines::new(&text).content(statement.lines.start);
+        Some(Location::new(sibling_uri, range))
     }
 }
 

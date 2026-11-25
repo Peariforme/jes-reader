@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Go to Definition from `JESYSMSG` and `JESMSGLG` to `JESJCL`: statement numbers of conversion messages, and steps to their `EXEC` statement (procedure steps included). For Zowe Explorer documents, the `JESJCL` DD is opened in the background.
+
 ## 0.1.0
 
 First release.

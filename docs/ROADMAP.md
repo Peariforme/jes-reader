@@ -80,9 +80,9 @@ Goal: open a sysout in VS Code and see at once which step failed and why.
 Goal: the tool is used on everyday jobs, without downloading anything.
 
 - [x] Identify the URI scheme of spools opened by Zowe Explorer (`zowe-jobs:`) and attach the extension to it. Checked: a job opened directly from Zowe Explorer is analysed (diagnostics, Outline).
-- [ ] Links: statement numbers in JESYSMSG to the matching line of JESJCL
-- [ ] Navigation: from a step in JESYSMSG to its EXEC in JESJCL
-- [ ] Cross-DD links for Zowe documents: the extension reads just the missing DD through Zowe's file system, without downloading the whole spool
+- [x] Links: statement numbers in JESYSMSG to the matching line of JESJCL (Go to Definition)
+- [x] Navigation: from a step in JESYSMSG or in the JESMSGLG step table to its EXEC in JESJCL, procedure steps included (`COBRUN.GO` → the expanded `GO` EXEC)
+- [ ] Cross-DD links for Zowe documents: the extension opens just the JESJCL DD in the background through Zowe's file system (`….JES2.JESJCL.3`), without downloading the whole spool. Implemented; to be checked against a live Zowe connection. Downloaded jobs: the server reads `JESJCL.txt` next to the file.
 - [ ] Hovers: our own TOML catalog of the ~50 most common messages and abends, with a link to IBM Docs for all the others
 - [ ] Clickable data set names opening in Zowe Explorer, if a public command allows it
 

@@ -12,6 +12,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Zowe sometimes adds a `(1)` suffix to the file name with no apparent duplicate in the folder (`JOB00896/LKED/COBRUN/SYSPRINT(1).txt`). The DD name is the file name without that suffix.
 - Installed products add their own DDs: IBM Fault Analyzer writes `IDIREPRT` on abends (`JOB00901/STEP010/IDIREPRT.txt`, 2,448 lines).
 - Opened without downloading, the document is named `<jobname>.<jobid>.<step>.<DD>.<n>` (`JRIDC12.JOB00922.JES2.JESMSGLG.2`), where `n` is the DD number in the spool. For a TSO session the job name is the user ID (`Z99999.TSU00812.JES2.JESYSMSG.4`).
+- The trailing number is the JES data set ID. JES2 numbers the system DDs JESMSGLG 2, JESJCL 3, JESYSMSG 4 (`JRIDC12.JOB00922.JES2.JESMSGLG.2`, `Z99999.TSU00812.JES2.JESYSMSG.4`); the extension relies on it to open the JESJCL of a Zowe document.
 - Consequence for the parser: **the unit of parsing is the DD**. The file name (or URI) gives the DD; the content is the fallback (see "Detection").
 - Whole spool in a single file: _not observed yet_ (separator between DDs unknown).
 

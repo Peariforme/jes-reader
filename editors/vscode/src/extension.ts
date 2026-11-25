@@ -29,8 +29,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         void restart(context);
       }
     }),
+    vscode.workspace.onDidOpenTextDocument((document) => void openSiblingJcl(document)),
   );
   await start(context);
+  for (const document of vscode.workspace.textDocuments) {
+    void openSiblingJcl(document);
+  }
 }
 
 export async function deactivate(): Promise<void> {
@@ -55,6 +59,14 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     initializationOptions: {
       maxReturnCode: config.get<number>('maxReturnCode', 4),
     },
+    middleware: {
+      // The JESJCL opened in the background may have been released by VS
+      // Code since: make sure the server has it before resolving a link.
+      provideDefinition: async (document, position, token, next) => {
+        await openSiblingJcl(document);
+        return next(document, position, token);
+      },
+    },
   };
   client = new LanguageClient('jesReader', 'JES Reader', serverOptions, clientOptions);
   await client.start();
@@ -75,6 +87,41 @@ function serverPath(context: vscode.ExtensionContext): string | undefined {
   const exe = process.platform === 'win32' ? 'jes-reader-lsp.exe' : 'jes-reader-lsp';
   const bundled = context.asAbsolutePath(path.join('server', exe));
   return fs.existsSync(bundled) ? bundled : undefined;
+}
+
+/**
+ * JESJCL of the same job, for a JESYSMSG or JESMSGLG document opened by Zowe
+ * Explorer (`<job>.<jobid>.JES2.JESYSMSG.4` → `<job>.<jobid>.JES2.JESJCL.3`).
+ * JES2 numbers its system DDs JESMSGLG 2, JESJCL 3, JESYSMSG 4. Downloaded
+ * files need nothing: the server reads `JESJCL.txt` next to them.
+ */
+function siblingJcl(uri: vscode.Uri): vscode.Uri | undefined {
+  if (uri.scheme === 'file' || uri.scheme === 'untitled') {
+    return undefined;
+  }
+  const match = /\.JES2\.(?:JESYSMSG|JESMSGLG)\.\d+$/.exec(uri.path);
+  if (!match) {
+    return undefined;
+  }
+  return uri.with({ path: `${uri.path.slice(0, match.index)}.JES2.JESJCL.3` });
+}
+
+/**
+ * Opens the sibling JESJCL in the background, without an editor tab: Zowe
+ * fetches only that DD, and the language server receives it like any open
+ * document, which enables Go to Definition from JESYSMSG and JESMSGLG.
+ */
+async function openSiblingJcl(document: vscode.TextDocument): Promise<void> {
+  const jcl = siblingJcl(document.uri);
+  if (!jcl) {
+    return;
+  }
+  try {
+    await vscode.workspace.openTextDocument(jcl);
+  } catch {
+    // Spool purged, DD not numbered as expected, Zowe not connected: links
+    // are simply unavailable.
+  }
 }
 
 /** Forces the language ID of the active document, whatever its name. */
