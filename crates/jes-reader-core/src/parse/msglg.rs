@@ -76,12 +76,13 @@ fn timed_job_id(line: &str) -> Option<&str> {
 /// Step table row:
 /// `-STEPNAME PROCSTEP    RC` in columns 22-29, 31-38 and 39-44 (offsets 21, 30, 38).
 fn step_row(line: &str, line_no: usize) -> Option<Step> {
+    // An unnamed step (`// EXEC` without a label) has a blank STEPNAME.
     let name = line.get(21..29)?.trim();
-    if name.is_empty() {
-        return None;
-    }
     let proc_step = line.get(30..38).map(str::trim).filter(|s| !s.is_empty());
     let rc = line.get(38..44)?.trim();
+    if rc.is_empty() {
+        return None;
+    }
     // System abend with a leading asterisk (`*S0C7`), user abend without
     // (`U4038`).
     let abend = rc.strip_prefix('*').unwrap_or(rc);
@@ -189,5 +190,13 @@ mod tests {
             ))
         );
         assert_eq!(row(" 04.42.18 JOB00868  -"), None);
+        // Unnamed step: blank STEPNAME column.
+        assert_eq!(
+            row(" 10.23.01 JOB01967  -                     00      6      0"),
+            Some((
+                "(unnamed step)".into(),
+                StepStatus::Completed { return_code: 0 }
+            ))
+        );
     }
 }
