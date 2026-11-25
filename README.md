@@ -64,9 +64,16 @@ The `Package` workflow builds the VSIX and CLI archives for five platforms on ev
 
 1. Set the same version in `editors/vscode/package.json` and `Cargo.toml` — the workflow rejects a tag that does not match.
 2. Push a `vX.Y.Z` tag.
-3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes to the VS Code Marketplace if the `VSCE_PAT` secret exists, and to Open VSX if `OVSX_PAT` exists.
+3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes to the VS Code Marketplace when the repository variable `PUBLISH_MARKETPLACE` is `true`, and to Open VSX when the `OVSX_PAT` secret exists. The job can be re-run: an existing release gets its assets replaced.
 
-`VSCE_PAT` is an Azure DevOps personal access token (scope *Marketplace > Manage*) for the `peariforme` publisher. `OVSX_PAT` is an open-vsx.org token, after creating the namespace once with `npx ovsx create-namespace peariforme`.
+**VS Code Marketplace** publishing uses [Trusted Publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension): GitHub proves the repository and workflow with an OIDC token (`vsce publish --oidc`, vsce 4), so no token is stored. Azure DevOps personal access tokens are not used: the global ones the Marketplace needed are being retired. Setup, once:
+
+1. Create the `peariforme` publisher on [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage) (the ID must match `publisher` in `editors/vscode/package.json`).
+2. If Trusted Publishing cannot create a new extension, upload the first VSIX of each platform by hand from the same page.
+3. On the publisher, under *Trusted Publishing*, add a policy for the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`.
+4. In the repository settings, add the Actions variable `PUBLISH_MARKETPLACE` = `true`.
+
+**Open VSX**: `OVSX_PAT` is an open-vsx.org token, after creating the namespace once with `npx ovsx create-namespace peariforme`.
 
 ## License
 
