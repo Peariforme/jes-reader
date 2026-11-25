@@ -21,6 +21,7 @@ Une fois après le clone, activer le filtre qui anonymise le corpus au `git add`
 
 ```sh
 git config filter.anonymize.clean "sh scripts/anonymize.sh"
+git config filter.anonymize.smudge cat
 git config filter.anonymize.required true
 ```
 
