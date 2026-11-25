@@ -6,6 +6,7 @@
 //! happens in the server.
 
 use std::ops::Range;
+use std::time::Duration;
 
 /// Severity of an IBM message, from the last character of its ID
 /// (`IEF142I`, `IEC161W`, `IGD17101E`…).
@@ -95,6 +96,17 @@ pub enum StepStatus {
     Unknown,
 }
 
+/// Short text for a step duration: `0.01 s`, `2 min 05 s`, `1 h 03 min`.
+pub fn duration_text(duration: Duration) -> String {
+    let centis = duration.as_millis() / 10;
+    let seconds = centis / 100;
+    match seconds {
+        0..60 => format!("{}.{:02} s", seconds, centis % 100),
+        60..3600 => format!("{} min {:02} s", seconds / 60, seconds % 60),
+        _ => format!("{} h {:02} min", seconds / 3600, seconds / 60 % 60),
+    }
+}
+
 /// Display name of a step without a name (`// EXEC PGM=…` without a label).
 pub const UNNAMED_STEP: &str = "(unnamed step)";
 
@@ -112,6 +124,18 @@ pub struct Step {
     /// Line that gives the outcome (`IEF142I`, `IEF472I`, JESMSGLG step table
     /// row…), otherwise the first line of the step.
     pub status_line: usize,
+    /// Program run (`PGM=` of the EXEC statement). Only JESJCL gives it:
+    /// see [`Dd::attach_programs`].
+    pub program: Option<String>,
+    /// Processor time: `CPU` of `IEF032I` (JESYSMSG), or the `TCB` column of
+    /// the JESMSGLG step table.
+    pub cpu: Option<Duration>,
+    /// Elapsed time: from `IEF373I` START to `IEF032I` STOP (to the minute,
+    /// JESYSMSG), or the `CLOCK` column of the JESMSGLG step table.
+    pub elapsed: Option<Duration>,
+    /// True if `elapsed` only counts minute changes (JESYSMSG timestamps are
+    /// `hhmm`): 0 means under a minute, 1 between a second and two minutes.
+    pub elapsed_in_minutes: bool,
 }
 
 impl Step {
@@ -122,6 +146,17 @@ impl Step {
             None if self.name.is_empty() => UNNAMED_STEP.to_owned(),
             None => self.name.clone(),
         }
+    }
+
+    /// Elapsed time for display: `2 min 05 s`, or `< 1 min` and `~3 min`
+    /// when only known to the minute.
+    pub fn elapsed_text(&self) -> Option<String> {
+        let elapsed = self.elapsed?;
+        Some(match elapsed.as_secs() / 60 {
+            0 if self.elapsed_in_minutes => "< 1 min".to_owned(),
+            minutes if self.elapsed_in_minutes => format!("~{minutes} min"),
+            _ => duration_text(elapsed),
+        })
     }
 }
 
@@ -149,6 +184,9 @@ pub struct Statement {
     pub operation: Option<String>,
     /// Lines covered, continuations and following comments included.
     pub lines: Range<usize>,
+    /// Program of an EXEC statement (`PGM=IDCAMS`), after symbol
+    /// substitution when `IEFC653I` gives it.
+    pub program: Option<String>,
 }
 
 /// End of job, read from `$HASP395` and `IEF453I` (JESMSGLG).
@@ -217,6 +255,22 @@ impl Dd {
             .find(|st| st.name.as_deref() == Some(proc_step));
         Some(expanded.unwrap_or(&self.statements[job_exec]))
     }
+
+    /// True if `self` is the JESJCL of the job `dd` belongs to.
+    pub fn is_jcl_of(&self, dd: &Dd) -> bool {
+        self.kind == DdKind::JesJcl && self.job_id.is_some() && self.job_id == dd.job_id
+    }
+
+    /// Fills the program of each step from `jcl`, the JESJCL of the same
+    /// job. Steps whose EXEC calls a procedure that is not expanded keep no
+    /// program.
+    pub fn attach_programs(&mut self, jcl: &Dd) {
+        for step in &mut self.steps {
+            if step.program.is_none() {
+                step.program = jcl.exec_statement(step).and_then(|st| st.program.clone());
+            }
+        }
+    }
 }
 
 /// Whole sysout of a job: aggregate of the open DDs with the same JES job ID.
@@ -256,6 +310,14 @@ mod tests {
     }
 
     #[test]
+    fn durations() {
+        assert_eq!(duration_text(Duration::ZERO), "0.00 s");
+        assert_eq!(duration_text(Duration::from_millis(600)), "0.60 s");
+        assert_eq!(duration_text(Duration::from_secs(125)), "2 min 05 s");
+        assert_eq!(duration_text(Duration::from_secs(3780)), "1 h 03 min");
+    }
+
+    #[test]
     fn step_display_name() {
         let mut step = Step {
             name: "COBRUN".into(),
@@ -263,10 +325,22 @@ mod tests {
             status: StepStatus::Unknown,
             lines: 0..1,
             status_line: 0,
+            program: None,
+            cpu: None,
+            elapsed: None,
+            elapsed_in_minutes: false,
         };
         assert_eq!(step.display_name(), "COBRUN.GO");
         step.proc_step = None;
         assert_eq!(step.display_name(), "COBRUN");
+
+        assert_eq!(step.elapsed_text(), None);
+        step.elapsed = Some(Duration::from_secs(125));
+        assert_eq!(step.elapsed_text().as_deref(), Some("2 min 05 s"));
+        step.elapsed_in_minutes = true;
+        assert_eq!(step.elapsed_text().as_deref(), Some("~2 min"));
+        step.elapsed = Some(Duration::ZERO);
+        assert_eq!(step.elapsed_text().as_deref(), Some("< 1 min"));
     }
 
     fn statement(number: u32, origin: StatementOrigin, name: &str, operation: &str) -> Statement {
@@ -276,6 +350,7 @@ mod tests {
             name: Some(name.into()),
             operation: Some(operation.into()),
             lines: 0..1,
+            program: None,
         }
     }
 
@@ -286,6 +361,10 @@ mod tests {
             status: StepStatus::Unknown,
             lines: 0..1,
             status_line: 0,
+            program: None,
+            cpu: None,
+            elapsed: None,
+            elapsed_in_minutes: false,
         }
     }
 
@@ -324,5 +403,18 @@ mod tests {
             Some(Some("GO"))
         );
         assert!(dd.statement(99).is_none());
+
+        let mut jcl = dd.clone();
+        jcl.statements[4].program = Some("*.LKED.SYSLMOD".into());
+        jcl.statements[5].program = Some("IDCAMS".into());
+        let mut sysmsg = dd;
+        sysmsg.steps = vec![
+            step("COBRUN", Some("GO")),
+            step("STEP2", None),
+            step("X", None),
+        ];
+        sysmsg.attach_programs(&jcl);
+        let programs: Vec<_> = sysmsg.steps.iter().map(|s| s.program.as_deref()).collect();
+        assert_eq!(programs, [Some("*.LKED.SYSLMOD"), Some("IDCAMS"), None]);
     }
 }

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Step summaries: a code lens above each step of `JESYSMSG` with its program, return code or abend, CPU time and elapsed time.
+- The Outline shows each step's program.
+- House rules by program: `[[steps]]` rules take a `program` pattern (`PGM=` of the EXEC statement, read in `JESJCL`), alone or with `name`.
 - Smaller, faster package: the client is bundled with esbuild into a single file, and the VSIX no longer ships `node_modules` (10 files instead of 326).
 
 ## 0.1.0

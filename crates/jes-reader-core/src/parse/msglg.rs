@@ -8,7 +8,7 @@
 //! Time in columns 2-9, JES job ID in columns 11-18, message or step table
 //! row from column 21 (offset 20).
 
-use super::{Messages, value_after};
+use super::{Messages, minutes, value_after};
 use crate::model::{Dd, JobEnd, Step, StepStatus};
 use crate::msgid::message_id_at;
 use crate::source::is_job_id;
@@ -19,6 +19,9 @@ const BODY: usize = 20;
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     let mut messages = Messages::new();
     let mut in_step_table = false;
+    // End columns of the TCB and CLOCK headers: values are right-aligned
+    // under them. The table layout depends on the installation (IEFACTRT).
+    let mut timing_columns = None;
 
     for (i, line) in lines.iter().enumerate() {
         let Some(job_id) = timed_job_id(line) else {
@@ -41,9 +44,14 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
                 let row = &line[BODY + 1..];
                 if row.starts_with("STEPNAME ") {
                     in_step_table = true;
+                    timing_columns = header_end(line, " TCB").zip(header_end(line, " CLOCK"));
                 } else if row.contains(" ENDED.  NAME-") {
                     in_step_table = false;
-                } else if in_step_table && let Some(step) = step_row(line, i) {
+                } else if in_step_table && let Some(mut step) = step_row(line, i) {
+                    if let Some((tcb, clock)) = timing_columns {
+                        step.cpu = value_ending_at(line, tcb).and_then(minutes);
+                        step.elapsed = value_ending_at(line, clock).and_then(minutes);
+                    }
                     dd.steps.push(step);
                 }
             }
@@ -71,6 +79,23 @@ fn timed_job_id(line: &str) -> Option<&str> {
     }
     let job_id = line.get(10..18)?;
     is_job_id(job_id).then_some(job_id)
+}
+
+/// Column just after `label` in the step table header.
+fn header_end(header: &str, label: &str) -> Option<usize> {
+    let start = header
+        .find(&format!("{label} "))
+        .or_else(|| header.ends_with(label).then(|| header.len() - label.len()))?;
+    Some(start + label.len())
+}
+
+/// Word of `line` that ends exactly at column `end` (right-aligned value).
+fn value_ending_at(line: &str, end: usize) -> Option<&str> {
+    let head = line.get(..end)?;
+    if line.as_bytes().get(end).is_some_and(|c| *c != b' ') {
+        return None;
+    }
+    head.split(' ').next_back().filter(|w| !w.is_empty())
 }
 
 /// Step table row:
@@ -104,6 +129,10 @@ fn step_row(line: &str, line_no: usize) -> Option<Step> {
         status,
         lines: line_no..line_no + 1,
         status_line: line_no,
+        program: None,
+        cpu: None,
+        elapsed: None,
+        elapsed_in_minutes: false,
     })
 }
 
@@ -156,6 +185,29 @@ mod tests {
         );
         assert_eq!(timed_job_id("0------ JES2 JOB STATISTICS ------"), None);
         assert_eq!(timed_job_id(" 04:12:28 JOB00823"), None);
+    }
+
+    #[test]
+    fn step_table_timings() {
+        let text = [
+            " 04.51.14 JOB00896  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV  WORKLOAD  PAGE  SWAP   VIO SWAPS",
+            " 04.51.14 JOB00896  -COBRUN   COBOL       00  16874    281       .01       .00     .3            68  BATCH        1     0     0     0",
+            " 04.42.18 JOB00868  -STEP020           FLUSH      0      0       .00       .00     .0                BATCH        0     0     0     0",
+        ];
+        let mut dd = crate::parse_file("JOB00896/JES2/JESMSGLG.txt", "");
+        parse(&text, &mut dd);
+        let timings: Vec<_> = dd.steps.iter().map(|s| (s.cpu, s.elapsed)).collect();
+        use std::time::Duration;
+        assert_eq!(
+            timings,
+            [
+                (
+                    Some(Duration::from_millis(600)),
+                    Some(Duration::from_secs(18))
+                ),
+                (Some(Duration::ZERO), Some(Duration::ZERO)),
+            ]
+        );
     }
 
     #[test]

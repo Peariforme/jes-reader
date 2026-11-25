@@ -8,9 +8,9 @@ job: PDSBUILD JOB01933
 end of job: ReturnCode(0)
 
 steps:
-  L9-9 DELETE: Completed { return_code: 0 } (L9)
-  L10-10 ALLOC: Completed { return_code: 0 } (L10)
-  L11-11 POPULATE: Completed { return_code: 0 } (L11)
+  L9-9 DELETE: Completed { return_code: 0 } (L9) CPU 0.00 s elapsed 0.00 s
+  L10-10 ALLOC: Completed { return_code: 0 } (L10) CPU 0.00 s elapsed 0.00 s
+  L11-11 POPULATE: Completed { return_code: 0 } (L11) CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

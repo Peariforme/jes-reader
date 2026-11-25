@@ -120,7 +120,7 @@ fn outcome(status: &StepStatus) -> String {
 
 /// True if `jcl` is the JESJCL of the job `dd` belongs to.
 pub fn is_jcl_of(jcl: &Dd, dd: &Dd) -> bool {
-    jcl.kind == DdKind::JesJcl && jcl.job_id.is_some() && jcl.job_id == dd.job_id
+    jcl.is_jcl_of(dd)
 }
 
 /// Local path of a `file:` URI path (`/c:/x/y` on Windows, `/x/y` elsewhere).

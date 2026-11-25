@@ -7,7 +7,7 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 13 lines
 job: @FILES1 JOB01956
 
 steps:
-  L4-10 VALIDATE: Completed { return_code: 0 } (L4)
+  L4-10 VALIDATE: Completed { return_code: 0 } (L4) CPU 0.01 s elapsed < 1 min
 
 messages:
   L2 col.12-19 IEFC001I [stmt 2] PROCEDURE ZXP$$CHK WAS EXPANDED USING SYSTEM LIBRARY VENDOR.PROCLIB

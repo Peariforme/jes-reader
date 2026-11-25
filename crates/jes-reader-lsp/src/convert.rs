@@ -8,10 +8,12 @@ use std::ops::Range;
 
 use jes_reader_core::{
     Dd, DdKind, Finding, FindingSeverity, Statement, StatementOrigin, Step, StepStatus,
+    duration_text,
 };
 use lsp_types::{
-    Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, DocumentSymbol, FoldingRange,
-    Location, NumberOrString, Position, Range as LspRange, SymbolKind, Uri,
+    CodeLens, Command, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
+    DocumentSymbol, FoldingRange, Location, NumberOrString, Position, Range as LspRange,
+    SymbolKind, Uri,
 };
 
 /// Text of a document split into lines, the way the parser does it.
@@ -157,13 +159,21 @@ pub fn symbols(dd: &Dd, lines: &Lines<'_>) -> Vec<DocumentSymbol> {
     }
 }
 
-fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
-    let detail = match &step.status {
+/// Short outcome of a step: `RC 8`, `abend S0C7`.
+fn outcome(status: &StepStatus) -> String {
+    match status {
         StepStatus::Completed { return_code } => format!("RC {return_code}"),
         StepStatus::Abended { code, .. } => format!("abend {code}"),
         StepStatus::NotRun => "not run".into(),
         StepStatus::Unknown => "running or unknown".into(),
-    };
+    }
+}
+
+fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
+    let mut detail = outcome(&step.status);
+    if let Some(program) = &step.program {
+        detail = format!("{detail} · {program}");
+    }
     symbol(
         step.display_name(),
         Some(detail),
@@ -172,6 +182,38 @@ fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
         lines.content(step.status_line),
         Vec::new(),
     )
+}
+
+/// Code lenses: a summary above each step of JESYSMSG,
+/// `STEP010 · IDCAMS · RC 8 · CPU 0.01 s · < 1 min`. JESMSGLG has none: its
+/// step table already gives the same figures on one line per step.
+pub fn code_lenses(dd: &Dd, lines: &Lines<'_>) -> Vec<CodeLens> {
+    if dd.kind != DdKind::JesYsMsg {
+        return Vec::new();
+    }
+    dd.steps
+        .iter()
+        .map(|step| CodeLens {
+            range: lines.content(step.lines.start),
+            // No command: the lens is a label, not a link.
+            command: Some(Command::new(step_summary(step), String::new(), None)),
+            data: None,
+        })
+        .collect()
+}
+
+/// One-line summary of a step.
+fn step_summary(step: &Step) -> String {
+    let mut parts = vec![step.display_name()];
+    parts.extend(step.program.clone());
+    parts.push(outcome(&step.status));
+    if let Some(cpu) = step.cpu {
+        parts.push(format!("CPU {}", duration_text(cpu)));
+    }
+    if let Some(elapsed) = step.elapsed_text() {
+        parts.push(format!("elapsed {elapsed}"));
+    }
+    parts.join(" · ")
 }
 
 /// Statement tree: JOB, then job EXEC, then procedure EXEC, with the DDs

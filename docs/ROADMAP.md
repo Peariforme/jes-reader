@@ -31,7 +31,7 @@ A single Rust engine, exposed through a language server for editors and a CLI fo
 | Protocol | LSP (`lsp-server`) | Used by VS Code, Zed, Neovim and Eclipse |
 | Highlighting | TextMate grammar (+ semantic tokens later) | TextMate works without the server; semantic tokens would carry the severity |
 | VS Code extension | TypeScript + vscode-languageclient | Thin client, server binary bundled per platform |
-| CLI | clap | `jes-reader check`, text output; JSON and SARIF later |
+| CLI | clap | `jes-reader check` (text, JSON, SARIF) and `jes-reader summary` (text, JSON) |
 | Tests | insta (snapshots) | Every corpus sysout has its expected analysis under version control |
 
 **Repository layout** (Cargo workspace)
@@ -92,12 +92,19 @@ Goal: the tool is used on everyday jobs, without downloading anything.
 
 Goal: the tool adapts to each site's conventions and is also useful outside the editor.
 
-- [ ] Code lens per step: name, program, return code, CPU and elapsed time when the end-of-step messages give them
+- [x] Code lens per step: name, program, return code, CPU and elapsed time when the end-of-step messages give them
 - [x] House rules in a `.jesreader.toml` (setting, workspace or home directory): message ID pattern and optional text → severity or `ignore`, return code tolerated per step name pattern, notes. Reloaded on save; an invalid file is reported and ignored. Same file for the CLI (`--rules`)
-- [ ] House rules by program (`PGM=IDCAMS` → RC 4 accepted): needs the step program from JESJCL
-- [ ] CLI: `jes-reader summary`, JSON and SARIF output for `check`
+- [x] House rules by program (`PGM=IDCAMS` → RC 4 accepted): needs the step program from JESJCL
+- [x] CLI: `jes-reader summary`, JSON and SARIF output for `check`
 
 **Exit**: a rules file of about ten lines is enough to adapt the tool to an application.
+
+**Status**: done. The exit criterion is a CLI test (`rules_by_program`): a ten-line file that tolerates RC 8 for IDCAMS and silences Fault Analyzer leaves no warning on `JOB00868` and no `IDI0078E` on `JOB00901`. Findings:
+
+- Step programs come from the `PGM=` of the EXEC statement in JESJCL, after symbol substitution (`IEFC653I`). A step that runs the module just link-edited shows a referback (`PGM=*.LKED.SYSLMOD`), not a program name. The language server attaches programs from the open JESJCL of the job, or `JESJCL.txt` next to a downloaded file; when JESJCL is opened after the other DDs (Zowe documents), those are analysed again and published only if their diagnostics change.
+- Timings have two sources of different precision. JESYSMSG: CPU to the hundredth of a second (`IEF032I`), elapsed time only from `IEF373I`/`IEF032I` timestamps (`hhmm`), so shown as `< 1 min` or `~N min`. JESMSGLG step table: `TCB` and `CLOCK` in minutes (hundredths and tenths), read under their headers since the layout belongs to the installation (IEFACTRT). `jes-reader summary` takes the steps of JESYSMSG and the elapsed time of JESMSGLG when both are there.
+- Code lenses are only shown in JESYSMSG: the JESMSGLG step table already prints one line per step with the same figures.
+- `jes-reader summary` reports each failure once per job, although JESMSGLG, JESYSMSG and the Fault Analyzer report all show it (`IEC141I` three times for `JOB00901`).
 
 ## Phase 4 — Distribution
 

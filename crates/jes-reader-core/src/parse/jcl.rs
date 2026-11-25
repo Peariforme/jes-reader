@@ -40,8 +40,48 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
         }
     }
 
+    for st in &mut statements {
+        if st.operation.as_deref() == Some("EXEC") {
+            st.program = program(&lines[st.lines.clone()]);
+        }
+    }
     dd.messages = messages.finish();
     dd.statements = statements;
+}
+
+/// `PGM=` value of an EXEC statement's lines. The `IEFC653I SUBSTITUTION
+/// JCL` line, when present, wins: it has symbols resolved (`PGM=&PROG`).
+fn program(lines: &[&str]) -> Option<String> {
+    let mut found = None;
+    for line in lines {
+        let text = line.get(BODY..).unwrap_or("");
+        if text.get(2..3) == Some("*") {
+            continue; // `//*` comment
+        }
+        let substituted = text.starts_with("IEFC653I");
+        if let Some(value) = pgm_value(text)
+            && (substituted || found.is_none())
+        {
+            found = Some(value.to_owned());
+        }
+    }
+    found
+}
+
+/// Value of the `PGM=` keyword in `text`, up to the next `,`, space or `)`.
+fn pgm_value(text: &str) -> Option<&str> {
+    let mut from = 0;
+    while let Some(i) = text[from..].find("PGM=") {
+        let at = from + i;
+        let starts_keyword = at == 0 || matches!(text.as_bytes()[at - 1], b' ' | b',' | b'(');
+        if starts_keyword {
+            let value = &text[at + 4..];
+            let end = value.find([',', ' ', ')']).unwrap_or(value.len());
+            return (end > 0).then(|| &value[..end]);
+        }
+        from = at + 4;
+    }
+    None
 }
 
 fn numbered_statement(line: &str, line_no: usize) -> Option<Statement> {
@@ -68,6 +108,7 @@ fn numbered_statement(line: &str, line_no: usize) -> Option<Statement> {
         name: name.map(str::to_owned),
         operation: operation.map(str::to_owned),
         lines: line_no..line_no + 1,
+        program: None,
     })
 }
 
@@ -106,5 +147,25 @@ mod tests {
 
         assert!(numbered_statement("          //             REGION=65536K", 0).is_none());
         assert!(numbered_statement("          IEFC653I SUBSTITUTION JCL", 0).is_none());
+    }
+
+    #[test]
+    fn programs() {
+        assert_eq!(
+            program(&["        4 XXCOBOL   EXEC PGM=IGYCRCTL,REGION=0M"]).as_deref(),
+            Some("IGYCRCTL")
+        );
+        assert_eq!(
+            program(&[
+                "        5 //STEP1    EXEC PGM=&PROG",
+                "          //*        PGM=NOTME",
+                "          IEFC653I SUBSTITUTION JCL - PGM=IDCAMS",
+            ])
+            .as_deref(),
+            Some("IDCAMS")
+        );
+        assert_eq!(program(&["        2 //COBRUN   EXEC IGYWCLG"]), None);
+        assert_eq!(pgm_value("EXEC NOTPGM=X,PGM=IEFBR14"), Some("IEFBR14"));
+        assert_eq!(pgm_value("EXEC PGM=,X"), None);
     }
 }

@@ -7,9 +7,9 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 150 lines
 job: JRS0C7 JOB00896
 
 steps:
-  L8-88 COBRUN.COBOL: Completed { return_code: 0 } (L36)
-  L89-118 COBRUN.LKED: Completed { return_code: 0 } (L100)
-  L119-147 COBRUN.GO: Abended { code: "S0C7", reason: Some("00000007") } (L131)
+  L8-88 COBRUN.COBOL: Completed { return_code: 0 } (L36) PGM=IGYCRCTL CPU 0.04 s elapsed < 1 min
+  L89-118 COBRUN.LKED: Completed { return_code: 0 } (L100) PGM=IEWBLINK CPU 0.01 s elapsed < 1 min
+  L119-147 COBRUN.GO: Abended { code: "S0C7", reason: Some("00000007") } (L131) PGM=*.LKED.SYSLMOD CPU 0.00 s elapsed < 1 min
 
 messages:
   L2 col.12-19 IEFC001I [stmt 2] PROCEDURE IGYWCLG WAS EXPANDED USING SYSTEM LIBRARY VENDOR.PROCLIB

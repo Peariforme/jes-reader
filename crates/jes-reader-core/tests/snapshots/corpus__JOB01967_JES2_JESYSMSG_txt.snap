@@ -7,7 +7,7 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 11 lines
 job: JCLSETUP JOB01967
 
 steps:
-  L2-8 (unnamed step): Completed { return_code: 0 } (L2)
+  L2-8 (unnamed step): Completed { return_code: 0 } (L2) CPU 0.00 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 10:19:01 ON WEDNESDAY, NOVEMBER 25, 2026

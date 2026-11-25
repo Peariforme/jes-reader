@@ -7,7 +7,8 @@ JES Reader works on the spool files you open from [Zowe Explorer](https://market
 ## Features
 
 - **Problems panel**: abends (`S0C7`, `S806`, `U4038`…), JCL errors, data sets not found and module-not-found messages are errors; steps that ended above the return-code threshold are warnings; steps that did not run are information. Severity does not rely on the message suffix alone — `IEF453I` (JCL ERROR) and `IEF472I` (abend) both end in `I`.
-- **Outline**: in `JESMSGLG` and `JESYSMSG`, every step with its outcome (`RC 0`, `abend S0C7`, `not run`), procedure steps included (`COBRUN.GO`); in `JESJCL`, a `JOB → EXEC → procedure EXEC → DD` tree.
+- **Outline**: in `JESMSGLG` and `JESYSMSG`, every step with its outcome (`RC 0`, `abend S0C7`, `not run`) and its program, procedure steps included (`COBRUN.GO`); in `JESJCL`, a `JOB → EXEC → procedure EXEC → DD` tree.
+- **Step summaries** (code lenses) above each step of `JESYSMSG`: name, program, return code or abend, CPU time and elapsed time, for example `STEP010 · IDCAMS · RC 8 · CPU 0.01 s · elapsed < 1 min`. The program comes from `JESJCL` (fetched in the background for Zowe documents, read next to downloaded files). Elapsed time in `JESYSMSG` is only known to the minute. Turn code lenses off with the `editor.codeLens` setting.
 - **Go to Definition** (Ctrl+click or F12) from `JESYSMSG` and `JESMSGLG` to the expanded JCL in `JESJCL`: on a statement number (`11 IEF655I …`) it opens statement 11; on a step's outcome line (`IEF142I`, `IEF472I`, a row of the step table) it opens the step's `EXEC`, inside the procedure for procedure steps. Link targets are underlined, and hovering one shows the JCL statement it leads to. For documents opened from Zowe Explorer, JES Reader fetches just the `JESJCL` DD in the background.
 - **Data set links** in documents opened from Zowe Explorer: Ctrl+click a data set name (`SYS1.MACLIB(JRNOMBR)`, `ISP.SISPEXEC`…) to open it, or the member, with Zowe Explorer, using the profile of the job.
 - **Folding** of steps, JCL statements and multi-line messages.
@@ -48,14 +49,20 @@ id = "IEF287I"
 text = "NOT CATLGD 2"      # only when the message text contains this
 severity = "error"
 
-# Steps: return code tolerated, by step name (`step` or `step.procstep`, `*` allowed).
+# Steps: return code tolerated, by step name (`step` or `step.procstep`, `*` allowed)…
 [[steps]]
 name = "COBRUN.LKED"
 max_return_code = 8
 note = "link-edit warnings are expected"
+
+# …or by program (`PGM=` of the EXEC statement), or both.
+[[steps]]
+program = "IDCAMS"
+max_return_code = 8
+note = "RC 8: nothing to delete"
 ```
 
-Rules apply in file order: the first matching rule wins. The `note` is added to the diagnostic. An invalid file is reported in a notification and ignored.
+Rules apply in file order: the first matching rule wins. A step rule needs a `name`, a `program` or both; with both, both must match. Program rules need the job's `JESJCL`: JES Reader fetches it in the background for documents opened from Zowe Explorer, and reads `JESJCL.txt` next to downloaded files. The `note` is added to the diagnostic. An invalid file is reported in a notification and ignored.
 
 ## Settings
 
@@ -79,7 +86,7 @@ Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a 
 - JES2 only; JES3 sysouts are not recognized.
 - A whole spool saved as a single file is not split into DDs yet.
 - Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`): silence them with a house rule.
-- Step rules match step names; rules by program (`PGM=IDCAMS`) are not supported yet.
+- A step that runs a program loaded from a previous step (`PGM=*.LKED.SYSLMOD`) shows that reference as its program.
 
 ## Feedback
 

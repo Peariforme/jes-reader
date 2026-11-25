@@ -1,8 +1,12 @@
 //! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
 //! Each open document is a DD, analysed on every change: diagnostics are
-//! pushed to the client; Outline, folding, Go to Definition and hovers are
-//! served on request.
+//! pushed to the client; Outline, folding, code lenses, Go to Definition
+//! and hovers are served on request.
+//!
+//! Step programs (`PGM=`) come from the JESJCL of the same job: an open
+//! document, or `JESJCL.txt` next to a downloaded file. When a JESJCL is
+//! opened, the other DDs of its job are analysed again.
 //!
 //! Initialization options (`initializationOptions`):
 //!
@@ -18,21 +22,23 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use jes_reader_core::{Dd, Options, Rules, analyze, parse_file};
+use jes_reader_core::{Dd, DdKind, Options, Rules, analyze, parse_file};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, Response};
 use lsp_types::notification::{
     DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
     Notification as LspNotification, PublishDiagnostics, ShowMessage,
 };
 use lsp_types::request::{
-    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as LspRequest,
+    CodeLensRefresh, CodeLensRequest, DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition,
+    HoverRequest, Request as LspRequest,
 };
 use lsp_types::{
-    DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
-    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, Hover,
-    HoverContents, HoverParams, HoverProviderCapability, InitializeParams, Location, MarkupContent,
-    MarkupKind, MessageType, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
-    ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
+    CodeLensOptions, CodeLensParams, Diagnostic, DocumentSymbolParams, DocumentSymbolResponse,
+    FoldingRangeParams, FoldingRangeProviderCapability, GotoDefinitionParams,
+    GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
+    InitializeParams, Location, MarkupContent, MarkupKind, MessageType, OneOf, Position,
+    PublishDiagnosticsParams, ServerCapabilities, ShowMessageParams, TextDocumentSyncCapability,
+    TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
@@ -45,6 +51,9 @@ pub fn capabilities() -> ServerCapabilities {
         folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
         definition_provider: Some(OneOf::Left(true)),
         hover_provider: Some(HoverProviderCapability::Simple(true)),
+        code_lens_provider: Some(CodeLensOptions {
+            resolve_provider: Some(false),
+        }),
         ..ServerCapabilities::default()
     }
 }
@@ -54,6 +63,8 @@ struct Document {
     uri: Uri,
     text: String,
     dd: Dd,
+    /// Diagnostics last published for it.
+    diagnostics: Vec<Diagnostic>,
 }
 
 struct Server<'a> {
@@ -64,6 +75,10 @@ struct Server<'a> {
     rules_file: Option<PathBuf>,
     /// Workspace folders, searched for `.jesreader.toml`.
     workspace: Vec<PathBuf>,
+    /// The client accepts `workspace/codeLens/refresh`.
+    code_lens_refresh: bool,
+    /// Number of requests sent to the client, for their IDs.
+    sent_requests: u32,
 }
 
 /// Performs the `initialize` handshake, then handles messages until `shutdown`.
@@ -88,6 +103,14 @@ pub fn run(connection: &Connection) -> Result<()> {
             .filter(|path| !path.is_empty())
             .map(PathBuf::from),
         workspace,
+        code_lens_refresh: params
+            .capabilities
+            .workspace
+            .as_ref()
+            .and_then(|w| w.code_lens.as_ref())
+            .and_then(|c| c.refresh_support)
+            .unwrap_or(false),
+        sent_requests: 0,
     };
     server.load_rules()?;
 
@@ -159,7 +182,6 @@ impl Server<'_> {
         Ok(())
     }
 
-    /// Analyses a document and publishes its diagnostics.
     /// Loads the house rules: the `rulesFile` option, otherwise the first
     /// `.jesreader.toml` of the workspace folders or the home directory. An
     /// invalid file is reported to the user and ignored.
@@ -185,22 +207,67 @@ impl Server<'_> {
         Ok(())
     }
 
+    /// Analyses a document and publishes its diagnostics. A JESJCL also
+    /// gives the programs of the other DDs of its job: those are analysed
+    /// again, and published again if their diagnostics changed.
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
-        let dd = parse_file(&decode_path(uri.path().as_str()), &text);
-        let lines = Lines::new(&text);
-        let diagnostics = analyze(&dd, &self.options)
-            .iter()
-            .map(|f| convert::diagnostic(f, &lines, &uri))
-            .collect();
+        let (dd, diagnostics) = self.analyse(&uri, &text);
+        let jcl = (dd.kind == DdKind::JesJcl && dd.job_id.is_some()).then(|| dd.clone());
         self.documents.insert(
             uri.as_str().to_owned(),
             Document {
                 uri: uri.clone(),
                 text,
                 dd,
+                diagnostics: diagnostics.clone(),
             },
         );
-        self.publish(uri, diagnostics)
+        self.publish(uri, diagnostics)?;
+
+        let Some(jcl) = jcl else {
+            return Ok(());
+        };
+        let job: Vec<(String, Uri, String)> = self
+            .documents
+            .iter()
+            .filter(|(_, doc)| navigate::is_jcl_of(&jcl, &doc.dd))
+            .map(|(key, doc)| (key.clone(), doc.uri.clone(), doc.text.clone()))
+            .collect();
+        for (key, uri, text) in &job {
+            let (dd, diagnostics) = self.analyse(uri, text);
+            let Some(doc) = self.documents.get_mut(key) else {
+                continue;
+            };
+            doc.dd = dd;
+            if doc.diagnostics != diagnostics {
+                doc.diagnostics.clone_from(&diagnostics);
+                self.publish(uri.clone(), diagnostics)?;
+            }
+        }
+        if !job.is_empty() && self.code_lens_refresh {
+            self.sent_requests += 1;
+            let id = format!("jes-reader-{}", self.sent_requests);
+            let request = Request::new(id.into(), CodeLensRefresh::METHOD.to_owned(), ());
+            self.connection.sender.send(request.into())?;
+        }
+        Ok(())
+    }
+
+    /// Parses a document, fills its step programs from the JESJCL of its job
+    /// and computes its diagnostics.
+    fn analyse(&self, uri: &Uri, text: &str) -> (Dd, Vec<Diagnostic>) {
+        let mut dd = parse_file(&decode_path(uri.path().as_str()), text);
+        if dd.kind != DdKind::JesJcl
+            && let Some(jcl) = self.jcl_of(uri, &dd)
+        {
+            dd.attach_programs(&jcl.dd);
+        }
+        let lines = Lines::new(text);
+        let diagnostics = analyze(&dd, &self.options)
+            .iter()
+            .map(|f| convert::diagnostic(f, &lines, uri))
+            .collect();
+        (dd, diagnostics)
     }
 
     fn publish(&self, uri: Uri, diagnostics: Vec<lsp_types::Diagnostic>) -> Result<()> {
@@ -236,6 +303,13 @@ impl Server<'_> {
                 let location = self.definition(&at.text_document.uri, at.position);
                 Response::new_ok(req.id, location.map(GotoDefinitionResponse::Scalar))
             }
+            CodeLensRequest::METHOD => {
+                let params: CodeLensParams = serde_json::from_value(req.params)?;
+                let lenses = self
+                    .document(&params.text_document.uri)
+                    .map(|doc| convert::code_lenses(&doc.dd, &Lines::new(&doc.text)));
+                Response::new_ok(req.id, lenses)
+            }
             HoverRequest::METHOD => {
                 let params: HoverParams = serde_json::from_value(req.params)?;
                 let at = params.text_document_position_params;
@@ -266,34 +340,40 @@ impl Server<'_> {
     /// JESJCL of the job `doc` belongs to: an open document first (the VS
     /// Code extension opens it in the background for Zowe documents),
     /// otherwise `JESJCL.txt` next to a downloaded file.
-    fn jcl_of(&self, doc: &Document) -> Option<Document> {
+    fn jcl_of(&self, uri: &Uri, dd: &Dd) -> Option<Document> {
         if let Some(jcl) = self
             .documents
             .values()
-            .find(|other| navigate::is_jcl_of(&other.dd, &doc.dd))
+            .find(|other| navigate::is_jcl_of(&other.dd, dd))
         {
             return Some(Document {
                 uri: jcl.uri.clone(),
                 text: jcl.text.clone(),
                 dd: jcl.dd.clone(),
+                diagnostics: Vec::new(),
             });
         }
-        if !doc.uri.as_str().starts_with("file:") {
+        if !uri.as_str().starts_with("file:") {
             return None;
         }
-        let path = navigate::file_path(&decode_path(doc.uri.path().as_str()));
+        let path = navigate::file_path(&decode_path(uri.path().as_str()));
         let sibling = navigate::sibling_jcl(&path)?;
         let text = String::from_utf8_lossy(&std::fs::read(&sibling).ok()?).into_owned();
         let dd = parse_file(&sibling.to_string_lossy(), &text);
-        let (directory, _) = doc.uri.as_str().rsplit_once('/')?;
+        let (directory, _) = uri.as_str().rsplit_once('/')?;
         let uri = format!("{directory}/JESJCL.txt").parse().ok()?;
-        Some(Document { uri, text, dd })
+        Some(Document {
+            uri,
+            text,
+            dd,
+            diagnostics: Vec::new(),
+        })
     }
 
     /// JCL statement behind the cursor, in the JESJCL of the same job.
     fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
         let (doc, target) = self.target(uri, position)?;
-        let jcl = self.jcl_of(doc)?;
+        let jcl = self.jcl_of(&doc.uri, &doc.dd)?;
         let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
         let range = Lines::new(&jcl.text).content(statement.lines.start);
         Some(Location::new(jcl.uri, range))
@@ -319,7 +399,7 @@ impl Server<'_> {
         }
 
         let target = navigate::target_at(&doc.dd, line, column)?;
-        let jcl = self.jcl_of(doc);
+        let jcl = self.jcl_of(&doc.uri, &doc.dd);
         let value = navigate::hover_text(
             target,
             &doc.dd,

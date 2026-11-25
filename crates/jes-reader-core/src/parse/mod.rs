@@ -7,6 +7,7 @@ mod other;
 mod sysmsg;
 
 use std::ops::Range;
+use std::time::Duration;
 
 use crate::model::{Dd, DdKind, Message, Severity};
 use crate::source::{DdSource, jes_dd_name};
@@ -167,6 +168,26 @@ impl<'a> StepNames<'a> {
     }
 }
 
+/// Decimal number of minutes (`.00`, `1.25`, `.0`), as printed in the
+/// JESMSGLG step table, read exactly to the hundredth of a minute.
+fn minutes(text: &str) -> Option<Duration> {
+    let (whole, fraction) = text.split_once('.').unwrap_or((text, ""));
+    if whole.is_empty() && fraction.is_empty() {
+        return None;
+    }
+    let digits = |s: &str| s.bytes().all(|c| c.is_ascii_digit());
+    if !digits(whole) || !digits(fraction) {
+        return None;
+    }
+    let whole: u64 = if whole.is_empty() {
+        0
+    } else {
+        whole.parse().ok()?
+    };
+    let hundredths: u64 = format!("{fraction:0<2}").get(..2)?.parse().ok()?;
+    Some(Duration::from_millis((whole * 100 + hundredths) * 600))
+}
+
 /// Value after `key` in `text`, up to the next space.
 fn value_after<'a>(text: &'a str, key: &str) -> Option<&'a str> {
     let start = text.find(key)? + key.len();
@@ -198,6 +219,17 @@ mod tests {
         // Unnamed step: only the job name before ` - `.
         let n = StepNames::parse("JCLSETUP - STEP WAS EXECUTED - COND CODE 0000").unwrap();
         assert_eq!((n.job, n.proc_step, n.step), ("JCLSETUP", None, ""));
+    }
+
+    #[test]
+    fn minute_values() {
+        assert_eq!(minutes(".00"), Some(Duration::ZERO));
+        assert_eq!(minutes(".01"), Some(Duration::from_millis(600)));
+        assert_eq!(minutes(".5"), Some(Duration::from_secs(30)));
+        assert_eq!(minutes("2.25"), Some(Duration::from_secs(135)));
+        assert_eq!(minutes("12"), Some(Duration::from_secs(720)));
+        assert_eq!(minutes("."), None);
+        assert_eq!(minutes("BATCH"), None);
     }
 
     #[test]

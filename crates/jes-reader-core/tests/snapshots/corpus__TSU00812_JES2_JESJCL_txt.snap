@@ -14,7 +14,7 @@ statements:
     5 L6-6 Procedure ? SET
     6 L7-8 Procedure ? SET
     7 L9-9 Procedure XX EXPORT
-    8 L10-16 Procedure IZUFPROC EXEC
+    8 L10-16 Procedure IZUFPROC EXEC PGM=IKJEFT01
     9 L17-17 Procedure STEPLIB DD
    10 L18-18 Procedure ? DD
    11 L19-19 Procedure ? DD

@@ -85,6 +85,11 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
         await openSiblingJcl(document);
         return next(document, position, token);
       },
+      // Code lenses show each step's program, read in JESJCL.
+      provideCodeLenses: async (document, token, next) => {
+        await openSiblingJcl(document);
+        return next(document, token);
+      },
     },
   };
   client = new LanguageClient('jesReader', 'JES Reader', serverOptions, clientOptions);

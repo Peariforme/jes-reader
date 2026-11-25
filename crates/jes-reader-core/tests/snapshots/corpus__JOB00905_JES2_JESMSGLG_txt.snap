@@ -8,7 +8,7 @@ job: JRS806 JOB00905
 end of job: Abend("S806")
 
 steps:
-  L16-16 STEP010: Abended { code: "S806", reason: None } (L16)
+  L16-16 STEP010: Abended { code: "S806", reason: None } (L16) PGM=JRNOPGM CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
