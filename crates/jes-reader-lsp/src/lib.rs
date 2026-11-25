@@ -7,7 +7,7 @@
 //! Initialization options (`initializationOptions`):
 //!
 //! ```json
-//! { "maxReturnCode": 4 }
+//! { "maxReturnCode": 4, "rulesFile": "C:/team/.jesreader.toml" }
 //! ```
 
 mod convert;
@@ -15,13 +15,14 @@ mod explain;
 mod navigate;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use anyhow::Result;
-use jes_reader_core::{Dd, Options, analyze, parse_file};
+use jes_reader_core::{Dd, Options, Rules, analyze, parse_file};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, Response};
 use lsp_types::notification::{
-    DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument,
-    Notification as LspNotification, PublishDiagnostics,
+    DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
+    Notification as LspNotification, PublishDiagnostics, ShowMessage,
 };
 use lsp_types::request::{
     DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as LspRequest,
@@ -30,8 +31,8 @@ use lsp_types::{
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
     FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, Hover,
     HoverContents, HoverParams, HoverProviderCapability, InitializeParams, Location, MarkupContent,
-    MarkupKind, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
-    TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
+    MarkupKind, MessageType, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
+    ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
@@ -59,17 +60,36 @@ struct Server<'a> {
     connection: &'a Connection,
     options: Options,
     documents: HashMap<String, Document>,
+    /// Rules file chosen by the user (`rulesFile` initialization option).
+    rules_file: Option<PathBuf>,
+    /// Workspace folders, searched for `.jesreader.toml`.
+    workspace: Vec<PathBuf>,
 }
 
 /// Performs the `initialize` handshake, then handles messages until `shutdown`.
 pub fn run(connection: &Connection) -> Result<()> {
     let caps = serde_json::to_value(capabilities())?;
     let params: InitializeParams = serde_json::from_value(connection.initialize(caps)?)?;
+    let init = params.initialization_options.as_ref();
+    let workspace = params
+        .workspace_folders
+        .iter()
+        .flatten()
+        .filter(|folder| folder.uri.as_str().starts_with("file:"))
+        .map(|folder| navigate::file_path(&decode_path(folder.uri.path().as_str())))
+        .collect();
     let mut server = Server {
         connection,
-        options: options(params.initialization_options.as_ref()),
+        options: options(init),
         documents: HashMap::new(),
+        rules_file: init
+            .and_then(|v| v.get("rulesFile"))
+            .and_then(serde_json::Value::as_str)
+            .filter(|path| !path.is_empty())
+            .map(PathBuf::from),
+        workspace,
     };
+    server.load_rules()?;
 
     for msg in &connection.receiver {
         match msg {
@@ -121,12 +141,50 @@ impl Server<'_> {
                 self.documents.remove(params.text_document.uri.as_str());
                 self.publish(params.text_document.uri, Vec::new())?;
             }
+            // The client watches `.jesreader.toml` files: reload the rules
+            // and analyse the open documents again.
+            DidChangeWatchedFiles::METHOD => {
+                self.load_rules()?;
+                let documents: Vec<(Uri, String)> = self
+                    .documents
+                    .values()
+                    .map(|doc| (doc.uri.clone(), doc.text.clone()))
+                    .collect();
+                for (uri, text) in documents {
+                    self.update(uri, text)?;
+                }
+            }
             _ => {}
         }
         Ok(())
     }
 
     /// Analyses a document and publishes its diagnostics.
+    /// Loads the house rules: the `rulesFile` option, otherwise the first
+    /// `.jesreader.toml` of the workspace folders or the home directory. An
+    /// invalid file is reported to the user and ignored.
+    fn load_rules(&mut self) -> Result<()> {
+        let path = self
+            .rules_file
+            .clone()
+            .or_else(|| jes_reader_core::rules::find(&self.workspace));
+        self.options.rules = match path.as_deref().map(Rules::load) {
+            Some(Ok(rules)) => rules,
+            Some(Err(error)) => {
+                let params = ShowMessageParams {
+                    typ: MessageType::WARNING,
+                    message: format!("JES Reader: house rules ignored. {error}"),
+                };
+                self.connection
+                    .sender
+                    .send(Notification::new(ShowMessage::METHOD.to_owned(), params).into())?;
+                Rules::default()
+            }
+            None => Rules::default(),
+        };
+        Ok(())
+    }
+
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
         let dd = parse_file(&decode_path(uri.path().as_str()), &text);
         let lines = Lines::new(&text);

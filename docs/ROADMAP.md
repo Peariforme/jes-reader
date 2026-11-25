@@ -93,7 +93,8 @@ Goal: the tool is used on everyday jobs, without downloading anything.
 Goal: the tool adapts to each site's conventions and is also useful outside the editor.
 
 - [ ] Code lens per step: name, program, return code, CPU and elapsed time when the end-of-step messages give them
-- [ ] House rules in a `.jesreader.toml` (project or user): pattern → severity, message, hover text. Typical cases: application messages, return codes accepted per program (IDCAMS RC=4, for instance)
+- [x] House rules in a `.jesreader.toml` (setting, workspace or home directory): message ID pattern and optional text → severity or `ignore`, return code tolerated per step name pattern, notes. Reloaded on save; an invalid file is reported and ignored. Same file for the CLI (`--rules`)
+- [ ] House rules by program (`PGM=IDCAMS` → RC 4 accepted): needs the step program from JESJCL
 - [ ] CLI: `jes-reader summary`, JSON and SARIF output for `check`
 
 **Exit**: a rules file of about ten lines is enough to adapt the tool to an application.

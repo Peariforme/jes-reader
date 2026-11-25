@@ -29,11 +29,40 @@ For anything else, run **JES Reader: Open as Sysout** from the Command Palette.
 
 IBM Z Open Editor already highlights some spool files (`spool`, `jesmsglg` and `jesjcl` languages). JES Reader attaches to those languages too: Z Open Editor keeps its highlighting, and JES Reader adds diagnostics, the Outline and folding.
 
+## House rules
+
+A `.jesreader.toml` file adapts the analysis to your site: silence a message that is not about your jobs, tolerate a return code for a step, or raise a message to an error. JES Reader looks for it in this order: the `jesReader.rulesFile` setting, the root of the workspace, your home directory. Changes are picked up as soon as you save the file.
+
+```toml
+# Return code above which a step is reported (default 4).
+max_return_code = 4
+
+# Messages: severity "error", "warning", "info" or "ignore". `*` matches anything.
+[[messages]]
+id = "IDI0078E"
+severity = "ignore"
+note = "Fault Analyzer history file, not about the job"
+
+[[messages]]
+id = "IEF287I"
+text = "NOT CATLGD 2"      # only when the message text contains this
+severity = "error"
+
+# Steps: return code tolerated, by step name (`step` or `step.procstep`, `*` allowed).
+[[steps]]
+name = "COBRUN.LKED"
+max_return_code = 8
+note = "link-edit warnings are expected"
+```
+
+Rules apply in file order: the first matching rule wins. The `note` is added to the diagnostic. An invalid file is reported in a notification and ignored.
+
 ## Settings
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `jesReader.maxReturnCode` | `4` | A step whose return code is above this value is reported as a warning. |
+| `jesReader.rulesFile` | `""` | House rules file. Empty: `.jesreader.toml` at the root of the workspace, then in your home directory. |
 | `jesReader.serverPath` | `""` | Path to a `jes-reader-lsp` binary. Empty: use the one bundled with the extension. |
 
 ## Commands
@@ -49,7 +78,8 @@ Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a 
 
 - JES2 only; JES3 sysouts are not recognized.
 - A whole spool saved as a single file is not split into DDs yet.
-- Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`). Configurable house rules are planned.
+- Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`): silence them with a house rule.
+- Step rules match step names; rules by program (`PGM=IDCAMS`) are not supported yet.
 
 ## Feedback
 

@@ -40,6 +40,7 @@ Your working copy keeps the real values; only what is committed is anonymized. C
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo run -p jes-reader-cli -- check corpus/sysout/JOB00896
+cargo run -p jes-reader-cli -- check --rules my-rules.toml corpus/sysout   # house rules, see editors/vscode/README.md
 ```
 
 Corpus snapshots (`crates/jes-reader-core/tests/snapshots`) are updated with `INSTA_UPDATE=always cargo test -p jes-reader-core --test corpus`; review the diff before committing.

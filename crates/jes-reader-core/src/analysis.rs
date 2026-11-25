@@ -10,6 +10,7 @@ use std::ops::Range;
 
 use crate::catalog::{CatalogSeverity, catalog, leading_abend};
 use crate::model::{Dd, Message, StepStatus};
+use crate::rules::{RuleSeverity, Rules};
 
 /// Severity of a finding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -52,13 +53,19 @@ pub struct Related {
 /// Rule settings.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Options {
-    /// A return code strictly above this threshold is a warning.
+    /// A return code strictly above this threshold is a warning (editor or
+    /// command-line setting; a rules file can override it).
     pub max_return_code: u16,
+    /// House rules (`.jesreader.toml`).
+    pub rules: Rules,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { max_return_code: 4 }
+        Self {
+            max_return_code: 4,
+            rules: Rules::default(),
+        }
     }
 }
 
@@ -67,10 +74,16 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
     let mut findings = Vec::new();
     // (finding index, lines of its step) for steps that failed or did not run.
     let mut step_findings = Vec::new();
+    let rules = &options.rules;
 
     for step in &dd.steps {
         let name = step.display_name();
-        let (severity, code, message) = match &step.status {
+        let rule = rules.step(&step.name, &name);
+        let max_return_code = rule
+            .and_then(|r| r.max_return_code)
+            .or(rules.max_return_code)
+            .unwrap_or(options.max_return_code);
+        let (severity, code, mut message) = match &step.status {
             StepStatus::Abended { code, reason } => (
                 FindingSeverity::Error,
                 code.clone(),
@@ -79,7 +92,7 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
                     describe_abend(code, reason.as_deref())
                 ),
             ),
-            StepStatus::Completed { return_code } if *return_code > options.max_return_code => (
+            StepStatus::Completed { return_code } if *return_code > max_return_code => (
                 FindingSeverity::Warning,
                 "RC".to_owned(),
                 format!("Step {name}: return code {return_code}"),
@@ -91,6 +104,9 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
             ),
             StepStatus::Completed { .. } | StepStatus::Unknown => continue,
         };
+        if let Some(note) = rule.and_then(|r| r.note.as_deref()) {
+            message.push_str(&format!(" ({note})"));
+        }
         if severity != FindingSeverity::Warning {
             step_findings.push((findings.len(), step.lines.clone()));
         }
@@ -105,16 +121,29 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
     }
 
     for m in &dd.messages {
-        if let Some(severity) = message_severity(m, dd) {
-            findings.push(Finding {
-                severity,
-                code: m.id.clone(),
-                message: describe_message(m),
-                line: m.lines.start,
-                columns: Some(m.id_columns.clone()),
-                related: Vec::new(),
-            });
+        let rule = rules.message(&m.id, &m.text);
+        let severity = match rule.and_then(|r| r.severity) {
+            Some(RuleSeverity::Error) => Some(FindingSeverity::Error),
+            Some(RuleSeverity::Warning) => Some(FindingSeverity::Warning),
+            Some(RuleSeverity::Info) => Some(FindingSeverity::Information),
+            Some(RuleSeverity::Ignore) => None,
+            None => message_severity(m, dd),
+        };
+        let Some(severity) = severity else {
+            continue;
+        };
+        let mut message = describe_message(m);
+        if let Some(note) = rule.and_then(|r| r.note.as_deref()) {
+            message.push_str(&format!(" ({note})"));
         }
+        findings.push(Finding {
+            severity,
+            code: m.id.clone(),
+            message,
+            line: m.lines.start,
+            columns: Some(m.id_columns.clone()),
+            related: Vec::new(),
+        });
     }
 
     relate_causes(&mut findings, &step_findings);
