@@ -21,4 +21,4 @@ messages:
   L15 col.21-28 $HASP395 JRIGZ    ENDED - ABEND=U4038
 
 findings:
-  L13 error [U4038] Step COBRUN.GO: abend U4038
+  L13 error [U4038] Step COBRUN.GO: abend U4038 (Language Environment abend)

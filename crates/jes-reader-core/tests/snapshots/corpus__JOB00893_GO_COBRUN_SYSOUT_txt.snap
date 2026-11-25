@@ -10,4 +10,4 @@ messages:
   L1-3 col.2-9 CEE3204S The system detected a protection exception (System Completion Code=0C4). From compile unit ABEND0C4 at entry point ABEND0C4 at compile unit offset +0000016E at entry offset +0000016E at address 1B20016E.
 
 findings:
-  L1 error [CEE3204S] The system detected a protection exception (System Completion Code=0C4). From compile unit ABEND0C4 at entry point ABEND0C4 at compile unit offset +0000016E at entry offset +0000016E at address 1B20016E.
+  L1 error [CEE3204S] Protection exception (0C4): The system detected a protection exception (System Completion Code=0C4). From compile unit ABEND0C4 at entry point ABEND0C4 at compile unit offset +0000016E at entry offset +0000016E at address 1B20016E.

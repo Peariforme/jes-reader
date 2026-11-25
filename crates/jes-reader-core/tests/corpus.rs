@@ -152,6 +152,9 @@ fn render(path: &str, dd: &Dd) -> String {
                 FindingSeverity::Information => "info",
             };
             writeln!(s, "  L{} {severity} [{}] {}", f.line + 1, f.code, f.message).unwrap();
+            for r in &f.related {
+                writeln!(s, "    ↳ L{} {}", r.line + 1, r.message).unwrap();
+            }
         }
     }
     s

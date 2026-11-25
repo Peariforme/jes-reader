@@ -9,8 +9,8 @@
 use std::ops::Range;
 
 /// Accepted type letters: information, warning, error, severe error, action,
-/// decision, terminating.
-const TYPE_LETTERS: &[u8] = b"IWESADT";
+/// decision, terminating, and critical (Language Environment, `CEE3250C`).
+const TYPE_LETTERS: &[u8] = b"IWESADTC";
 
 /// True if `token` has the shape of a message ID.
 pub fn is_message_id(token: &str) -> bool {
@@ -55,6 +55,7 @@ mod tests {
             "IGZ0035S",
             "IDC3012I",
             "CEE3207S",
+            "CEE3250C",
             "DSNT408I",
             "$HASP373",
             "$HASP0395",

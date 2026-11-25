@@ -11,6 +11,7 @@
 //! ```
 
 mod convert;
+mod explain;
 mod navigate;
 
 use std::collections::HashMap;
@@ -131,7 +132,7 @@ impl Server<'_> {
         let lines = Lines::new(&text);
         let diagnostics = analyze(&dd, &self.options)
             .iter()
-            .map(|f| convert::diagnostic(f, &lines))
+            .map(|f| convert::diagnostic(f, &lines, &uri))
             .collect();
         self.documents.insert(
             uri.as_str().to_owned(),
@@ -240,29 +241,47 @@ impl Server<'_> {
         Some(Location::new(jcl.uri, range))
     }
 
-    /// On a link target: the JCL statement it leads to, so that the reader
-    /// sees what is behind the link before following it.
+    /// Hover, most specific first: a message ID or an abend code (from the
+    /// catalog), then a link target (the JCL statement it leads to, so that
+    /// the reader sees what is behind the link before following it).
     fn hover(&self, uri: &Uri, position: Position) -> Option<Hover> {
-        let (doc, target) = self.target(uri, position)?;
+        let doc = self.document(uri)?;
+        let line = usize::try_from(position.line).ok()?;
+        let lines = Lines::new(&doc.text);
+        let column = lines.byte_column(line, position.character);
+
+        if let Some(message) = explain::message_at(&doc.dd, line, column) {
+            let range = lines.span(line, message.id_columns.clone());
+            return Some(markdown(explain::message_hover(message), Some(range)));
+        }
+        if let Some((code, reason)) = explain::abend_at(lines.line(line), column)
+            && let Some(text) = explain::abend_hover(&code, reason.as_deref())
+        {
+            return Some(markdown(text, None));
+        }
+
+        let target = navigate::target_at(&doc.dd, line, column)?;
         let jcl = self.jcl_of(doc);
         let value = navigate::hover_text(
             target,
             &doc.dd,
             jcl.as_ref().map(|j| (&j.dd, j.text.as_str())),
         );
-        let lines = Lines::new(&doc.text);
-        let line = usize::try_from(position.line).ok()?;
         let range = match navigate::target_columns(&doc.dd, target, line) {
             Some(columns) => lines.span(line, columns),
             None => lines.content(line),
         };
-        Some(Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value,
-            }),
-            range: Some(range),
-        })
+        Some(markdown(value, Some(range)))
+    }
+}
+
+fn markdown(value: String, range: Option<lsp_types::Range>) -> Hover {
+    Hover {
+        contents: HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value,
+        }),
+        range,
     }
 }
 

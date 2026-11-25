@@ -20,5 +20,5 @@ messages:
   L33 col.21-28 $HASP395 JRS013   ENDED - ABEND=S013
 
 findings:
-  L7 error [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
-  L31 error [S013] Step STEP010: abend S013
+  L7 error [IEC141I] OPEN failed (S013-18: member not found in the partitioned data set): 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
+  L31 error [S013] Step STEP010: abend S013 (OPEN error)

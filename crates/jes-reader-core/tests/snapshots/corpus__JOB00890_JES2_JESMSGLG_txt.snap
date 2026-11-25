@@ -20,5 +20,5 @@ messages:
   L14 col.21-28 $HASP395 JRNOTCAT ENDED
 
 findings:
-  L12 error [IEF453I] JRNOTCAT - JOB FAILED - JCL ERROR
+  L12 error [IEF453I] JCL error: JRNOTCAT - JOB FAILED - JCL ERROR
   L11 info [FLUSH] Step STEP020 did not run

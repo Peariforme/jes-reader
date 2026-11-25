@@ -97,6 +97,8 @@ messages:
   L90-91 col.2-8 IEF033I JOB/JRS806  /STOP  2026329.0453 CPU:     0 HR  00 MIN  00.06 SEC    SRB:     0 HR  00 MIN  00.00 SEC
 
 findings:
-  L6 error [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND
+  L6 error [CSV003I] Module not found: REQUESTED MODULE JRNOPGM  NOT FOUND
+    ↳ L81 Step STEP010: abend S806 (Module not found), reason 00000004: module not found in the searched libraries
   L51 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
-  L81 error [S806] Step STEP010: abend S806, reason 00000004
+  L81 error [S806] Step STEP010: abend S806 (Module not found), reason 00000004: module not found in the searched libraries
+    ↳ L6 Cause: Module not found: REQUESTED MODULE JRNOPGM  NOT FOUND

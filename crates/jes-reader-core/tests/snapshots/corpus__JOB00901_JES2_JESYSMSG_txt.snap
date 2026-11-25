@@ -108,6 +108,8 @@ messages:
   L117-118 col.2-8 IEF033I JOB/JRS013  /STOP  2026329.0453 CPU:     0 HR  00 MIN  00.11 SEC    SRB:     0 HR  00 MIN  00.00 SEC
 
 findings:
-  L9 error [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC, SYS1.MACLIB(JRNOMBR)
+  L9 error [IEC141I] OPEN failed (S013-18: member not found in the partitioned data set): 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC, SYS1.MACLIB(JRNOMBR)
+    ↳ L105 Step STEP010: abend S013 (OPEN error), reason 00000018: member not found in the partitioned data set
   L60 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
-  L105 error [S013] Step STEP010: abend S013, reason 00000018
+  L105 error [S013] Step STEP010: abend S013 (OPEN error), reason 00000018: member not found in the partitioned data set
+    ↳ L9 Cause: OPEN failed (S013-18: member not found in the partitioned data set): 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC, SYS1.MACLIB(JRNOMBR)

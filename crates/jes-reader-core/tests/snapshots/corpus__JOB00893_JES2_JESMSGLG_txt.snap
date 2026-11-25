@@ -21,4 +21,4 @@ messages:
   L15 col.21-28 $HASP395 JRS0C4   ENDED - ABEND=S0C4
 
 findings:
-  L13 error [S0C4] Step COBRUN.GO: abend S0C4
+  L13 error [S0C4] Step COBRUN.GO: abend S0C4 (Protection or addressing exception)

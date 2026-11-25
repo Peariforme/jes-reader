@@ -1,0 +1,375 @@
+# jes-reader catalog of IBM messages and abend codes.
+#
+# Every text here is our own short summary. Never copy wording from IBM
+# manuals: hovers link to IBM Docs for the full description.
+#
+# [messages.<ID>]
+#   title     short name, used in diagnostics ("OPEN failed")
+#   summary   what the message means, one or two sentences
+#   action    what to check or do (optional)
+#   severity  "error", "warning" or "info" (optional): overrides the message
+#             suffix, for messages whose suffix is misleading (IEF453I ends
+#             in I but means JCL ERROR) or that should not be reported
+#
+# [abends.<code>]   S0C7 for a system abend, U4038 for a user abend
+#   title, summary, action as above
+#   reasons   table reason code (hex, leading zeros dropped) -> meaning
+#
+# Keep the error list of the TextMate grammar (editors/vscode/syntaxes,
+# "known-messages") in sync with the messages marked severity = "error".
+
+# --- JES2 ---------------------------------------------------------------
+
+[messages."$HASP373"]
+title = "Job started"
+summary = "JES2 selected the job and an initiator started running it."
+
+[messages."$HASP395"]
+title = "Job ended"
+summary = "The job finished. The message gives the highest step return code (RC=), the abend code (ABEND=), or nothing after a JCL error."
+
+# --- Job and step ends (MVS) --------------------------------------------
+
+[messages.IEF142I]
+title = "Step ended"
+summary = "The step ran to its end. COND CODE is its return code."
+
+[messages.IEF472I]
+title = "Step abended"
+summary = "The step ended abnormally. SYSTEM= is the system abend code, USER= the user abend code, REASON= the reason code."
+action = "Look for the message that explains the abend just before this one, and in the step's application DDs (SYSOUT, CEEDUMP)."
+
+[messages.IEF450I]
+title = "Step abended"
+summary = "Job log summary of an abnormal step end, with the abend and reason codes."
+
+[messages.IEF202I]
+title = "Step bypassed"
+summary = "The step did not run because of the return codes of earlier steps (COND parameter)."
+
+[messages.IEF272I]
+title = "Step not executed"
+summary = "The step did not run: bypassed by condition codes, or stopped by a JCL or allocation error before it started."
+
+[messages.IEF453I]
+severity = "error"
+title = "JCL error"
+summary = "The job failed because of a JCL error. No step after the error ran."
+action = "The cause is in JESYSMSG: a numbered conversion message, or an allocation message such as IEFA107I."
+
+[messages.IEF677I]
+title = "JCL warnings"
+summary = "The converter issued warning messages for this job. They are listed in JESYSMSG, with the number of the JCL statement concerned."
+
+# --- Allocation ---------------------------------------------------------
+
+[messages.IEFA107I]
+severity = "error"
+title = "Data set not found"
+summary = "A DD statement refers to a cataloged data set that does not exist, so the step cannot be allocated."
+action = "Check the data set name (symbols such as &SYSUID included) and that a previous step or job created it."
+
+[messages.IEF212I]
+severity = "error"
+title = "Data set not found"
+summary = "A DD statement refers to a data set that was not found, so the step cannot be allocated."
+action = "Check the data set name and whether it is cataloged."
+
+[messages.IEF287I]
+severity = "warning"
+title = "Catalog action failed"
+summary = "The data set was processed but its catalog disposition (CATLG, UNCATLG) could not be done. NOT CATLGD 2 means an entry with that name already exists in the catalog."
+action = "Delete or rename the existing catalog entry before creating the data set again."
+
+[messages.IEF236I]
+title = "Allocation for step"
+summary = "Start of the allocation messages for the named step."
+
+[messages.IEF237I]
+title = "DD allocated"
+summary = "A DD statement was allocated to a device, a JES2 data set or a dummy file."
+
+[messages.IEF285I]
+title = "Data set disposition"
+summary = "What happened to a data set at the end of the step: KEPT, CATALOGED, DELETED, PASSED, and its volume serial."
+
+[messages.IGD17101I]
+severity = "error"
+title = "Duplicate data set name"
+summary = "SMS could not create the data set because an entry with the same name already exists in the catalog."
+action = "Delete the existing data set first (for example DISP=(MOD,DELETE) in an earlier step), or use another name."
+
+[messages.IGD100I]
+title = "DD allocated"
+summary = "A DD statement was allocated by SMS (unit, VIO or data class)."
+
+[messages.IGD101I]
+title = "New data set allocated"
+summary = "SMS allocated a new data set to the DD."
+
+[messages.IGD103I]
+title = "Data set allocated"
+summary = "SMS allocated an existing data set to the DD."
+
+[messages.IGD104I]
+title = "Data set retained"
+summary = "The SMS-managed data set was kept at the end of the step."
+
+[messages.IGD105I]
+title = "Data set deleted"
+summary = "The SMS-managed data set was deleted at the end of the step."
+
+# --- JCL conversion -----------------------------------------------------
+
+[messages.IEFC001I]
+severity = "info"
+title = "Procedure expanded"
+summary = "The converter expanded a cataloged or in-stream procedure; its statements appear with XX in JESJCL."
+
+[messages.IEFC002I]
+severity = "info"
+title = "INCLUDE group expanded"
+summary = "The converter inserted the JCL statements of an INCLUDE group."
+
+[messages.IEFC653I]
+severity = "info"
+title = "Symbols substituted"
+summary = "The converter replaced symbols (&NAME) in the statement above; the line shows the result."
+
+[messages.IEF655I]
+severity = "warning"
+title = "Invalid DSNAME"
+summary = "A DD statement coded with SYSOUT or as in-stream data (*) also has a DSNAME that is not valid with it. The converter only warns."
+
+[messages.IEF686I]
+severity = "warning"
+title = "DDNAME reference not resolved"
+summary = "A DD statement coded with DDNAME= in an earlier step was never resolved: the DD statement it names did not follow. The converter only warns."
+
+# --- Data management ----------------------------------------------------
+
+[messages.IEC141I]
+severity = "error"
+title = "OPEN failed"
+summary = "A data set could not be opened, which ends the step with a 013 abend. The fields are: abend-reason, module, job, step, DD, device, volume, then the data set name."
+action = "The reason code says why (see abend S013): a missing member, block size or record format conflicts."
+
+[messages.IEC130I]
+severity = "error"
+title = "DD statement missing"
+summary = "The program tried to open a file whose DD statement is not in the step."
+action = "Add the DD statement to the step, or check its name in the program."
+
+[messages.IEC030I]
+severity = "error"
+title = "Out of space (B37)"
+summary = "A data set ran out of space on its volume and could not be extended."
+action = "Increase the primary or secondary space, or allow more volumes."
+
+[messages.IEC031I]
+severity = "error"
+title = "Out of space (D37)"
+summary = "A data set ran out of primary space and has no secondary allocation."
+action = "Add a secondary quantity to SPACE, or increase the primary quantity."
+
+[messages.IEC032I]
+severity = "error"
+title = "Out of space (E37)"
+summary = "A data set used all its extents or all the space available on its volumes."
+action = "Increase the space, allow more volumes, or compress the partitioned data set."
+
+# --- Program fetch ------------------------------------------------------
+
+[messages.CSV003I]
+severity = "error"
+title = "Module not found"
+summary = "The program named in PGM= (or loaded by the program) is not in STEPLIB, JOBLIB or the system link list. The step ends with abend S806."
+action = "Check the program name and the load libraries of the step."
+
+[messages.CSV028I]
+title = "Abend 806 details"
+summary = "Job and step of the module-not-found abend reported just before."
+
+# --- Dumps --------------------------------------------------------------
+
+[messages.IEA995I]
+title = "Symptom dump"
+summary = "Summary of the abend: completion code, failing program status word, registers. Printed when no other dump was requested."
+
+[messages.IEA848I]
+title = "No dump"
+summary = "No dump was taken for this abend, because of the system or installation settings."
+
+# --- IDCAMS -------------------------------------------------------------
+
+[messages.IDC3012I]
+title = "Entry not found"
+summary = "IDCAMS did not find the catalog entry named in the command."
+
+[messages.IDC3009I]
+title = "Catalog return code"
+summary = "Catalog management return and reason codes for the IDCAMS error reported just before."
+
+[messages.IDC0551I]
+title = "Entry not deleted"
+summary = "The DELETE command did not delete the entry; the message before it says why."
+
+[messages.IDC0001I]
+title = "IDCAMS function completed"
+summary = "End of one IDCAMS command, with its highest condition code."
+
+[messages.IDC0002I]
+title = "IDCAMS processing complete"
+summary = "End of the IDCAMS step, with the highest condition code of all commands. It becomes the step return code."
+
+# --- Language Environment and COBOL --------------------------------------
+
+[messages.CEE3201S]
+title = "Operation exception (0C1)"
+summary = "The program tried to run an invalid instruction: often a call to a missing or overwritten routine."
+
+[messages.CEE3204S]
+title = "Protection exception (0C4)"
+summary = "The program accessed storage it is not allowed to use: an uninitialized pointer, a subscript out of range, or a parameter list mismatch."
+
+[messages.CEE3207S]
+title = "Data exception (0C7)"
+summary = "A packed or zoned decimal field holds invalid data: spaces, letters or a bad sign in a numeric field."
+action = "Find the field used by the failing statement and where it was filled."
+
+[messages.CEE3250C]
+title = "Abend in Language Environment"
+summary = "A system or user abend was issued while Language Environment was running the program."
+
+[messages.IGZ0035S]
+title = "COBOL OPEN failed"
+summary = "A COBOL OPEN or CLOSE failed and the program has no FILE STATUS clause or error declarative, so the runtime ended it (abend U4038). The status code says why: 35 means the file or its DD statement is missing."
+action = "Add the DD statement, or a FILE STATUS clause to handle the error in the program."
+
+[messages.IGZ0006S]
+title = "Subscript out of range"
+summary = "A table reference was out of range; this is detected when the program is compiled with SSRANGE."
+
+# --- Security -----------------------------------------------------------
+
+[messages.ICH70001I]
+title = "Last access"
+summary = "The user ID that runs the job and the time of its previous use."
+
+[messages.IRR010I]
+title = "User ID assigned"
+summary = "The user ID under which the job runs."
+
+[messages.IEFA111I]
+title = "Job settings"
+summary = "Job-related system settings in effect for this job."
+
+# --- Db2 ----------------------------------------------------------------
+
+[messages.DSNT408I]
+title = "SQL error"
+summary = "An SQL statement failed with a negative SQLCODE."
+action = "Look up the SQLCODE; the message also gives the program and statement number."
+
+[messages.DSNT404I]
+title = "SQL warning"
+summary = "An SQL statement completed with a positive SQLCODE (warning)."
+
+# --- System abends ------------------------------------------------------
+
+[abends.S001]
+title = "I/O error"
+summary = "An input/output error, or a record that does not match the data set attributes (wrong length, wrong format)."
+
+[abends.S013]
+title = "OPEN error"
+summary = "A data set could not be opened. Message IEC141I gives the DD and the data set."
+
+[abends.S013.reasons]
+"18" = "member not found in the partitioned data set"
+"20" = "block size is not a multiple of the record length"
+
+[abends.S0C1]
+title = "Operation exception"
+summary = "An invalid instruction was executed, often because of a call to a missing or overwritten routine."
+
+[abends.S0C4]
+title = "Protection or addressing exception"
+summary = "The program referenced storage it is not allowed to use, or an address that does not exist: an uninitialized pointer, a subscript out of range, a parameter mismatch."
+
+[abends.S0C4.reasons]
+"4" = "protection exception"
+"10" = "segment translation exception"
+"11" = "page translation exception"
+
+[abends.S0C7]
+title = "Data exception"
+summary = "A packed or zoned decimal field holds invalid data, for example spaces or letters in a numeric field."
+
+[abends.S0C9]
+title = "Fixed-point divide exception"
+summary = "A binary division by zero, or a quotient too large for its field."
+
+[abends.S0CB]
+title = "Decimal divide exception"
+summary = "A packed decimal division by zero, or a quotient too large for its field."
+
+[abends.S122]
+title = "Cancelled by the operator, with dump"
+summary = "The operator cancelled the job and requested a dump."
+
+[abends.S222]
+title = "Cancelled"
+summary = "The job was cancelled by the operator or by its owner, without a dump."
+
+[abends.S322]
+title = "CPU time exceeded"
+summary = "The step or job used more CPU time than allowed by TIME= or the job class. Often an endless loop."
+
+[abends.S522]
+title = "Wait time exceeded"
+summary = "The job waited longer than the installation limit without using CPU (a TSO session idle too long, a job waiting for a resource)."
+
+[abends.S722]
+title = "Output limit exceeded"
+summary = "The job wrote more output lines than allowed by the LINES limit."
+
+[abends.S806]
+title = "Module not found"
+summary = "The program to load is not in STEPLIB, JOBLIB or the link list. Message CSV003I names it."
+
+[abends.S806.reasons]
+"4" = "module not found in the searched libraries"
+
+[abends.S80A]
+title = "Not enough virtual storage"
+summary = "A storage request could not be satisfied above or below the line."
+action = "Increase REGION, or look for a storage leak in the program."
+
+[abends.S878]
+title = "Not enough virtual storage"
+summary = "A storage request could not be satisfied in the region."
+action = "Increase REGION, or look for a storage leak in the program."
+
+[abends.S913]
+title = "Not authorized"
+summary = "The security product denied access to a resource, usually a data set."
+action = "The ICH408I message gives the resource and the access requested."
+
+[abends.SB37]
+title = "Out of space"
+summary = "A data set ran out of space and could not be extended on its volume."
+
+[abends.SD37]
+title = "Out of space, no secondary"
+summary = "A data set used its primary space and has no secondary allocation."
+
+[abends.SE37]
+title = "Out of space, extents exhausted"
+summary = "A data set used all its extents or all the space on its volumes."
+
+# --- User abends --------------------------------------------------------
+
+[abends.U4038]
+title = "Language Environment abend"
+summary = "Language Environment ended the program after an unhandled severe condition. The real cause is the CEE or IGZ message printed before it, in SYSOUT or CEEDUMP."
