@@ -17,6 +17,15 @@ Serveur de langage qui transforme une sysout z/OS (JES2) en document navigable :
 
 ## Développement
 
+Une fois après le clone, activer le filtre qui anonymise le corpus au `git add` (userids Z Xplore remplacés par `Z99999`) :
+
+```sh
+git config filter.anonymize.clean "sh scripts/anonymize.sh"
+git config filter.anonymize.required true
+```
+
+La copie de travail garde les vraies valeurs ; seul ce qui est commité est anonymisé. La CI échoue si un userid réel passe quand même.
+
 ```sh
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings

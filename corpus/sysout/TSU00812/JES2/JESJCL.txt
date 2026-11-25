@@ -1,0 +1,57 @@
+        1 //Z99999   JOB 'IZUACCT',                                               TSU00812
+          //             REGION=65536K
+        2 //IZUFPROC EXEC IZUFPROC
+        3 XXIZUFPROC PROC ROOT='/usr/lpp/zosmf'  /* zOSMF INSTALL ROOT     */
+        4 XX         EXPORT SYMLIST=(XX)
+        5 XX         SET QT=''''
+        6 XX         SET XX=&QT.&ROOT.&QT.
+          IEFC653I SUBSTITUTION JCL - XX='/usr/lpp/zosmf'
+        7 XXXX       EXPORT EXPSET=/usr/lpp/zosmf              GENERATED STATEMENT
+        8 XXIZUFPROC EXEC PGM=IKJEFT01,DYNAMNBR=200
+          XX****************************************************************/
+          XX** 20221219RDC add steplib to enable RXVSAM
+          XX** 20230117RDC add sysproc to enable zxpdlist
+          XX** 20230914RDC add sysexec to enable DSNREXX-based utilities
+          XX** 20261021RDC add DSND10 libs to steplib
+          XX****************************************************************/
+        9 XXSTEPLIB  DD DISP=SHR,DSN=ZXP.PUBLIC.LOAD
+       10 XX         DD DISP=SHR,DSN=DSND10.DBDG.SDSNEXIT
+       11 XX         DD DISP=SHR,DSN=DSND10.SDSNLOAD
+       12 XX         DD DISP=SHR,DSN=DSND10.SDSNLOD2
+          XX****************************************************************/
+          XX* TSO LOGON PROC FOR Z/OS DATA SET AND FILE REST INTERFACE     */
+          XX*                                                              */
+          XX* PROPRIETARY STATEMENT:                                       */
+          XX*                                                              */
+          XX*     LICENSED MATERIALS - PROPERTY OF IBM                     */
+          XX*     5650-ZOS                                                 */
+          XX*     COPYRIGHT IBM CORP. 2014, 2016                           */
+          XX*     STATUS = HSMA220                                         */
+          XX****************************************************************/
+       13 XXCEEOPTS DD *,SYMBOLS=JCLONLY
+       14 XXSYSEXEC  DD DISP=SHR,DSN=ZXP.PUBLIC.EXEC
+       15 XX         DD DISP=SHR,DSN=ISP.SISPEXEC
+       16 XX         DD DISP=SHR,DSN=SYS1.SBPXEXEC
+       17 XX         DD DISP=SHR,DSN=ISF.SISFEXEC
+       18 XXSYSPROC  DD DISP=SHR,DSN=VENDOR.CLIST
+       19 XX         DD DISP=SHR,DSN=ZXP.PUBLIC.CLIST
+       20 XX         DD DISP=SHR,DSN=ISP.SISPCLIB
+       21 XX         DD DISP=SHR,DSN=SYS1.SBPXEXEC
+       22 XXISPLLIB  DD DISP=SHR,DSN=SYS1.SIEALNKE
+       23 XXISPTLIB  DD DISP=SHR,DSN=ISP.SISPTENU
+       24 XXISPSLIB  DD DISP=SHR,DSN=ISP.SISPSENU
+       25 XXISPMLIB  DD DISP=SHR,DSN=ISP.SISPMENU
+          XX*SPPROF DD DISP=NEW,UNIT=SYSDA,SPACE=(TRK,(15,15,15)),
+       26 XXISPPROF  DD DISP=NEW,UNIT=SYSDA,SPACE=(TRK,(1,1,1)),
+          XX           DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+          XX*SPPLIB DD DISP=SHR,DSN=ISP.SISPPENU
+          XX*SPPLIB  DD DISP=NEW,UNIT=SYSDA,SPACE=(TRK,(15,15,15)),
+       27 XXISPPLIB  DD DISP=NEW,UNIT=SYSDA,SPACE=(TRK,(1,1,1)),
+          XX           DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+       28 XXIZUSRVMP DD PATH='&ROOT./defaults/izurf.tsoservlet.mapping.json'
+          IEFC653I SUBSTITUTION JCL - PATH='/usr/lpp/zosmf/defaults/izurf.tsoservlet.mapping.json'
+       29 XXSYSOUT   DD DUMMY,SYSOUT=H
+       30 XXCEEDUMP  DD DUMMY
+       31 XXSYSUDUMP DD DUMMY
+       32 XX
+       33 XXXX       EXPORT EXPSET=                            GENERATED STATEMENT

@@ -2,4 +2,6 @@
 
 # Les sysouts et le JCL du corpus sont versionnés à l'octet près :
 # aucune conversion de fin de ligne.
-corpus/** -text
+# Le filtre `anonymize` remplace les userids Z Xplore par Z99999 au
+# `git add` (scripts/anonymize.sh, activation dans le README).
+corpus/** -text filter=anonymize

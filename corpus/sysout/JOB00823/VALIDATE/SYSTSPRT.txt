@@ -1,0 +1,8 @@
+1READY
+ %ZXP$$CHK Z99999   @VSC1
+ processing  Z99999 VSC1
+ HTTP status 00000200
+ HTTP reason OK
+ Response {"userid":"Z99999","challenge_id":"VSC1","status":"CORRECT","greeting":"Congratulations!"}
+ READY
+ END

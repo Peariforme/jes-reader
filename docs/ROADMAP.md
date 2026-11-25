@@ -55,12 +55,12 @@ Un seul moteur Rust, exposé par un serveur LSP pour les éditeurs et par une CL
 
 Objectif : un dépôt qui compile et un corpus de sysouts réelles, sans aucune donnée client.
 
-- [ ] Ouvrir l'accès IBM Z Xplore et vérifier qu'on peut compiler du COBOL et soumettre des jobs
-- [ ] Écrire des jobs qui plantent volontairement : S0C7, S0C4, S806, S322, S013, JCL ERROR, dataset introuvable, NOT CATLGD, RC 4/8/12 via IDCAMS, abend utilisateur COBOL (IGZ)
-- [ ] Récupérer chaque sysout de deux façons (spool complète via Zowe Explorer, puis DD par DD) pour voir les variantes de format
-- [ ] Créer le workspace Cargo et la CI GitHub Actions (fmt, clippy, tests)
-- [ ] Choisir la librairie LSP
-- [ ] Tenir un `FORMAT.md` : caractère ASA en colonne 1, largeur des lignes, séparateurs de DD, en-têtes de page, marqueur d'en-tête JES2
+- [x] Ouvrir l'accès IBM Z Xplore et vérifier qu'on peut compiler du COBOL et soumettre des jobs (soumission validée par `JOB00823`, compilation COBOL à confirmer avec `s0c7.jcl`)
+- [x] Écrire des jobs qui plantent volontairement : S0C7, S0C4, S806, S322, S013, JCL ERROR, dataset introuvable, NOT CATLGD, RC 4/8/12 via IDCAMS, abend utilisateur COBOL (IGZ) (RC 12 IDCAMS restant)
+- [ ] Récupérer chaque sysout via Zowe Explorer. Constat : Zowe lit et télécharge les spools DD par DD (`<jobid>/<step>/<DD>.txt`), il n'y a pas de spool complète par défaut. Le parser travaille donc DD par DD (voir `FORMAT.md`)
+- [x] Créer le workspace Cargo et la CI GitHub Actions (fmt, clippy, tests)
+- [x] Choisir la librairie LSP : `lsp-server`
+- [ ] Tenir un `FORMAT.md` (commencé à partir de `JOB00823` et `TSU00812`) : caractère ASA en colonne 1, largeur des lignes, séparateurs de DD, en-têtes de page, marqueur d'en-tête JES2
 
 **Sortie** : au moins 15 sysouts versionnées et une CI verte.
 
@@ -68,8 +68,8 @@ Objectif : un dépôt qui compile et un corpus de sysouts réelles, sans aucune 
 
 Objectif : ouvrir une sysout dans VS Code et voir tout de suite quel step a planté et pourquoi.
 
-1. **Parser** (`sysout-core`) : découpage en DD, détection des steps et de leur fin (messages IEF de début, fin et code retour), extraction des messages par ID avec sévérité tirée du dernier caractère (I, W, E, S, A). Le parser ne plante jamais : ce qu'il ne comprend pas reste du texte brut.
-2. **Détection du langage** : par extension (`.sysout`, `.joblog`) et par contenu (en-tête JES2 dans les premières lignes), plus une commande « Ouvrir comme sysout ».
+1. **Parser** (`jes-reader-core`) : **l'unité de parsing est la DD** (`parse_dd`), car Zowe Explorer ouvre les spools DD par DD ; une spool complète est d'abord découpée en DD. Type de DD tiré du nom de fichier ou de l'URI, à défaut du contenu. Le `Job` est un agrégat facultatif des DD ouvertes du même identifiant JES (`JOB`, `TSU` ou `STC`). Puis, détection des steps et de leur fin (messages IEF de début, fin et code retour), extraction des messages par ID avec sévérité tirée du dernier caractère (I, W, E, S, A). Le parser ne plante jamais : ce qu'il ne comprend pas reste du texte brut.
+2. **Détection du langage** : language id `jes-sysout` par extension (`.sysout`, `.joblog`), par nom de DD et par contenu (en-tête JES2 dans les premières lignes), plus une commande « Ouvrir comme sysout ». Le client s'abonne aussi aux language ids d'IBM Z Open Editor (`spool`, `jesmsglg`, `jesjcl`, attribués par nom de fichier) : quand cette extension est installée, elle garde sa coloration TextMate de base et nous ajoutons diagnostics, outline et semantic tokens par-dessus, sans conflit. Z Open Editor n'a pas de serveur de langage pour les spools (vérifié sur la 6.9.0). Ne rien reprendre de sa grammaire (propriété IBM).
 3. **Grammaire TextMate** : IDs de message, codes retour, codes d'abend, noms de datasets et de DD.
 4. **Serveur LSP** : outline DD → steps, repliage, diagnostics (abend et JCL ERROR en erreur, RC > 4 en avertissement, seuil configurable).
 5. **Extension VS Code** : client mince, binaire embarqué.
@@ -81,7 +81,7 @@ Objectif : ouvrir une sysout dans VS Code et voir tout de suite quel step a plan
 
 Objectif : l'outil s'utilise sur les jobs du quotidien, sans télécharger de fichier.
 
-- [ ] Identifier le schéma d'URI des spools ouvertes par Zowe Explorer et y abonner l'extension (spool complète et DD par DD)
+- [ ] Identifier le schéma d'URI des spools ouvertes par Zowe Explorer (`zowe-jobs:`) et y abonner l'extension. Pour les liens entre DD, l'extension lit à la demande la seule DD manquante via le système de fichiers de Zowe, sans télécharger toute la spool
 - [ ] Hovers : catalogue maison en TOML des \~50 messages et abends les plus fréquents, rédigé par nous, avec lien IBM Docs pour tous les autres
 - [ ] Liens : numéros d'instruction de JESYSMSG vers la ligne correspondante de JESJCL
 - [ ] Navigation : d'un step dans JESYSMSG vers son EXEC dans JESJCL
@@ -126,17 +126,17 @@ Le risque principal n'est pas technique : c'est la propriété intellectuelle vi
 
 **Questions ouvertes**
 
-- Nom du projet (`sysout-lsp` comme nom de travail)
-- Licence : EPL-2.0 comme Zowe, ou MIT/Apache-2.0
+- ~~Nom du projet~~ : `jes-reader`
+- ~~Licence~~ : MIT ou Apache-2.0 au choix
 - JES3 dans la v1 ou plus tard
-- tower-lsp-server ou lsp-server
+- ~~tower-lsp-server ou lsp-server~~ : `lsp-server`
 
 ## Demain : session 1
 
 Première session de 2 à 3 heures, consacrée à lancer la phase 0.
 
-- [ ] S'inscrire à IBM Z Xplore (l'activation peut prendre du temps, à lancer en premier)
-- [ ] Trancher le nom de code et la librairie LSP
-- [ ] Initialiser le workspace Cargo (`core`, `lsp`, `cli`) et la CI
-- [ ] Écrire les trois premiers jobs qui plantent : S0C7, JCL ERROR, IDCAMS RC=8
-- [ ] Récupérer leurs sysouts et commencer `FORMAT.md`
+- [x] S'inscrire à IBM Z Xplore (l'activation peut prendre du temps, à lancer en premier)
+- [x] Trancher le nom de code et la librairie LSP
+- [x] Initialiser le workspace Cargo (`core`, `lsp`, `cli`) et la CI
+- [x] Écrire les trois premiers jobs qui plantent : S0C7, JCL ERROR, IDCAMS RC=8
+- [ ] Récupérer leurs sysouts (`FORMAT.md` commencé)
