@@ -134,6 +134,47 @@ fn symbol(
     }
 }
 
+/// Outline of a document: the symbols of its DD, or for a whole spool one
+/// symbol per DD with the DD's symbols under it.
+pub fn document_symbols(dds: &[Dd], lines: &Lines<'_>) -> Vec<DocumentSymbol> {
+    if let [dd] = dds {
+        return symbols(dd, lines);
+    }
+    dds.iter()
+        .map(|dd| {
+            let block = dd.first_line..dd.first_line + dd.line_count;
+            symbol(
+                dd.name.clone().unwrap_or_else(|| "Step output".to_owned()),
+                Some(format!("{} lines", dd.line_count)),
+                SymbolKind::FILE,
+                lines.block(&block),
+                lines.content(dd.first_line),
+                symbols(dd, lines),
+            )
+        })
+        .collect()
+}
+
+/// Folding ranges of a document: those of each DD, and each DD of a whole
+/// spool.
+pub fn document_folding_ranges(dds: &[Dd]) -> Vec<FoldingRange> {
+    let mut ranges: Vec<FoldingRange> = dds.iter().flat_map(folding_ranges).collect();
+    if dds.len() > 1 {
+        ranges.extend(
+            dds.iter()
+                .filter(|dd| dd.line_count > 1)
+                .map(|dd| FoldingRange {
+                    start_line: to_u32(dd.first_line),
+                    end_line: to_u32(dd.first_line + dd.line_count - 1),
+                    ..FoldingRange::default()
+                }),
+        );
+        ranges.sort_by_key(|r| (r.start_line, std::cmp::Reverse(r.end_line)));
+        ranges.dedup_by_key(|r| (r.start_line, r.end_line));
+    }
+    ranges
+}
+
 /// Outline: steps for JESMSGLG and JESYSMSG, a JOB → EXEC → DD tree for
 /// JESJCL, messages for other DDs.
 pub fn symbols(dd: &Dd, lines: &Lines<'_>) -> Vec<DocumentSymbol> {
@@ -317,7 +358,7 @@ fn statement_symbol(
 }
 
 /// Folding ranges: steps, statements and multi-line messages.
-pub fn folding_ranges(dd: &Dd) -> Vec<FoldingRange> {
+fn folding_ranges(dd: &Dd) -> Vec<FoldingRange> {
     let blocks = dd
         .steps
         .iter()

@@ -3,9 +3,9 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use jes_reader_core::{Dd, DdKind, parse_file};
+use jes_reader_core::{Dd, DdKind, parse_document, parse_file};
 
-/// A DD read from a file.
+/// A DD read from a file (a whole spool gives several, with the same path).
 pub struct File {
     pub path: PathBuf,
     pub dd: Dd,
@@ -24,8 +24,12 @@ pub fn load(paths: &[PathBuf]) -> Result<Vec<File>> {
 
     let mut files = Vec::new();
     for path in found {
-        let dd = read(&path)?;
-        files.push(File { path, dd });
+        for dd in parse_document(&path.to_string_lossy(), &text(&path)?) {
+            files.push(File {
+                path: path.clone(),
+                dd,
+            });
+        }
     }
 
     let jcls: Vec<Dd> = files
@@ -41,19 +45,19 @@ pub fn load(paths: &[PathBuf]) -> Result<Vec<File>> {
             file.dd.attach_programs(jcl);
         } else if let Some(sibling) = file.path.parent().map(|p| p.join("JESJCL.txt"))
             && sibling.is_file()
-            && let Ok(jcl) = read(&sibling)
+            && let Ok(text) = text(&sibling)
         {
-            file.dd.attach_programs(&jcl);
+            file.dd
+                .attach_programs(&parse_file(&sibling.to_string_lossy(), &text));
         }
     }
     Ok(files)
 }
 
-fn read(path: &Path) -> Result<Dd> {
+fn text(path: &Path) -> Result<String> {
     let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
     // A sysout may contain bytes badly converted from EBCDIC: tolerate them.
-    let text = String::from_utf8_lossy(&bytes);
-    Ok(parse_file(&path.to_string_lossy(), &text))
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
 }
 
 /// A file, or every file in a directory and its subdirectories.

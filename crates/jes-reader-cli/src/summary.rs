@@ -94,7 +94,11 @@ fn job<'a>(files: &[&'a File], options: &Options) -> Job<'a> {
         name: files.iter().find_map(|f| f.dd.job_name.clone()),
         id: files.iter().find_map(|f| f.dd.job_id.clone()),
         end: msglg.and_then(|dd| dd.job_end.clone()),
-        files: files.iter().map(|f| f.path.as_path()).collect(),
+        files: {
+            let mut paths: Vec<&Path> = files.iter().map(|f| f.path.as_path()).collect();
+            paths.dedup();
+            paths
+        },
         steps,
         findings,
     }

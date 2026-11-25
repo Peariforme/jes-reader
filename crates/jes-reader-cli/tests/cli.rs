@@ -170,3 +170,39 @@ severity = "ignore"
 
     std::fs::remove_dir_all(&dir).ok();
 }
+
+/// A whole spool: every DD of the job in one file.
+#[test]
+fn whole_spool() {
+    let dir = std::env::temp_dir().join(format!("jes-reader-cli-spool-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let job = corpus().join("JOB00868");
+    let mut text = String::new();
+    for dd in [
+        "JES2/JESMSGLG.txt",
+        "JES2/JESJCL.txt",
+        "JES2/JESYSMSG.txt",
+        "STEP005/SYSPRINT.txt",
+        "STEP010/SYSPRINT.txt",
+    ] {
+        text.push_str(&String::from_utf8_lossy(
+            &std::fs::read(job.join(dd)).unwrap(),
+        ));
+    }
+    let spool = dir.join("JRIDC8.txt");
+    std::fs::write(&spool, text).unwrap();
+    let spool = spool.to_string_lossy();
+
+    let (_, out) = run(&["check", &spool]);
+    assert!(
+        out.ends_with("1 file(s), 0 error(s), 2 warning(s)\n"),
+        "{out}"
+    );
+    let summary = json(&["summary", "--format", "json", &spool]);
+    let job = &summary["jobs"][0];
+    assert_eq!(job["id"], "JOB00868");
+    assert_eq!(job["files"].as_array().unwrap().len(), 1);
+    assert_eq!(job["steps"][1]["program"], "IDCAMS");
+
+    std::fs::remove_dir_all(&dir).ok();
+}

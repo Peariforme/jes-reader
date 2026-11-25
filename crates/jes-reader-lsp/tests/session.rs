@@ -571,3 +571,64 @@ fn program_rules_wait_for_the_jcl() {
     client.stop(handle);
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn whole_spool() {
+    let (mut client, handle) = Client::start();
+    // JOB00896 saved as one file: its DDs one after the other.
+    let mut text = String::new();
+    let mut starts = Vec::new();
+    for dd in [
+        "JES2/JESMSGLG.txt",
+        "JES2/JESJCL.txt",
+        "JES2/JESYSMSG.txt",
+        "GO/COBRUN/SYSOUT.txt",
+    ] {
+        starts.push(u32::try_from(text.lines().count()).unwrap());
+        text.push_str(&corpus(&format!("JOB00896/{dd}")));
+    }
+    let uri: Uri = "untitled:JRS0C7-spool.txt".parse().unwrap();
+    client.notify(
+        DidOpenTextDocument::METHOD,
+        DidOpenTextDocumentParams {
+            text_document: TextDocumentItem::new(uri.clone(), "jes-sysout".into(), 1, text),
+        },
+    );
+    let (jcl, sysmsg) = (starts[1], starts[2]);
+
+    // The abend of COBRUN.GO, on its line in the spool.
+    let diagnostics = client.diagnostics().diagnostics;
+    let abend = diagnostics
+        .iter()
+        .find(|d| {
+            d.code == Some(NumberOrString::String("S0C7".into())) && d.range.start.line >= sysmsg
+        })
+        .expect("S0C7 in JESYSMSG");
+    assert_eq!(abend.range.start.line, sysmsg + 130);
+
+    // Outline: one entry per DD.
+    let symbols = client.request(
+        DocumentSymbolRequest::METHOD,
+        DocumentSymbolParams {
+            text_document: TextDocumentIdentifier::new(uri.clone()),
+            work_done_progress_params: Default::default(),
+            partial_result_params: Default::default(),
+        },
+    );
+    let names: Vec<&str> = symbols
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["JESMSGLG", "JESJCL", "JESYSMSG", "Step output"]);
+
+    // Go to Definition stays in the spool: the expanded `XXGO EXEC`.
+    let location = client.definition(&uri, sysmsg + 130, 5).unwrap();
+    assert_eq!(
+        (location.uri, location.range.start.line),
+        (uri.clone(), jcl + 73)
+    );
+
+    client.stop(handle);
+}

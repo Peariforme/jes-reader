@@ -27,7 +27,12 @@ impl<'a> Report<'a> {
             })
             .collect();
         Self {
-            files: files.len(),
+            // A whole spool is one file holding several DDs.
+            files: files
+                .iter()
+                .map(|f| &f.path)
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
             findings,
         }
     }
