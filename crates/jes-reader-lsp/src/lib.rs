@@ -1,8 +1,8 @@
 //! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
 //! Each open document is a DD, analysed on every change: diagnostics are
-//! pushed to the client; Outline, folding, code lenses, Go to Definition
-//! and hovers are served on request.
+//! pushed to the client; Outline, folding, code lenses, semantic tokens,
+//! Go to Definition and hovers are served on request.
 //!
 //! A whole spool (every DD of a job in one file) is cut into its DDs, each
 //! analysed as if it had been opened on its own.
@@ -33,15 +33,16 @@ use lsp_types::notification::{
 };
 use lsp_types::request::{
     CodeLensRefresh, CodeLensRequest, DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition,
-    HoverRequest, Request as LspRequest,
+    HoverRequest, Request as LspRequest, SemanticTokensFullRequest, SemanticTokensRefresh,
 };
 use lsp_types::{
     CodeLensOptions, CodeLensParams, Diagnostic, DocumentSymbolParams, DocumentSymbolResponse,
     FoldingRangeParams, FoldingRangeProviderCapability, GotoDefinitionParams,
     GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
     InitializeParams, Location, MarkupContent, MarkupKind, MessageType, OneOf, Position,
-    PublishDiagnosticsParams, ServerCapabilities, ShowMessageParams, TextDocumentSyncCapability,
-    TextDocumentSyncKind, Uri,
+    PublishDiagnosticsParams, SemanticTokensFullOptions, SemanticTokensOptions,
+    SemanticTokensParams, SemanticTokensResult, SemanticTokensServerCapabilities,
+    ServerCapabilities, ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
@@ -57,6 +58,14 @@ pub fn capabilities() -> ServerCapabilities {
         code_lens_provider: Some(CodeLensOptions {
             resolve_provider: Some(false),
         }),
+        semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
+            SemanticTokensOptions {
+                legend: convert::semantic_legend(),
+                full: Some(SemanticTokensFullOptions::Bool(true)),
+                range: None,
+                work_done_progress_options: Default::default(),
+            },
+        )),
         ..ServerCapabilities::default()
     }
 }
@@ -99,6 +108,8 @@ struct Server<'a> {
     workspace: Vec<PathBuf>,
     /// The client accepts `workspace/codeLens/refresh`.
     code_lens_refresh: bool,
+    /// The client accepts `workspace/semanticTokens/refresh`.
+    semantic_tokens_refresh: bool,
     /// Number of requests sent to the client, for their IDs.
     sent_requests: u32,
 }
@@ -130,6 +141,13 @@ pub fn run(connection: &Connection) -> Result<()> {
             .workspace
             .as_ref()
             .and_then(|w| w.code_lens.as_ref())
+            .and_then(|c| c.refresh_support)
+            .unwrap_or(false),
+        semantic_tokens_refresh: params
+            .capabilities
+            .workspace
+            .as_ref()
+            .and_then(|w| w.semantic_tokens.as_ref())
             .and_then(|c| c.refresh_support)
             .unwrap_or(false),
         sent_requests: 0,
@@ -197,6 +215,10 @@ impl Server<'_> {
                     .collect();
                 for (uri, text) in documents {
                     self.update(uri, text)?;
+                }
+                // Severities may have changed without any document change.
+                if self.semantic_tokens_refresh {
+                    self.send_request(SemanticTokensRefresh::METHOD)?;
                 }
             }
             _ => {}
@@ -272,11 +294,18 @@ impl Server<'_> {
             }
         }
         if !job.is_empty() && self.code_lens_refresh {
-            self.sent_requests += 1;
-            let id = format!("jes-reader-{}", self.sent_requests);
-            let request = Request::new(id.into(), CodeLensRefresh::METHOD.to_owned(), ());
-            self.connection.sender.send(request.into())?;
+            self.send_request(CodeLensRefresh::METHOD)?;
         }
+        Ok(())
+    }
+
+    /// Sends a request without parameters to the client; its response is
+    /// ignored.
+    fn send_request(&mut self, method: &str) -> Result<()> {
+        self.sent_requests += 1;
+        let id = format!("jes-reader-{}", self.sent_requests);
+        let request = Request::new(id.into(), method.to_owned(), ());
+        self.connection.sender.send(request.into())?;
         Ok(())
     }
 
@@ -351,6 +380,17 @@ impl Server<'_> {
                         .collect::<Vec<_>>()
                 });
                 Response::new_ok(req.id, lenses)
+            }
+            SemanticTokensFullRequest::METHOD => {
+                let params: SemanticTokensParams = serde_json::from_value(req.params)?;
+                let tokens = self.document(&params.text_document.uri).map(|doc| {
+                    SemanticTokensResult::Tokens(convert::semantic_tokens(
+                        &doc.dds,
+                        &self.options,
+                        &Lines::new(&doc.text),
+                    ))
+                });
+                Response::new_ok(req.id, tokens)
             }
             HoverRequest::METHOD => {
                 let params: HoverParams = serde_json::from_value(req.params)?;

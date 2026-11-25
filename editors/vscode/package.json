@@ -98,6 +98,56 @@
           "markdownDescription": "House rules file (`.jesreader.toml`). Empty: `.jesreader.toml` at the root of the workspace, then in your home directory. See the README for the format."
         }
       }
+    },
+    "semanticTokenTypes": [
+      {
+        "id": "jesError",
+        "description": "Message ID reported as an error by JES Reader"
+      },
+      {
+        "id": "jesWarning",
+        "description": "Message ID reported as a warning by JES Reader"
+      },
+      {
+        "id": "jesInformation",
+        "description": "Message ID reported as information by JES Reader"
+      },
+      {
+        "id": "jesMessage",
+        "description": "Message ID that JES Reader does not report"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "jesError": [
+            "token.error-token.message-id.jes-sysout"
+          ],
+          "jesWarning": [
+            "token.warn-token.message-id.jes-sysout"
+          ],
+          "jesInformation": [
+            "token.info-token.message-id.jes-sysout"
+          ],
+          "jesMessage": [
+            "token.info-token.message-id.jes-sysout"
+          ]
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "[jes-sysout]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "[spool]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "[jesmsglg]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "[jesjcl]": {
+        "editor.semanticHighlighting.enabled": true
+      }
     }
   },
   "scripts": {

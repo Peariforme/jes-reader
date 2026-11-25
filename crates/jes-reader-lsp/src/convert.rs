@@ -7,13 +7,13 @@
 use std::ops::Range;
 
 use jes_reader_core::{
-    Dd, DdKind, Finding, FindingSeverity, Statement, StatementOrigin, Step, StepStatus,
-    duration_text,
+    Dd, DdKind, Finding, FindingSeverity, Options, Statement, StatementOrigin, Step, StepStatus,
+    analyze, duration_text,
 };
 use lsp_types::{
     CodeLens, Command, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
     DocumentSymbol, FoldingRange, Location, NumberOrString, Position, Range as LspRange,
-    SymbolKind, Uri,
+    SemanticToken, SemanticTokenType, SemanticTokens, SemanticTokensLegend, SymbolKind, Uri,
 };
 
 /// Text of a document split into lines, the way the parser does it.
@@ -225,6 +225,63 @@ fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
     )
 }
 
+/// Semantic token types, in legend order. The VS Code extension maps them
+/// to the TextMate scopes of its grammar (`semanticTokenScopes`), so that
+/// themes color them like the grammar does.
+const TOKEN_TYPES: [&str; 4] = ["jesError", "jesWarning", "jesInformation", "jesMessage"];
+
+/// Legend announced in the server capabilities.
+pub fn semantic_legend() -> SemanticTokensLegend {
+    SemanticTokensLegend {
+        token_types: TOKEN_TYPES.map(SemanticTokenType::new).to_vec(),
+        token_modifiers: Vec::new(),
+    }
+}
+
+/// One token per message ID, typed by the severity the analysis gives it:
+/// the catalog and the house rules decide, not the suffix the grammar sees.
+/// A message the analysis does not report (an `ignore` rule, an
+/// information message) is a plain `jesMessage`.
+pub fn semantic_tokens(dds: &[Dd], options: &Options, lines: &Lines<'_>) -> SemanticTokens {
+    let mut data = Vec::new();
+    let mut previous = Position::new(0, 0);
+    for dd in dds {
+        let findings = analyze(dd, options);
+        for m in &dd.messages {
+            let severity = findings
+                .iter()
+                .find(|f| f.line == m.lines.start && f.columns.as_ref() == Some(&m.id_columns))
+                .map(|f| f.severity);
+            let token_type = match severity {
+                Some(FindingSeverity::Error) => 0,
+                Some(FindingSeverity::Warning) => 1,
+                Some(FindingSeverity::Information) => 2,
+                None => 3,
+            };
+            let range = lines.span(m.lines.start, m.id_columns.clone());
+            let start = range.start;
+            let delta_line = start.line - previous.line;
+            let delta_start = if delta_line == 0 {
+                start.character - previous.character
+            } else {
+                start.character
+            };
+            data.push(SemanticToken {
+                delta_line,
+                delta_start,
+                length: range.end.character - start.character,
+                token_type,
+                token_modifiers_bitset: 0,
+            });
+            previous = start;
+        }
+    }
+    SemanticTokens {
+        result_id: None,
+        data,
+    }
+}
+
 /// Code lenses: a summary above each step of JESYSMSG,
 /// `STEP010 · IDCAMS · RC 8 · CPU 0.01 s · < 1 min`. JESMSGLG has none: its
 /// step table already gives the same figures on one line per step.
@@ -390,6 +447,50 @@ mod tests {
         assert_eq!(lines.position(0, 2), Position::new(0, 1));
         assert_eq!(lines.position(0, usize::MAX), Position::new(0, 10));
         assert_eq!(lines.position(5, 3), Position::new(5, 0));
+    }
+
+    #[test]
+    fn semantic_tokens_follow_the_analysis() {
+        let text = " IEF142I JRS013 STEP010 - STEP WAS EXECUTED - COND CODE 0000\n\
+                    \x20IEC141I 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,\n\
+                    \x20IDI0078E Open of fault history file failed\n";
+        let dd = jes_reader_core::parse_file("JOB00901/JES2/JESYSMSG.txt", text);
+        let lines = Lines::new(text);
+        // Absolute (line, column, length, type) of each token.
+        let decode = |tokens: SemanticTokens| {
+            let (mut line, mut column) = (0, 0);
+            tokens
+                .data
+                .iter()
+                .map(|t| {
+                    if t.delta_line > 0 {
+                        column = 0;
+                    }
+                    line += t.delta_line;
+                    column += t.delta_start;
+                    (line, column, t.length, TOKEN_TYPES[t.token_type as usize])
+                })
+                .collect::<Vec<_>>()
+        };
+        let options = Options::default();
+        assert_eq!(
+            decode(semantic_tokens(std::slice::from_ref(&dd), &options, &lines)),
+            [
+                (0, 1, 7, "jesMessage"),
+                (1, 1, 7, "jesError"),
+                (2, 1, 8, "jesError"),
+            ]
+        );
+        // A house rule silences IDI0078E: its ID is no longer red.
+        let options = Options {
+            rules: jes_reader_core::Rules::parse(
+                "[[messages]]\nid = \"IDI*\"\nseverity = \"ignore\"\n",
+            )
+            .unwrap(),
+            ..Options::default()
+        };
+        let tokens = decode(semantic_tokens(&[dd], &options, &lines));
+        assert_eq!(tokens[2].3, "jesMessage");
     }
 
     #[test]
