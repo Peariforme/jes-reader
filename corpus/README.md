@@ -40,6 +40,13 @@ Files in this folder are never converted (line endings included, see `.gitattrib
 | `sysout/JOB00901` | S013 | `jcl/s013.jcl` | `IEC141I 013-18` | Fault Analyzer report (`IDIREPRT`) |
 | `sysout/JOB00903` | S322 | `jcl/s322.jcl` | S322 in step GO | |
 | `sysout/JOB00905` | S806 | `jcl/s806.jcl` | `CSV003I`, S806-04 | Fault Analyzer report (`IDIREPRT`) |
+| `sysout/JOB01933` | Z Xplore JCL course: PDSBUILD | (Z Xplore course) | RC=0 | IDCAMS DELETE of missing entries (RC 8 per command, step RC 0), application DD under the step name |
+| `sysout/JOB01956` | Z Xplore course: @FILES1 | (Z Xplore course) | RC=0 | |
+| `sysout/JOB01967` | Z Xplore JCL course: JCLSETUP | (Z Xplore course) | RC=0 | **Unnamed step** (`// EXEC` without a label): job name only in `IEF142I`, blank STEPNAME in the step table |
+| `sysout/JOB01975` | Z Xplore JCL course: JCL1 | (Z Xplore course) | RC=0 | Two copy steps |
+| `sysout/JOB01987` | Z Xplore JCL course: JCL2 | (Z Xplore course) | U4038 in step RUN, AFTER not run | User abend outside a procedure (`-RUN               U4038`), `IGZ0035S` with status 96 |
+| `sysout/JOB01995` | Z Xplore JCL course: JCL2, fixed | (Z Xplore course) | RC=0 | Same job as JOB01987 once fixed |
+| `sysout/JOB02007` | Z Xplore JCL course: JCL3 | (Z Xplore course) | RC=0 | 13 steps, two with the same name (`CORTLNDT`) |
 
 On Z Xplore, S0C7 and S0C4 end as system abends; Language Environment does not turn them into U4038.
 

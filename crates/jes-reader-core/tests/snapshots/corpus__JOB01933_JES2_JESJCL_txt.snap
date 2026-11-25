@@ -1,0 +1,10 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01933/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA: yes, 1 lines
+job: PDSBUILD JOB01933
+
+statements:
+    1 L1-1 Job PDSBUILD JOB

@@ -1,0 +1,18 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01975/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 19 lines
+job: JCL1 JOB01975
+end of job: ReturnCode(0)
+
+steps:
+  L9-9 COPYJCL2: Completed { return_code: 0 } (L9)
+  L10-10 COPYJCL3: Completed { return_code: 0 } (L10)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 10:23:15 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 JCL1     STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L12 col.21-28 $HASP395 JCL1     ENDED - RC=0000

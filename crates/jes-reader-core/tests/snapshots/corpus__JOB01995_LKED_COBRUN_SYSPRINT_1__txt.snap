@@ -1,0 +1,10 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01995/LKED/COBRUN/SYSPRINT(1).txt
+DD SYSPRINT (Other), ASA: yes, 133 lines
+job: ? JOB01995
+
+messages:
+  L109 col.2-9 IEW2008I 0F03 PROCESSING COMPLETED.  RETURN CODE =  0.

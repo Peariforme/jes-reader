@@ -1,0 +1,32 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01995/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA: yes, 36 lines
+job: JCL2 JOB01995
+
+statements:
+    1 L1-1 Job JCL2 JOB
+    2 L2-2 Job EXP EXPORT
+    3 L3-3 Job BEFORE EXEC
+    4 L4-4 Job SYSPROC DD
+    5 L5-5 Job SYSTSPRT DD
+    6 L6-16 Job SYSTSIN DD
+    7 L17-17 Job COBRUN EXEC
+   21 L18-18 Job COBOL.SYSIN DD
+   51 L19-20 Job LKED.SYSLMOD DD
+   60 L21-22 Job ? IF
+   61 L23-23 Job RUN EXEC
+   62 L24-24 Job STEPLIB DD
+   63 L25-25 Job FNAMES DD
+   64 L26-26 Job LNAMES DD
+   65 L27-27 Job COMBINED DD
+   66 L28-28 Job SYSOUT DD
+   67 L29-29 Job CEEDUMP DD
+   68 L30-31 Job SYSUDUMP DD
+   69 L32-32 Job ? ELSE
+   70 L33-33 Job ? ENDIF
+   71 L34-34 Job AFTER EXEC
+   72 L35-35 Job SYSTSPRT DD
+   73 L36-36 Job SYSTSIN DD

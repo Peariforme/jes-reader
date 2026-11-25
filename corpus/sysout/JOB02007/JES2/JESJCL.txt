@@ -1,0 +1,120 @@
+        1 //JCL3     JOB ,MSGLEVEL=(2,0)                                          JOB02007
+          //*--------------------------------------------------------------
+          //*
+          //* THIS JOB CREATES THE JCL3OUT DATASET AND ADDS RECORDS TO IT.
+          //*
+          //* IF YOU SUBMIT THIS JOB MORE THAN ONCE, YOU WILL NEED TO
+          //* MAKE SURE THE JCL3OUT DATASET IS DELETED BEFORE CREATING AGAIN.
+          //*
+          //* IF YOU DO NOT, THE JOB WILL FAIL WITH A JCL ERROR DUE TO
+          //* "IGD17001I DUPLICATE DATA SET NAME ON VOLUME ZXPxxx"
+          //*
+          //*--------------------------------------------------------------
+          //*
+          //* IEBGENER is a system utility program to copy data
+          //*  where the default input  filename is SYSUT1
+          //*  and   the default output filename is SYSUT2
+          //*
+        2 //HEADER EXEC PGM=IEBGENER
+        3 //SYSPRINT DD DUMMY
+        4 //SYSIN    DD DUMMY
+        5 //SYSUT1   DD *
+        6 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(NEW,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+        7 //POK EXEC PGM=IEBGENER
+        8 //SYSPRINT DD DUMMY
+        9 //SYSIN    DD DUMMY
+       10 //SYSUT1   DD *
+       11 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       12 //NHB EXEC PGM=IEBGENER
+       13 //SYSPRINT DD DUMMY
+       14 //SYSIN    DD DUMMY
+       15 //SYSUT1   DD *
+       16 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       17 //BEACON EXEC PGM=IEBGENER
+       18 //SYSPRINT DD DUMMY
+       19 //SYSIN    DD DUMMY
+       20 //SYSUT1   DD *
+       21 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       22 //CLDSPRNG EXEC PGM=IEBGENER
+       23 //SYSPRINT DD DUMMY
+       24 //SYSIN    DD DUMMY
+       25 //SYSUT1   DD *
+       26 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       27 //GARRISON EXEC PGM=IEBGENER
+       28 //SYSPRINT DD DUMMY
+       29 //SYSIN    DD DUMMY
+       30 //SYSUT1   DD *
+       31 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       32 //PEEKSKL EXEC PGM=IEBGENER
+       33 //SYSPRINT DD DUMMY
+       34 //SYSIN    DD DUMMY
+       35 //SYSUT1   DD *
+       36 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       37 //CORTLNDT EXEC PGM=IEBGENER
+       38 //SYSPRINT DD DUMMY
+       39 //SYSIN    DD DUMMY
+       40 //SYSUT1   DD *
+       41 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       42 //CORTLNDT EXEC PGM=IEBGENER
+       43 //SYSPRINT DD DUMMY
+       44 //SYSIN    DD DUMMY
+       45 //SYSUT1   DD *
+       46 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       47 //CROTONH EXEC PGM=IEBGENER
+       48 //SYSPRINT DD DUMMY
+       49 //SYSIN    DD DUMMY
+       50 //SYSUT1   DD *
+       51 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       52 //H125 EXEC PGM=IEBGENER
+       53 //SYSPRINT DD DUMMY
+       54 //SYSIN    DD DUMMY
+       55 //SYSUT1   DD *
+       56 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       57 //GCT EXEC PGM=IEBGENER
+       58 //SYSPRINT DD DUMMY
+       59 //SYSIN    DD DUMMY
+       60 //SYSUT1   DD *
+       61 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,PASS,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)
+          //*
+       62 //PEAKINFO EXEC PGM=IEBGENER
+       63 //SYSPRINT DD DUMMY
+       64 //SYSIN    DD DUMMY
+       65 //SYSUT1   DD *
+       66 //SYSUT2   DD DSN=&SYSUID..JCL3OUT,DISP=(MOD,CATLG,DELETE),
+          //            SPACE=(TRK,(1,1)),UNIT=SYSDA,
+          //            DCB=(DSORG=PS,RECFM=FB,LRECL=80)

@@ -1,0 +1,15 @@
+        1 //JCL1     JOB                                                          JOB01975
+        2 //COPYJCL2 EXEC PGM=IEBGENER
+        3 //SYSPRINT DD SYSOUT=*
+        4 //SYSIN    DD DUMMY
+        5 //SYSUT1   DD DISP=SHR,DSN=ZXP.PUBLIC.JCL(JCL2)
+        6 //SYSUT2   DD DISP=SHR,DSN=&SYSUID..JCL(JCL2)      <== FIX THIS ONE
+          //*
+          IEFC653I SUBSTITUTION JCL - DISP=SHR,DSN=Z99999.JCL(JCL2)
+        7 //COPYJCL3 EXEC PGM=IEBGENER
+        8 //SYSPRINT DD SYSOUT=*
+        9 //SYSIN    DD DUMMY
+       10 //SYSUT1   DD DISP=SHR,DSN=ZXP.PUBLIC.JCL(JCL3)
+       11 //SYSUT2   DD DISP=SHR,DSN=&SYSUID..JCL(JCL3)      <== AND THIS ONE
+          //*
+          IEFC653I SUBSTITUTION JCL - DISP=SHR,DSN=Z99999.JCL(JCL3)

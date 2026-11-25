@@ -1,0 +1,20 @@
+1                   J E S 2  J O B  L O G  --  S Y S T E M  S 0 W 1  --  N O D E  S V S C J E S 2
+0
+ 10.13.18 JOB01933 ---- WEDNESDAY, 25 NOV 2026 ----
+ 10.13.18 JOB01933  IRR010I  USERID Z99999   IS ASSIGNED TO THIS JOB.
+ 10.13.19 JOB01933  ICH70001I Z99999   LAST ACCESS AT 09:30:13 ON WEDNESDAY, NOVEMBER 25, 2026
+ 10.13.19 JOB01933  $HASP373 PDSBUILD STARTED - INIT 1    - CLASS 7        - SYS S0W1
+ 10.13.20 JOB01933  -                                      -----TIMINGS (MINS.)------                          -----PAGING COUNTS----
+ 10.13.20 JOB01933  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV  WORKLOAD  PAGE  SWAP   VIO SWAPS
+ 10.13.20 JOB01933  -DELETE               00     26      2       .00       .00     .0             3  BATCH        0     0     0     0
+ 10.13.20 JOB01933  -ALLOC                00      6      0       .00       .00     .0                BATCH        0     0     0     0
+ 10.13.22 JOB01933  -POPULATE             00    276     18       .00       .00     .0            57  BATCH        0     0     0     0
+ 10.13.22 JOB01933  -PDSBUILD ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
+ 10.13.22 JOB01933  $HASP395 PDSBUILD ENDED - RC=0000
+0------ JES2 JOB STATISTICS ------
+-  25 NOV 2026 JOB EXECUTION DATE
+-           33 CARDS READ
+-           85 SYSOUT PRINT RECORDS
+-            0 SYSOUT PUNCH RECORDS
+-            5 SYSOUT SPOOL KBYTES
+-         0.05 MINUTES EXECUTION TIME

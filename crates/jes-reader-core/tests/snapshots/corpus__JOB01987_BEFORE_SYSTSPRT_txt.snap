@@ -1,0 +1,13 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01987/BEFORE/SYSTSPRT.txt
+DD SYSTSPRT (Other), ASA: yes, 6 lines
+job: ? JOB01987
+
+messages:
+  L1 col.2-9 IDC3302I ACTION ERROR ON Z99999.OUTPUT
+  L2 col.2-9 IDC3330I ** NAMES    NOT FOUND
+  L3 col.2-9 IDC0548I ** MEMBER NAMES NOT DELETED
+  L4 col.2-9 IDC0014I LASTCC=8

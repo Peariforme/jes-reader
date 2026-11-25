@@ -1,0 +1,18 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+file: JOB01967/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 20 lines
+job: JCLSETUP JOB01967
+end of job: ReturnCode(0)
+
+steps:
+  L11-11 (unnamed step): Completed { return_code: 0 } (L11)
+
+messages:
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 10:19:01 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 JCLSETUP STARTED - INIT 1    - CLASS 7        - SYS S0W1
+  L7 col.21-29 IGD17380I STORAGE GROUP (SGSLOAD) IS ESTIMATED AT 89% OF CAPACITY,  650
+  L13 col.21-28 $HASP395 JCLSETUP ENDED - RC=0000
