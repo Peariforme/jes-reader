@@ -22,3 +22,15 @@ npm run compile
 ```
 
 Puis ouvrir `editors/vscode` dans VS Code et lancer « Extension JES Reader » (F5) : une seconde fenêtre s'ouvre sur `corpus/sysout`.
+
+## Packaging et publication
+
+`npm run package -- <cible>` produit `dist/jes-reader-<cible>-<version>.vsix` avec le serveur compilé pour cette plateforme. Cibles : `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`. Sans argument : la machine courante. Fermer d'abord les fenêtres de développement (F5), qui verrouillent `server/`.
+
+Le workflow `Package` construit les VSIX et les binaires CLI de cinq plateformes à chaque PR et push sur `main` (artefacts de l'exécution). Pour publier une version :
+
+1. Aligner la version dans `editors/vscode/package.json` et `Cargo.toml` (le workflow refuse un tag qui ne correspond pas).
+2. Pousser un tag `vX.Y.Z`.
+3. Le workflow crée la release GitHub (VSIX et CLI attachés), puis publie sur le VS Code Marketplace si le secret `VSCE_PAT` existe, et sur Open VSX si le secret `OVSX_PAT` existe.
+
+Les deux jetons se créent une fois : `VSCE_PAT` est un Personal Access Token Azure DevOps (portée *Marketplace > Manage*) lié à l'éditeur `peariforme` ; `OVSX_PAT` est un jeton open-vsx.org, après création de l'espace de noms `peariforme` (`npx ovsx create-namespace peariforme`).

@@ -62,7 +62,14 @@ writeFileSync(
     `${license('LICENSE-MIT')}\n\n${license('LICENSE-APACHE')}`,
 );
 
-// 4. Platform-specific VSIX (vsce runs `vscode:prepublish`, which compiles).
+// 4. Compile the client explicitly: vsce checks the entry point exists.
+execFileSync('npm', ['run', 'compile'], {
+  cwd: extension,
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+});
+
+// 5. Platform-specific VSIX.
 mkdirSync(join(extension, 'dist'), { recursive: true });
 const out = join('dist', `jes-reader-${target}-${version}.vsix`);
 execFileSync('npx', ['vsce', 'package', '--target', target, '--out', out], {
