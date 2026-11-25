@@ -68,6 +68,8 @@ jobs:
           version=$(node -p "require('./editors/vscode/package.json').version")
           name=jes-reader-cli-${{ matrix.target }}-$version
           mkdir -p dist
+          # Artefact à plat : la publication attend des fichiers, pas des dossiers.
+          cp editors/vscode/dist/*.vsix dist/
           cd target/${{ matrix.rust }}/release
           if [[ "${{ matrix.target }}" == win32-* ]]; then
             7z a -tzip "$GITHUB_WORKSPACE/dist/$name.zip" jes-reader.exe
@@ -78,9 +80,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: jes-reader-${{ matrix.target }}
-          path: |
-            editors/vscode/dist/*.vsix
-            dist/*
+          path: dist/*
           if-no-files-found: error
 
   publish:
