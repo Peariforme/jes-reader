@@ -87,7 +87,7 @@ Objectif : ouvrir une sysout dans VS Code et voir tout de suite quel step a plan
 
 Objectif : l'outil s'utilise sur les jobs du quotidien, sans télécharger de fichier.
 
-- [ ] Identifier le schéma d'URI des spools ouvertes par Zowe Explorer (`zowe-jobs:`) et y abonner l'extension. Pour les liens entre DD, l'extension lit à la demande la seule DD manquante via le système de fichiers de Zowe, sans télécharger toute la spool
+- [x] Identifier le schéma d'URI des spools ouvertes par Zowe Explorer (`zowe-jobs:`) et y abonner l'extension. Vérifié le 25/11/2026 : un job ouvert directement depuis Zowe Explorer est analysé (diagnostics, Outline). Reste à faire : Pour les liens entre DD, l'extension lit à la demande la seule DD manquante via le système de fichiers de Zowe, sans télécharger toute la spool
 - [ ] Hovers : catalogue maison en TOML des \~50 messages et abends les plus fréquents, rédigé par nous, avec lien IBM Docs pour tous les autres
 - [ ] Liens : numéros d'instruction de JESYSMSG vers la ligne correspondante de JESJCL
 - [ ] Navigation : d'un step dans JESYSMSG vers son EXEC dans JESJCL
