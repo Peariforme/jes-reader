@@ -7,6 +7,7 @@
 - Hovers on message IDs and abend codes from our own catalog (51 messages, 20 abends), with links to the z/OS 3.2 message pages and to an IBM Docs search.
 - Readable diagnostics: catalog title, reason code meaning and the full message text, continuation lines included (`OPEN failed (S013-18: member not found in the partitioned data set): … SYS1.MACLIB(JRNOMBR)`).
 - A failed or skipped step is linked to the messages that caused it (related information), and back.
+- Data set names in documents opened from Zowe Explorer link to the data set or member, opened through Zowe Explorer with the profile of the job.
 - Messages ending in `C` (Language Environment critical, `CEE3250C`) are recognized and reported as errors.
 
 ## 0.1.0
