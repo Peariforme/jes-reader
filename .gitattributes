@@ -1,7 +1,7 @@
 * text=auto eol=lf
 
-# Les sysouts et le JCL du corpus sont versionnés à l'octet près :
-# aucune conversion de fin de ligne.
-# Le filtre `anonymize` remplace les userids Z Xplore par Z99999 au
-# `git add` (scripts/anonymize.sh, activation dans le README).
+# Corpus sysouts and JCL are stored byte for byte:
+# no line-ending conversion.
+# The `anonymize` filter replaces Z Xplore user IDs with Z99999 on
+# `git add` (scripts/anonymize.sh, setup in the README).
 corpus/** -text filter=anonymize

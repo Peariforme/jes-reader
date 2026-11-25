@@ -1,8 +1,8 @@
 //JRS322   JOB (ACCT),'JES-READER S322',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS S322 : boucle infinie, limite CPU du step GO a 1 seconde.
-//* Attendu : IEF450I ... ABEND=S322, step GO.
+//* CASE S322: endless loop, CPU limit of step GO set to 1 second.
+//* Expected: IEF450I ... ABEND=S322, step GO.
 //*--------------------------------------------------------------------
 //COBRUN   EXEC IGYWCLG,TIME.GO=(0,1)
 //COBOL.SYSIN DD *

@@ -2,12 +2,12 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00885/GO/COBRUN/SYSOUT.txt
-DD SYSOUT (Other), ASA : oui, 4 lignes
-job : ? JOB00885
+file: JOB00885/GO/COBRUN/SYSOUT.txt
+DD SYSOUT (Other), ASA: yes, 4 lines
+job: ? JOB00885
 
-messages :
+messages:
   L1-4 col.2-9 IGZ0035S There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'.
 
-constats :
-  L1 erreur [IGZ0035S] There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'.
+findings:
+  L1 error [IGZ0035S] There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'.

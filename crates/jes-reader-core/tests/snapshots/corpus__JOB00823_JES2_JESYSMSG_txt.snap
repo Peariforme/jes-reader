@@ -2,15 +2,15 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00823/JES2/JESYSMSG.txt
-DD JESYSMSG (JesYsMsg), ASA : oui, 13 lignes
-job : @VSC1 JOB00823
+file: JOB00823/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 13 lines
+job: @VSC1 JOB00823
 
-steps :
-  L4-10 VALIDATE : Completed { return_code: 0 } (L4)
+steps:
+  L4-10 VALIDATE: Completed { return_code: 0 } (L4)
 
-messages :
-  L2 col.12-19 IEFC001I [instr. 2] PROCEDURE ZXP$$CHK WAS EXPANDED USING SYSTEM LIBRARY VENDOR.PROCLIB
+messages:
+  L2 col.12-19 IEFC001I [stmt 2] PROCEDURE ZXP$$CHK WAS EXPANDED USING SYSTEM LIBRARY VENDOR.PROCLIB
   L3 col.2-10 ICH70001I Z99999   LAST ACCESS AT 02:06:49 ON WEDNESDAY, NOVEMBER 25, 2026
   L4 col.2-8 IEF142I @VSC1 VALIDATE - STEP WAS EXECUTED - COND CODE 0000
   L5 col.2-8 IEF373I STEP/VALIDATE/START 2026329.0412

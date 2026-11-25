@@ -2,14 +2,14 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00901/JES2/JESYSMSG.txt
-DD JESYSMSG (JesYsMsg), ASA : oui, 118 lignes
-job : JRS013 JOB00901
+file: JOB00901/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 118 lines
+job: JRS013 JOB00901
 
-steps :
-  L4-115 STEP010 : Abended { code: "S013", reason: Some("00000018") } (L105)
+steps:
+  L4-115 STEP010: Abended { code: "S013", reason: Some("00000018") } (L105)
 
-messages :
+messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:51:09 ON WEDNESDAY, NOVEMBER 25, 2026
   L2-3 col.2-9 IEFA111I JRS013 IS USING THE FOLLOWING JOB RELATED SETTINGS:
   L4 col.2-8 IEF236I ALLOC. FOR JRS013 STEP010
@@ -107,7 +107,7 @@ messages :
   L116 col.2-8 IEF375I JOB/JRS013  /START 2026329.0452
   L117-118 col.2-8 IEF033I JOB/JRS013  /STOP  2026329.0453
 
-constats :
-  L9 erreur [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,
-  L60 erreur [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
-  L105 erreur [S013] Step STEP010 : abend S013, raison 00000018
+findings:
+  L9 error [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,
+  L60 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
+  L105 error [S013] Step STEP010: abend S013, reason 00000018

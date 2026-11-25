@@ -1,7 +1,7 @@
 {
   "name": "jes-reader",
   "displayName": "JES Reader",
-  "description": "Sysouts JES2 z/OS navigables : erreurs dans Problems, steps dans l'Outline, messages colorés par sévérité.",
+  "description": "Navigable z/OS JES2 sysouts: failures in Problems, job steps in the Outline, messages colored by severity. Works with Zowe Explorer.",
   "version": "0.1.0",
   "publisher": "peariforme",
   "license": "(MIT OR Apache-2.0)",
@@ -60,12 +60,12 @@
     "commands": [
       {
         "command": "jesReader.openAsSysout",
-        "title": "Ouvrir comme sysout",
+        "title": "Open as Sysout",
         "category": "JES Reader"
       },
       {
         "command": "jesReader.restartServer",
-        "title": "Redémarrer le serveur",
+        "title": "Restart Server",
         "category": "JES Reader"
       }
     ],
@@ -85,12 +85,12 @@
           "default": 4,
           "minimum": 0,
           "maximum": 4095,
-          "markdownDescription": "Code retour au-delà duquel un step est signalé en avertissement."
+          "markdownDescription": "A step whose return code is above this value is reported as a warning."
         },
         "jesReader.serverPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Chemin du binaire `jes-reader-lsp`. Vide : binaire embarqué dans l'extension."
+          "markdownDescription": "Path to a `jes-reader-lsp` binary. Empty: use the one bundled with the extension."
         }
       }
     }
@@ -111,5 +111,9 @@
     "@vscode/vsce": "^3.2.1",
     "ovsx": "^0.10.1",
     "typescript": "~5.6.3"
+  },
+  "homepage": "https://github.com/Peariforme/jes-reader#readme",
+  "bugs": {
+    "url": "https://github.com/Peariforme/jes-reader/issues"
   }
 }

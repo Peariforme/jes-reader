@@ -1,9 +1,9 @@
 //JRIGZ    JOB (ACCT),'JES-READER IGZ',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS IGZ : OPEN d'un fichier dont la DD INFILE est absente du step
-//* GO, sans clause FILE STATUS. Le runtime COBOL termine le programme.
-//* Attendu : IGZ0035S dans SYSOUT/CEEDUMP, puis abend U4038.
+//* CASE IGZ: OPEN of a file whose INFILE DD is missing from step
+//* GO, with no FILE STATUS clause. The COBOL runtime ends the program.
+//* Expected: IGZ0035S in SYSOUT/CEEDUMP, then abend U4038.
 //*--------------------------------------------------------------------
 //COBRUN   EXEC IGYWCLG
 //COBOL.SYSIN DD *

@@ -2,13 +2,13 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00905/STEP010/IDIREPRT.txt
-DD IDIREPRT (Other), ASA : non, 375 lignes
-job : ? JOB00905
+file: JOB00905/STEP010/IDIREPRT.txt
+DD IDIREPRT (Other), ASA: no, 375 lines
+job: ? JOB00905
 
-messages :
+messages:
   L107 col.1-7 CSV003I REQUESTED MODULE JRNOPGM  NOT FOUND
   L254 col.1-7 CSV028I ABEND806-04  JOBNAME=JRS806    STEPNAME=STEP010
 
-constats :
-  L107 erreur [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND
+findings:
+  L107 error [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND

@@ -1,54 +1,55 @@
 # Corpus
 
-Sysouts de test et JCL qui les produit.
+Test sysouts and the JCL that produces them.
 
-**Règle absolue : aucune sysout client, aucune donnée réelle.** Tout ce qui se trouve ici est produit sur IBM Z Xplore à partir des jobs de `jcl/`, ou reconstitué à la main de façon synthétique.
+**Hard rule: no customer sysout, no real data.** Everything here is produced on IBM Z Xplore from the jobs in `jcl/`, or rebuilt by hand as synthetic data.
 
-Les userids Z Xplore (`Z` suivi de 5 chiffres) sont remplacés par `Z99999` au `git add` par le filtre `anonymize` (voir le README à la racine pour l'activer). La CI échoue si un userid réel passe quand même.
+Z Xplore user IDs (`Z` followed by 5 digits) are replaced with `Z99999` on `git add` by the `anonymize` filter (see the root README to enable it). CI fails if a real user ID gets through anyway.
 
-## Organisation
+## Layout
 
-- `jcl/` : jobs qui plantent volontairement, un cas par fichier
-- `sysout/` : sysouts récupérées, **dans l'arborescence produite par Zowe Explorer**, sans renommage. C'est ce que le parser recevra en vrai :
+- `jcl/`: jobs that fail on purpose, one case per file
+- `sysout/`: retrieved sysouts, **in the folder layout Zowe Explorer produces when downloading a job**, not renamed. This is what the parser gets in real life:
 
   ```
-  sysout/<jobid>/JES2/JESMSGLG.txt     DD système
+  sysout/<jobid>/JES2/JESMSGLG.txt               system DDs
   sysout/<jobid>/JES2/JESJCL.txt
   sysout/<jobid>/JES2/JESYSMSG.txt
-  sysout/<jobid>/<step>/<DD>.txt        DD applicatives
+  sysout/<jobid>/<step>/<DD>.txt                  application DDs
+  sysout/<jobid>/<procstep>/<step>/<DD>.txt       application DDs of a procedure step
   ```
 
-  Une spool complète téléchargée en un seul fichier, si un outil le permet, va dans `sysout/<jobid>.spool.txt`.
+  A whole spool downloaded as a single file, if a tool allows it, goes to `sysout/<jobid>.spool.txt`.
 
-Les fichiers de ce dossier ne subissent aucune conversion de fin de ligne (voir `.gitattributes`). Ne pas les reformater.
+Files in this folder are never converted (line endings included, see `.gitattributes`). Do not reformat them.
 
-## Sysouts récupérées
+## Retrieved sysouts
 
-| Dossier | Cas | JCL | Résultat | Intérêt |
+| Folder | Case | JCL | Outcome | Why it is useful |
 | --- | --- | --- | --- | --- |
-| `sysout/JOB00823` | Validation Z Xplore | (fourni par Z Xplore) | RC=0 | DD applicative `SYSTSPRT` |
-| `sysout/TSU00812` | Session TSO (z/OSMF) | | session active | Préfixe `TSU`, pas de fin de job |
+| `sysout/JOB00823` | Z Xplore validation | (provided by Z Xplore) | RC=0 | Application DD `SYSTSPRT` |
+| `sysout/TSU00812` | TSO session (z/OSMF) | | session still active | `TSU` prefix, no end of job |
 | `sysout/JOB00868` | IDCAMS RC=8 | `jcl/idcams-rc8.jcl` | RC 4, RC 8, STEP020 `IEF202I` | `$HASP395 ENDED - RC=0008` |
-| `sysout/JOB00869` | JCL ERROR dans une procédure | `jcl/igz-open.jcl` sans `<userid>.LOAD` | step COBOL RC=0, LKED `IEFA107I` sur `SYSLMOD`, `IEF453I` | JCL ERROR après un step exécuté ; avertissements de conversion numérotés (`IEF655I`, `IEF686I`) |
-| `sysout/JOB00884` | Allocation de LOAD | `jcl/setup-load.jcl` | RC=0 | Job minimal IEFBR14 |
-| `sysout/JOB00885` | IGZ | `jcl/igz-open.jcl` | `IGZ0035S`, U4038 | Steps de procédure, DD `SYSOUT` du step GO |
-| `sysout/JOB00889` | JCL ERROR | `jcl/jcl-error.jcl` | `IEFA107I`, `IEF453I` | `FLUSH` dans le tableau des steps |
-| `sysout/JOB00890` | NOT CATLGD | `jcl/not-catlgd.jcl` | `IGD17101I` (SMS), JCL ERROR | Message dont la suite est en col. 2 |
-| `sysout/JOB00893` | S0C4 | `jcl/s0c4.jcl` | S0C4 au step GO | |
-| `sysout/JOB00896` | S0C7 | `jcl/s0c7.jcl` | S0C7 au step GO | |
-| `sysout/JOB00901` | S013 | `jcl/s013.jcl` | `IEC141I 013-18` | Rapport Fault Analyzer (`IDIREPRT`) |
-| `sysout/JOB00903` | S322 | `jcl/s322.jcl` | S322 au step GO | |
-| `sysout/JOB00905` | S806 | `jcl/s806.jcl` | `CSV003I`, S806-04 | Rapport Fault Analyzer (`IDIREPRT`) |
+| `sysout/JOB00869` | JCL ERROR in a procedure | `jcl/igz-open.jcl` without `<userid>.LOAD` | COBOL step RC=0, LKED `IEFA107I` on `SYSLMOD`, `IEF453I` | JCL ERROR after a step that ran; numbered conversion warnings (`IEF655I`, `IEF686I`) |
+| `sysout/JOB00884` | LOAD library allocation | `jcl/setup-load.jcl` | RC=0 | Minimal IEFBR14 job |
+| `sysout/JOB00885` | IGZ | `jcl/igz-open.jcl` | `IGZ0035S`, U4038 | Procedure steps, `SYSOUT` DD of the GO step |
+| `sysout/JOB00889` | JCL ERROR | `jcl/jcl-error.jcl` | `IEFA107I`, `IEF453I` | `FLUSH` in the step table |
+| `sysout/JOB00890` | NOT CATLGD | `jcl/not-catlgd.jcl` | `IGD17101I` (SMS), JCL ERROR | Message continued in column 2 |
+| `sysout/JOB00893` | S0C4 | `jcl/s0c4.jcl` | S0C4 in step GO | |
+| `sysout/JOB00896` | S0C7 | `jcl/s0c7.jcl` | S0C7 in step GO | |
+| `sysout/JOB00901` | S013 | `jcl/s013.jcl` | `IEC141I 013-18` | Fault Analyzer report (`IDIREPRT`) |
+| `sysout/JOB00903` | S322 | `jcl/s322.jcl` | S322 in step GO | |
+| `sysout/JOB00905` | S806 | `jcl/s806.jcl` | `CSV003I`, S806-04 | Fault Analyzer report (`IDIREPRT`) |
 
-Sur Z Xplore, S0C7 et S0C4 sortent en abend système, sans conversion LE en U4038.
+On Z Xplore, S0C7 and S0C4 end as system abends; Language Environment does not turn them into U4038.
 
-## Cas restants
+## Cases still to collect
 
-| Cas | JCL et attendu |
+| Case | JCL and expected outcome |
 | --- | --- |
-| IDCAMS RC=12 | `jcl/idcams-rc12.jcl` : mot-clé inconnu, `$HASP395 … RC=0012` |
-| Job long | `jcl/long.jcl` : une dizaine de steps, `IF/THEN/ELSE`, procédure in-stream appelée deux fois, SYSPRINT de plusieurs dizaines de pages, DD écrite sans ASA (IEBGENER) |
+| IDCAMS RC=12 | `jcl/idcams-rc12.jcl`: unknown keyword, `$HASP395 … RC=0012` |
+| Long job | `jcl/long.jcl`: about ten steps, `IF/THEN/ELSE`, an in-stream procedure called twice, a SYSPRINT of several dozen pages, a DD written without ASA characters (IEBGENER) |
 
-Avant les jobs COBOL (s0c7, s0c4, s322, igz-open), soumettre une fois `jcl/setup-load.jcl` : la procédure `IGYWCLG` de Z Xplore range le module dans `<userid>.LOAD` et le job part en JCL ERROR si la bibliothèque n'existe pas.
+Before the COBOL jobs (s0c7, s0c4, s322, igz-open), submit `jcl/setup-load.jcl` once: on Z Xplore the `IGYWCLG` procedure stores the load module in `<userid>.LOAD`, and the job fails with a JCL ERROR if that library does not exist.
 
-Sur Z Xplore, remplacer `CLASS=A` par la classe autorisée (`CLASS=7` observée sur `JOB00823`) et vérifier le nom de la procédure de compilation COBOL (`IGYWCLG` par défaut). Pour chaque job, télécharger la spool avec l'action de téléchargement de Zowe Explorer (clic droit sur le job), puis la déposer telle quelle dans `sysout/`.
+On Z Xplore, replace `CLASS=A` with the class you are allowed to use (`CLASS=7` on `JOB00823`) and check the name of the COBOL compile procedure (`IGYWCLG` by default). For each job, download the spool with Zowe Explorer's download action (right-click the job) and drop it as is into `sysout/`.

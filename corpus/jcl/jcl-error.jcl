@@ -1,8 +1,8 @@
 //JRJCLERR JOB (ACCT),'JES-READER JCLERR',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS JCL ERROR : DISP=SHR sur un dataset qui n'existe pas.
-//* Attendu : IEFA107I ... NOT FOUND, puis IEF453I JCL ERROR.
+//* CASE JCL ERROR: DISP=SHR on a data set that does not exist.
+//* Expected: IEFA107I ... NOT FOUND, then IEF453I JCL ERROR.
 //*--------------------------------------------------------------------
 //STEP010  EXEC PGM=IEBGENER
 //SYSPRINT DD SYSOUT=*

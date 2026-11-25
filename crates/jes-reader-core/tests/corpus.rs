@@ -1,9 +1,9 @@
-//! Un snapshot par DD du corpus (`corpus/sysout`) : steps, instructions,
-//! messages et constats.
+//! One snapshot per DD of the corpus (`corpus/sysout`): steps, statements,
+//! messages and findings.
 //!
-//! Mise à jour après un changement voulu du parser :
+//! After an intended parser change, update with
 //! `INSTA_UPDATE=always cargo test -p jes-reader-core --test corpus`,
-//! puis relire le diff des fichiers `tests/snapshots/*.snap`.
+//! then review the diff of `tests/snapshots/*.snap`.
 
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ fn corpus() {
     files.sort();
     assert!(
         files.len() >= 40,
-        "corpus incomplet : {} fichiers",
+        "incomplete corpus: {} files",
         files.len()
     );
 
@@ -50,8 +50,8 @@ fn collect(dir: &Path, files: &mut Vec<PathBuf>) {
     }
 }
 
-/// Même règle que `scripts/anonymize.sh` : le corpus local garde le vrai
-/// userid, la CI voit `Z99999`. Les snapshots doivent être identiques.
+/// Same rule as `scripts/anonymize.sh`: the local corpus keeps the real user
+/// ID while CI sees `Z99999`, and snapshots must be identical in both.
 fn anonymize(text: &str) -> String {
     let b = text.as_bytes();
     let mut out = b.to_vec();
@@ -66,32 +66,31 @@ fn anonymize(text: &str) -> String {
     String::from_utf8(out).unwrap()
 }
 
-/// Rendu lisible d'une DD ; lignes numérotées à partir de 1 comme dans
-/// l'éditeur.
+/// Readable rendering of a DD; lines are numbered from 1, as in the editor.
 fn render(path: &str, dd: &Dd) -> String {
     let mut s = String::new();
     let opt = |v: &Option<String>| v.clone().unwrap_or_else(|| "?".into());
-    writeln!(s, "fichier : {path}").unwrap();
+    writeln!(s, "file: {path}").unwrap();
     writeln!(
         s,
-        "DD {} ({:?}), ASA : {}, {} lignes",
+        "DD {} ({:?}), ASA: {}, {} lines",
         opt(&dd.name),
         dd.kind,
-        if dd.has_asa { "oui" } else { "non" },
+        if dd.has_asa { "yes" } else { "no" },
         dd.line_count
     )
     .unwrap();
-    writeln!(s, "job : {} {}", opt(&dd.job_name), opt(&dd.job_id)).unwrap();
+    writeln!(s, "job: {} {}", opt(&dd.job_name), opt(&dd.job_id)).unwrap();
     if let Some(end) = &dd.job_end {
-        writeln!(s, "fin du job : {end:?}").unwrap();
+        writeln!(s, "end of job: {end:?}").unwrap();
     }
 
     if !dd.steps.is_empty() {
-        writeln!(s, "\nsteps :").unwrap();
+        writeln!(s, "\nsteps:").unwrap();
         for step in &dd.steps {
             writeln!(
                 s,
-                "  L{}-{} {} : {:?} (L{})",
+                "  L{}-{} {}: {:?} (L{})",
                 step.lines.start + 1,
                 step.lines.end,
                 step.display_name(),
@@ -103,7 +102,7 @@ fn render(path: &str, dd: &Dd) -> String {
     }
 
     if !dd.statements.is_empty() {
-        writeln!(s, "\ninstructions :").unwrap();
+        writeln!(s, "\nstatements:").unwrap();
         for st in &dd.statements {
             writeln!(
                 s,
@@ -120,7 +119,7 @@ fn render(path: &str, dd: &Dd) -> String {
     }
 
     if !dd.messages.is_empty() {
-        writeln!(s, "\nmessages :").unwrap();
+        writeln!(s, "\nmessages:").unwrap();
         for m in &dd.messages {
             let lines = if m.lines.len() == 1 {
                 format!("L{}", m.lines.start + 1)
@@ -129,7 +128,7 @@ fn render(path: &str, dd: &Dd) -> String {
             };
             let statement = m
                 .statement
-                .map(|n| format!(" [instr. {n}]"))
+                .map(|n| format!(" [stmt {n}]"))
                 .unwrap_or_default();
             writeln!(
                 s,
@@ -145,11 +144,11 @@ fn render(path: &str, dd: &Dd) -> String {
 
     let findings = analyze(dd, &Options::default());
     if !findings.is_empty() {
-        writeln!(s, "\nconstats :").unwrap();
+        writeln!(s, "\nfindings:").unwrap();
         for f in findings {
             let severity = match f.severity {
-                FindingSeverity::Error => "erreur",
-                FindingSeverity::Warning => "avertissement",
+                FindingSeverity::Error => "error",
+                FindingSeverity::Warning => "warning",
                 FindingSeverity::Information => "info",
             };
             writeln!(s, "  L{} {severity} [{}] {}", f.line + 1, f.code, f.message).unwrap();

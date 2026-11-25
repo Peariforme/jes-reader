@@ -2,23 +2,23 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00890/JES2/JESMSGLG.txt
-DD JESMSGLG (JesMsgLg), ASA : oui, 21 lignes
-job : JRNOTCAT JOB00890
-fin du job : JclError
+file: JOB00890/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 21 lines
+job: JRNOTCAT JOB00890
+end of job: JclError
 
-steps :
-  L9-9 STEP005 : Completed { return_code: 0 } (L9)
-  L10-10 STEP010 : Completed { return_code: 0 } (L10)
-  L11-11 STEP020 : NotRun (L11)
+steps:
+  L9-9 STEP005: Completed { return_code: 0 } (L9)
+  L10-10 STEP010: Completed { return_code: 0 } (L10)
+  L11-11 STEP020: NotRun (L11)
 
-messages :
+messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
   L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:49:32 ON WEDNESDAY, NOVEMBER 25, 2026
   L6 col.21-28 $HASP373 JRNOTCAT STARTED - INIT 1    - CLASS A        - SYS S0W1
   L12 col.21-27 IEF453I JRNOTCAT - JOB FAILED - JCL ERROR
   L14 col.21-28 $HASP395 JRNOTCAT ENDED
 
-constats :
-  L12 erreur [IEF453I] JRNOTCAT - JOB FAILED - JCL ERROR
-  L11 info [FLUSH] Step STEP020 non exécuté
+findings:
+  L12 error [IEF453I] JRNOTCAT - JOB FAILED - JCL ERROR
+  L11 info [FLUSH] Step STEP020 did not run

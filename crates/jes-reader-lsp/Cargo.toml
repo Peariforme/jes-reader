@@ -1,6 +1,6 @@
 [package]
 name = "jes-reader-lsp"
-description = "Serveur de langage (LSP) pour sysouts JES2 z/OS"
+description = "Language server (LSP) for z/OS JES2 sysouts"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

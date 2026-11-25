@@ -1,9 +1,9 @@
 //JRS0C4   JOB (ACCT),'JES-READER S0C4',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS S0C4 : ecriture a l'adresse 0 via un pointeur NULL
-//* (protection exception). Selon les options LE : S0C4 au step GO,
-//* ou CEE3204S puis U4038.
+//* CASE S0C4: write to address 0 through a NULL pointer
+//* (protection exception). Depending on LE options: S0C4 in step GO,
+//* or CEE3204S then U4038.
 //*--------------------------------------------------------------------
 //COBRUN   EXEC IGYWCLG
 //COBOL.SYSIN DD *

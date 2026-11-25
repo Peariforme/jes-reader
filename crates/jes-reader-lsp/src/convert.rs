@@ -1,8 +1,8 @@
-//! Conversion du modèle `jes-reader-core` vers les types LSP : diagnostics,
-//! symboles (Outline) et zones de repliage.
+//! Conversion from the `jes-reader-core` model to LSP types: diagnostics,
+//! symbols (Outline) and folding ranges.
 //!
-//! Le cœur compte les colonnes en octets ; le LSP les attend en unités
-//! UTF-16. La conversion se fait ici, à partir du texte de chaque ligne.
+//! The core counts columns in bytes; LSP expects UTF-16 code units. The
+//! conversion happens here, from the text of each line.
 
 use std::ops::Range;
 
@@ -14,7 +14,7 @@ use lsp_types::{
     Range as LspRange, SymbolKind,
 };
 
-/// Texte d'un document découpé en lignes, comme le fait le parser.
+/// Text of a document split into lines, the way the parser does it.
 pub struct Lines<'a>(Vec<&'a str>);
 
 impl<'a> Lines<'a> {
@@ -26,7 +26,7 @@ impl<'a> Lines<'a> {
         self.0.get(n).copied().unwrap_or("")
     }
 
-    /// Position LSP d'un offset en octets dans la ligne `n`.
+    /// LSP position of a byte offset in line `n`.
     fn position(&self, n: usize, byte: usize) -> Position {
         let line = self.line(n);
         let mut byte = byte.min(line.len());
@@ -36,16 +36,16 @@ impl<'a> Lines<'a> {
         Position::new(to_u32(n), to_u32(line[..byte].encode_utf16().count()))
     }
 
-    /// Colonnes `columns` de la ligne `n`.
-    fn span(&self, n: usize, columns: Range<usize>) -> LspRange {
+    /// Columns `columns` of line `n`.
+    pub fn span(&self, n: usize, columns: Range<usize>) -> LspRange {
         LspRange::new(
             self.position(n, columns.start),
             self.position(n, columns.end),
         )
     }
 
-    /// Contenu de la ligne `n`, sans le caractère ASA ni les espaces de tête.
-    fn content(&self, n: usize) -> LspRange {
+    /// Content of line `n`, without the ASA character and leading spaces.
+    pub fn content(&self, n: usize) -> LspRange {
         let line = self.line(n);
         let start = line
             .char_indices()
@@ -55,7 +55,19 @@ impl<'a> Lines<'a> {
         self.span(n, start..line.len())
     }
 
-    /// Lignes `lines` entières (borne haute exclue).
+    /// Byte offset of the UTF-16 column `character` in line `n`.
+    pub fn byte_column(&self, n: usize, character: u32) -> usize {
+        let mut units = 0;
+        for (i, c) in self.line(n).char_indices() {
+            if units >= character as usize {
+                return i;
+            }
+            units += c.len_utf16();
+        }
+        self.line(n).len()
+    }
+
+    /// Whole lines `lines` (exclusive upper bound).
     fn block(&self, lines: &Range<usize>) -> LspRange {
         let last = lines.end.max(lines.start + 1) - 1;
         LspRange::new(
@@ -88,7 +100,7 @@ pub fn diagnostic(finding: &Finding, lines: &Lines<'_>) -> Diagnostic {
     }
 }
 
-#[allow(deprecated)] // `DocumentSymbol::deprecated` est obligatoire dans le littéral.
+#[allow(deprecated)] // `DocumentSymbol::deprecated` is required in the struct literal.
 fn symbol(
     name: String,
     detail: Option<String>,
@@ -109,8 +121,8 @@ fn symbol(
     }
 }
 
-/// Outline : steps pour JESMSGLG et JESYSMSG, arbre JOB → EXEC → DD pour
-/// JESJCL, messages pour les autres DD.
+/// Outline: steps for JESMSGLG and JESYSMSG, a JOB → EXEC → DD tree for
+/// JESJCL, messages for other DDs.
 pub fn symbols(dd: &Dd, lines: &Lines<'_>) -> Vec<DocumentSymbol> {
     match dd.kind {
         DdKind::JesMsgLg | DdKind::JesYsMsg => {
@@ -138,8 +150,8 @@ fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
     let detail = match &step.status {
         StepStatus::Completed { return_code } => format!("RC {return_code}"),
         StepStatus::Abended { code, .. } => format!("abend {code}"),
-        StepStatus::NotRun => "non exécuté".into(),
-        StepStatus::Unknown => "en cours ou inconnu".into(),
+        StepStatus::NotRun => "not run".into(),
+        StepStatus::Unknown => "running or unknown".into(),
     };
     symbol(
         step.display_name(),
@@ -151,10 +163,10 @@ fn step_symbol(step: &Step, lines: &Lines<'_>) -> DocumentSymbol {
     )
 }
 
-/// Arbre des instructions : JOB, puis EXEC du job, puis EXEC de procédure,
-/// avec les DD sous l'EXEC le plus proche.
+/// Statement tree: JOB, then job EXEC, then procedure EXEC, with the DDs
+/// under the nearest EXEC.
 fn jcl_symbols(statements: &[Statement], lines: &Lines<'_>) -> Vec<DocumentSymbol> {
-    // (instruction, enfants), du plus englobant au plus interne.
+    // (statement, children), from outermost to innermost.
     let mut job: Option<(&Statement, Vec<DocumentSymbol>)> = None;
     let mut exec: Option<(&Statement, Vec<DocumentSymbol>)> = None;
     let mut proc_exec: Option<(&Statement, Vec<DocumentSymbol>)> = None;
@@ -206,7 +218,7 @@ fn jcl_symbols(statements: &[Statement], lines: &Lines<'_>) -> Vec<DocumentSymbo
     roots
 }
 
-/// Ajoute `child` au nœud `parent` s'il existe, sinon à la racine.
+/// Adds `child` to the `parent` node if there is one, otherwise to the roots.
 fn attach(
     parent: &mut Option<(&Statement, Vec<DocumentSymbol>)>,
     child: Option<DocumentSymbol>,
@@ -231,11 +243,11 @@ fn statement_symbol(
         _ => SymbolKind::FIELD,
     };
     let detail = match st.origin {
-        StatementOrigin::Job => format!("{operation} · instr. {}", st.number),
-        StatementOrigin::Procedure => format!("{operation} · instr. {} · procédure", st.number),
-        StatementOrigin::Override => format!("{operation} · instr. {} · surcharge", st.number),
+        StatementOrigin::Job => format!("{operation} · stmt {}", st.number),
+        StatementOrigin::Procedure => format!("{operation} · stmt {} · procedure", st.number),
+        StatementOrigin::Override => format!("{operation} · stmt {} · override", st.number),
     };
-    // Le symbole couvre l'instruction et tous ses enfants.
+    // The symbol covers the statement and all its children.
     let mut range = lines.block(&st.lines);
     if let Some(last) = children.last() {
         range.end = range.end.max(last.range.end);
@@ -251,7 +263,7 @@ fn statement_symbol(
     )
 }
 
-/// Zones repliables : steps, instructions et messages de plusieurs lignes.
+/// Folding ranges: steps, statements and multi-line messages.
 pub fn folding_ranges(dd: &Dd) -> Vec<FoldingRange> {
     let blocks = dd
         .steps
@@ -277,9 +289,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn colonnes_utf16() {
+    fn utf16_columns() {
         let lines = Lines::new(" é IEF142I\n");
-        // `é` fait 2 octets mais 1 unité UTF-16.
+        // `é` is 2 bytes but 1 UTF-16 code unit.
         assert_eq!(lines.position(0, 4), Position::new(0, 3));
         assert_eq!(lines.position(0, 2), Position::new(0, 1));
         assert_eq!(lines.position(0, usize::MAX), Position::new(0, 10));
@@ -287,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn contenu_sans_asa() {
+    fn content_without_asa() {
         let lines = Lines::new("0  IDC3012I ENTRY\n");
         assert_eq!(
             lines.content(0),

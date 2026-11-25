@@ -1,19 +1,19 @@
 //JRLONG   JOB (ACCT),'JES-READER LONG',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS JOB LONG : volume et structure, sans abend.
-//*   PRINT   : IDCAMS PRINT d'un gros membre -> SYSPRINT de plusieurs
-//*             dizaines de pages (sauts de page ASA au fil de la DD)
-//*   COPY    : IEBGENER vers SYSOUT, DD ecrite SANS caractere ASA
+//* CASE LONG JOB: volume and structure, no abend.
+//*   PRINT   : IDCAMS PRINT of a large member -> SYSPRINT of several
+//*             dozen pages (ASA page breaks inside the DD)
+//*   COPY    : IEBGENER to SYSOUT, DD written WITHOUT ASA characters
 //*   RC4     : IDCAMS SET MAXCC=4                     -> RC=4
-//*   SIOK    : IF (RC4.RC = 4) vrai                   -> execute
-//*   SINON   : branche ELSE                           -> non execute
-//*   APPEL1/APPEL2 : procedure in-stream de 2 steps appelee 2 fois
-//*             (noms <procstep> <step> dans les messages)
+//*   SIOK    : IF (RC4.RC = 4) true                   -> runs
+//*   SINON   : ELSE branch                            -> does not run
+//*   APPEL1/APPEL2 : 2-step in-stream procedure called twice
+//*             (<procstep> <step> names in the messages)
 //*   FIN     : IEFBR14
-//* Attendu : $HASP395 ... ENDED - RC=0004, une dizaine de steps.
-//* Si IHAPSA est absent de SYS1.MACLIB, prendre un autre gros
-//* membre (IEFUCBOB, IHASCB...).
+//* Expected: $HASP395 ... ENDED - RC=0004, about ten steps.
+//* If IHAPSA is not in SYS1.MACLIB, use another large member
+//* (IEFUCBOB, IHASCB...).
 //*--------------------------------------------------------------------
 //JRPROC   PROC
 //ETAPE1   EXEC PGM=IEFBR14

@@ -1,5 +1,5 @@
-// Compile jes-reader-lsp en release et le copie dans server/, où
-// l'extension le cherche par défaut.
+// Builds jes-reader-lsp in release mode and copies it into server/, where
+// the extension looks for it by default.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -15,4 +15,4 @@ execFileSync('cargo', ['build', '--release', '-p', 'jes-reader-lsp'], {
 });
 mkdirSync(join(extension, 'server'), { recursive: true });
 copyFileSync(join(workspace, 'target', 'release', exe), join(extension, 'server', exe));
-console.log(`server/${exe} prêt`);
+console.log(`server/${exe} ready`);

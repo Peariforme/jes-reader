@@ -1,4 +1,4 @@
-//! Poignée de main LSP complète sur une connexion en mémoire.
+//! Full LSP handshake over an in-memory connection.
 
 use lsp_server::{Connection, Message, Notification, Request, RequestId};
 use lsp_types::{InitializeParams, InitializeResult, TextDocumentSyncCapability};
@@ -20,7 +20,7 @@ fn initialize_then_shutdown() {
         )
         .unwrap();
     let Message::Response(resp) = client.receiver.recv().unwrap() else {
-        panic!("réponse attendue à initialize");
+        panic!("expected a response to initialize");
     };
     let result: InitializeResult = serde_json::from_value(resp.response_result.unwrap()).unwrap();
     assert!(matches!(
@@ -37,7 +37,7 @@ fn initialize_then_shutdown() {
         .send(Request::new(RequestId::from(2), "shutdown".into(), ()).into())
         .unwrap();
     let Message::Response(resp) = client.receiver.recv().unwrap() else {
-        panic!("réponse attendue à shutdown");
+        panic!("expected a response to shutdown");
     };
     assert_eq!(resp.id, RequestId::from(2));
     client

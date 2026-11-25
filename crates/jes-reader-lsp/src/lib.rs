@@ -1,15 +1,17 @@
-//! Serveur LSP pour sysouts JES2, construit sur `lsp-server` (synchrone).
+//! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
-//! Chaque document ouvert est une DD, analysée à chaque modification :
-//! diagnostics poussés au client, Outline et repliage sur demande.
+//! Each open document is a DD, analysed on every change: diagnostics are
+//! pushed to the client; Outline, folding, Go to Definition and hovers are
+//! served on request.
 //!
-//! Options d'initialisation (`initializationOptions`) :
+//! Initialization options (`initializationOptions`):
 //!
 //! ```json
 //! { "maxReturnCode": 4 }
 //! ```
 
 mod convert;
+mod navigate;
 
 use std::collections::HashMap;
 
@@ -20,27 +22,34 @@ use lsp_types::notification::{
     DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument,
     Notification as LspNotification, PublishDiagnostics,
 };
-use lsp_types::request::{DocumentSymbolRequest, FoldingRangeRequest, Request as LspRequest};
+use lsp_types::request::{
+    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as LspRequest,
+};
 use lsp_types::{
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
-    FoldingRangeProviderCapability, InitializeParams, OneOf, PublishDiagnosticsParams,
-    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
+    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, Hover,
+    HoverContents, HoverParams, HoverProviderCapability, InitializeParams, Location, MarkupContent,
+    MarkupKind, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
+    TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
 
-/// Capacités annoncées au client.
+/// Capabilities announced to the client.
 pub fn capabilities() -> ServerCapabilities {
     ServerCapabilities {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
         document_symbol_provider: Some(OneOf::Left(true)),
         folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+        definition_provider: Some(OneOf::Left(true)),
+        hover_provider: Some(HoverProviderCapability::Simple(true)),
         ..ServerCapabilities::default()
     }
 }
 
-/// Document ouvert : son texte et son analyse.
+/// Open document: its URI, its text and its analysis.
 struct Document {
+    uri: Uri,
     text: String,
     dd: Dd,
 }
@@ -51,7 +60,7 @@ struct Server<'a> {
     documents: HashMap<String, Document>,
 }
 
-/// Fait la poignée de main `initialize`, puis traite les messages jusqu'à `shutdown`.
+/// Performs the `initialize` handshake, then handles messages until `shutdown`.
 pub fn run(connection: &Connection) -> Result<()> {
     let caps = serde_json::to_value(capabilities())?;
     let params: InitializeParams = serde_json::from_value(connection.initialize(caps)?)?;
@@ -76,7 +85,7 @@ pub fn run(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
-/// Lit `maxReturnCode` dans les options d'initialisation, sinon valeur par défaut.
+/// Reads `maxReturnCode` from the initialization options, otherwise the default.
 fn options(init: Option<&serde_json::Value>) -> Options {
     let mut options = Options::default();
     if let Some(max) = init
@@ -100,7 +109,7 @@ impl Server<'_> {
             DidChangeTextDocument::METHOD => {
                 let params: <DidChangeTextDocument as LspNotification>::Params =
                     serde_json::from_value(not.params)?;
-                // Synchronisation complète : le dernier changement porte tout le texte.
+                // Full sync: the last change carries the whole text.
                 if let Some(change) = params.content_changes.into_iter().last() {
                     self.update(params.text_document.uri, change.text)?;
                 }
@@ -116,7 +125,7 @@ impl Server<'_> {
         Ok(())
     }
 
-    /// Analyse un document et publie ses diagnostics.
+    /// Analyses a document and publishes its diagnostics.
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
         let dd = parse_file(&decode_path(uri.path().as_str()), &text);
         let lines = Lines::new(&text);
@@ -124,8 +133,14 @@ impl Server<'_> {
             .iter()
             .map(|f| convert::diagnostic(f, &lines))
             .collect();
-        self.documents
-            .insert(uri.as_str().to_owned(), Document { text, dd });
+        self.documents.insert(
+            uri.as_str().to_owned(),
+            Document {
+                uri: uri.clone(),
+                text,
+                dd,
+            },
+        );
         self.publish(uri, diagnostics)
     }
 
@@ -156,10 +171,21 @@ impl Server<'_> {
                     .map(|doc| convert::folding_ranges(&doc.dd));
                 Response::new_ok(req.id, ranges)
             }
+            GotoDefinition::METHOD => {
+                let params: GotoDefinitionParams = serde_json::from_value(req.params)?;
+                let at = params.text_document_position_params;
+                let location = self.definition(&at.text_document.uri, at.position);
+                Response::new_ok(req.id, location.map(GotoDefinitionResponse::Scalar))
+            }
+            HoverRequest::METHOD => {
+                let params: HoverParams = serde_json::from_value(req.params)?;
+                let at = params.text_document_position_params;
+                Response::new_ok(req.id, self.hover(&at.text_document.uri, at.position))
+            }
             method => Response::new_err(
                 req.id,
                 ErrorCode::MethodNotFound as i32,
-                format!("méthode non prise en charge : {method}"),
+                format!("unsupported method: {method}"),
             ),
         };
         self.connection.sender.send(response.into())?;
@@ -169,10 +195,79 @@ impl Server<'_> {
     fn document(&self, uri: &Uri) -> Option<&Document> {
         self.documents.get(uri.as_str())
     }
+
+    /// Document under `uri` and the link target at `position`, if any.
+    fn target(&self, uri: &Uri, position: Position) -> Option<(&Document, navigate::Target)> {
+        let doc = self.document(uri)?;
+        let line = usize::try_from(position.line).ok()?;
+        let column = Lines::new(&doc.text).byte_column(line, position.character);
+        Some((doc, navigate::target_at(&doc.dd, line, column)?))
+    }
+
+    /// JESJCL of the job `doc` belongs to: an open document first (the VS
+    /// Code extension opens it in the background for Zowe documents),
+    /// otherwise `JESJCL.txt` next to a downloaded file.
+    fn jcl_of(&self, doc: &Document) -> Option<Document> {
+        if let Some(jcl) = self
+            .documents
+            .values()
+            .find(|other| navigate::is_jcl_of(&other.dd, &doc.dd))
+        {
+            return Some(Document {
+                uri: jcl.uri.clone(),
+                text: jcl.text.clone(),
+                dd: jcl.dd.clone(),
+            });
+        }
+        if !doc.uri.as_str().starts_with("file:") {
+            return None;
+        }
+        let path = navigate::file_path(&decode_path(doc.uri.path().as_str()));
+        let sibling = navigate::sibling_jcl(&path)?;
+        let text = String::from_utf8_lossy(&std::fs::read(&sibling).ok()?).into_owned();
+        let dd = parse_file(&sibling.to_string_lossy(), &text);
+        let (directory, _) = doc.uri.as_str().rsplit_once('/')?;
+        let uri = format!("{directory}/JESJCL.txt").parse().ok()?;
+        Some(Document { uri, text, dd })
+    }
+
+    /// JCL statement behind the cursor, in the JESJCL of the same job.
+    fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
+        let (doc, target) = self.target(uri, position)?;
+        let jcl = self.jcl_of(doc)?;
+        let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
+        let range = Lines::new(&jcl.text).content(statement.lines.start);
+        Some(Location::new(jcl.uri, range))
+    }
+
+    /// On a link target: the JCL statement it leads to, so that the reader
+    /// sees what is behind the link before following it.
+    fn hover(&self, uri: &Uri, position: Position) -> Option<Hover> {
+        let (doc, target) = self.target(uri, position)?;
+        let jcl = self.jcl_of(doc);
+        let value = navigate::hover_text(
+            target,
+            &doc.dd,
+            jcl.as_ref().map(|j| (&j.dd, j.text.as_str())),
+        );
+        let lines = Lines::new(&doc.text);
+        let line = usize::try_from(position.line).ok()?;
+        let range = match navigate::target_columns(&doc.dd, target, line) {
+            Some(columns) => lines.span(line, columns),
+            None => lines.content(line),
+        };
+        Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value,
+            }),
+            range: Some(range),
+        })
+    }
 }
 
-/// Décode les `%XX` d'un chemin d'URI. Le nom de la DD en dépend :
-/// `SYSPRINT%281%29.txt` doit redevenir `SYSPRINT(1).txt`.
+/// Decodes the `%XX` escapes of a URI path. The DD name depends on it:
+/// `SYSPRINT%281%29.txt` must become `SYSPRINT(1).txt` again.
 fn decode_path(path: &str) -> String {
     let bytes = path.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -201,7 +296,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn chemin_decode() {
+    fn decoded_path() {
         assert_eq!(
             decode_path("/c%3A/corpus/JOB00896/LKED/COBRUN/SYSPRINT%281%29.txt"),
             "/c:/corpus/JOB00896/LKED/COBRUN/SYSPRINT(1).txt"
@@ -211,7 +306,7 @@ mod tests {
     }
 
     #[test]
-    fn options_initialisation() {
+    fn initialization_options() {
         assert_eq!(options(None).max_return_code, 4);
         let init = serde_json::json!({ "maxReturnCode": 8 });
         assert_eq!(options(Some(&init)).max_return_code, 8);

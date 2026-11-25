@@ -1,8 +1,8 @@
 name: Package
 
-# VSIX par plateforme et binaires CLI à chaque PR et push sur main
-# (artefacts téléchargeables). Sur un tag `v*`, publication : release
-# GitHub, puis VS Code Marketplace et Open VSX si leurs jetons existent.
+# Platform-specific VSIX and CLI binaries on every PR and push to main
+# (downloadable artifacts). On a `v*` tag, publishing: GitHub release,
+# then VS Code Marketplace and Open VSX if their tokens exist.
 
 permissions:
   contents: read
@@ -68,7 +68,7 @@ jobs:
           version=$(node -p "require('./editors/vscode/package.json').version")
           name=jes-reader-cli-${{ matrix.target }}-$version
           mkdir -p dist
-          # Artefact à plat : la publication attend des fichiers, pas des dossiers.
+          # Flat artifact: the publish job expects files, not directories.
           cp editors/vscode/dist/*.vsix dist/
           cd target/${{ matrix.rust }}/release
           if [[ "${{ matrix.target }}" == win32-* ]]; then
@@ -84,7 +84,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publication
+    name: Publish
     if: startsWith(github.ref, 'refs/tags/v')
     needs: package
     runs-on: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Tag et versions concordent
+      - name: Tag matches versions
         run: |
           tag=${GITHUB_REF_NAME#v}
           extension=$(node -p "require('./editors/vscode/package.json').version")
@@ -109,7 +109,7 @@ jobs:
           path: release
           merge-multiple: true
 
-      - name: Release GitHub
+      - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" release/* --title "$GITHUB_REF_NAME" --generate-notes
@@ -118,7 +118,7 @@ jobs:
         if: env.VSCE_PAT != '' || env.OVSX_PAT != ''
         with:
           node-version: 20
-      - name: Outils de publication
+      - name: Publishing tools
         if: env.VSCE_PAT != '' || env.OVSX_PAT != ''
         working-directory: editors/vscode
         run: npm ci

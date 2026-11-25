@@ -1,16 +1,19 @@
-//! Session LSP complète sur une sysout du corpus : ouverture, diagnostics,
-//! Outline, repliage, fermeture.
+//! Full LSP sessions on corpus sysouts: open, diagnostics, Outline, folding,
+//! Go to Definition, close.
 
 use lsp_server::{Connection, Message, Notification, Request, RequestId};
 use lsp_types::notification::{
     DidCloseTextDocument, DidOpenTextDocument, Notification as _, PublishDiagnostics,
 };
-use lsp_types::request::{DocumentSymbolRequest, FoldingRangeRequest, Request as _};
+use lsp_types::request::{
+    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as _,
+};
 use lsp_types::{
     DiagnosticSeverity, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRange, FoldingRangeParams,
-    InitializeParams, NumberOrString, PublishDiagnosticsParams, TextDocumentIdentifier,
-    TextDocumentItem, Uri,
+    GotoDefinitionParams, GotoDefinitionResponse, HoverParams, InitializeParams, Location,
+    NumberOrString, Position, PublishDiagnosticsParams, TextDocumentIdentifier, TextDocumentItem,
+    TextDocumentPositionParams, Uri,
 };
 use serde_json::Value;
 
@@ -49,8 +52,8 @@ impl Client {
         match self.connection.receiver.recv().unwrap() {
             Message::Response(resp) if resp.id == id => resp
                 .response_result
-                .unwrap_or_else(|e| panic!("{method} : erreur {e:?}")),
-            other => panic!("réponse attendue à {method}, reçu {other:?}"),
+                .unwrap_or_else(|e| panic!("{method}: error {e:?}")),
+            other => panic!("expected a response to {method}, got {other:?}"),
         }
     }
 
@@ -59,7 +62,7 @@ impl Client {
             Message::Notification(n) if n.method == PublishDiagnostics::METHOD => {
                 serde_json::from_value(n.params).unwrap()
             }
-            other => panic!("diagnostics attendus, reçu {other:?}"),
+            other => panic!("expected diagnostics, got {other:?}"),
         }
     }
 }
@@ -71,10 +74,146 @@ fn corpus(path: &str) -> String {
     String::from_utf8_lossy(&std::fs::read(file).unwrap()).into_owned()
 }
 
+/// `file:` URI of a corpus file, as the editor would send it.
+fn corpus_uri(path: &str) -> Uri {
+    let file = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../corpus/sysout")
+        .join(path)
+        .to_string_lossy()
+        .replace('\\', "/");
+    let uri = if file.starts_with('/') {
+        format!("file://{file}")
+    } else {
+        format!("file:///{file}")
+    };
+    uri.parse().unwrap()
+}
+
+impl Client {
+    /// Opens a document and consumes the diagnostics it triggers.
+    fn open(&self, uri: &Uri, text: String) {
+        self.notify(
+            DidOpenTextDocument::METHOD,
+            DidOpenTextDocumentParams {
+                text_document: TextDocumentItem::new(uri.clone(), "jes-sysout".into(), 1, text),
+            },
+        );
+        self.diagnostics();
+    }
+
+    fn definition(&mut self, uri: &Uri, line: u32, character: u32) -> Option<Location> {
+        let result = self.request(
+            GotoDefinition::METHOD,
+            GotoDefinitionParams {
+                text_document_position_params: TextDocumentPositionParams::new(
+                    TextDocumentIdentifier::new(uri.clone()),
+                    Position::new(line, character),
+                ),
+                work_done_progress_params: Default::default(),
+                partial_result_params: Default::default(),
+            },
+        );
+        match serde_json::from_value(result).unwrap() {
+            Some(GotoDefinitionResponse::Scalar(location)) => Some(location),
+            None => None,
+            other => panic!("expected a single location, got {other:?}"),
+        }
+    }
+
+    fn stop(mut self, handle: std::thread::JoinHandle<anyhow::Result<()>>) {
+        self.request("shutdown", ());
+        self.notify("exit", ());
+        handle.join().unwrap().unwrap();
+    }
+}
+
+#[test]
+fn definition_with_open_jcl() {
+    let (mut client, handle) = Client::start();
+    // Zowe documents: the extension opens JESJCL in the background.
+    let sysmsg: Uri = "zowe-jobs:/zosmf/JOB00896/JRS0C7.JOB00896.JES2.JESYSMSG.4"
+        .parse()
+        .unwrap();
+    let msglg: Uri = "zowe-jobs:/zosmf/JOB00896/JRS0C7.JOB00896.JES2.JESMSGLG.2"
+        .parse()
+        .unwrap();
+    let jcl: Uri = "zowe-jobs:/zosmf/JOB00896/JRS0C7.JOB00896.JES2.JESJCL.3"
+        .parse()
+        .unwrap();
+    client.open(&sysmsg, corpus("JOB00896/JES2/JESYSMSG.txt"));
+    client.open(&msglg, corpus("JOB00896/JES2/JESMSGLG.txt"));
+    client.open(&jcl, corpus("JOB00896/JES2/JESJCL.txt"));
+
+    // `        11 IEF655I …`: statement 11 of JESJCL.
+    let location = client.definition(&sysmsg, 2, 9).unwrap();
+    assert_eq!(location.uri, jcl);
+    assert_eq!(location.range.start.line, 26);
+    // On the message ID itself: nothing.
+    assert!(client.definition(&sysmsg, 2, 13).is_none());
+
+    // Abend of step COBRUN.GO: the expanded `XXGO EXEC` (statement 46).
+    let location = client.definition(&sysmsg, 130, 5).unwrap();
+    assert_eq!((location.uri, location.range.start.line), (jcl.clone(), 73));
+
+    // Same step from the JESMSGLG step table.
+    let location = client.definition(&msglg, 12, 25).unwrap();
+    assert_eq!((location.uri, location.range.start.line), (jcl, 73));
+
+    // Hover on the abend line: the step outcome and its EXEC statement.
+    let hover = client.request(
+        HoverRequest::METHOD,
+        HoverParams {
+            text_document_position_params: TextDocumentPositionParams::new(
+                TextDocumentIdentifier::new(sysmsg.clone()),
+                Position::new(130, 5),
+            ),
+            work_done_progress_params: Default::default(),
+        },
+    );
+    let text = hover["contents"]["value"].as_str().unwrap();
+    assert!(
+        text.starts_with("**Step COBRUN.GO** · abend S0C7"),
+        "{text}"
+    );
+    assert!(text.contains("EXEC statement 46:"), "{text}");
+    assert!(text.contains("XXGO "), "{text}");
+    // No hover on a line that is not a link target.
+    assert!(
+        client
+            .request(
+                HoverRequest::METHOD,
+                HoverParams {
+                    text_document_position_params: TextDocumentPositionParams::new(
+                        TextDocumentIdentifier::new(sysmsg.clone()),
+                        Position::new(0, 3),
+                    ),
+                    work_done_progress_params: Default::default(),
+                },
+            )
+            .is_null()
+    );
+
+    client.stop(handle);
+}
+
+#[test]
+fn definition_reads_downloaded_jcl() {
+    let (mut client, handle) = Client::start();
+    // Downloaded job: JESJCL is not open, the server reads it from disk.
+    let sysmsg = corpus_uri("JOB00896/JES2/JESYSMSG.txt");
+    client.open(&sysmsg, corpus("JOB00896/JES2/JESYSMSG.txt"));
+
+    let location = client.definition(&sysmsg, 130, 5).unwrap();
+    assert!(location.uri.as_str().ends_with("/JOB00896/JES2/JESJCL.txt"));
+    assert_eq!(location.range.start.line, 73);
+
+    client.stop(handle);
+}
+
 #[test]
 fn abend_s0c7() {
     let (mut client, handle) = Client::start();
-    // Forme d'un document ouvert par Zowe Explorer, sans téléchargement.
+    // Name of a document opened by Zowe Explorer, without downloading.
     let uri: Uri = "zowe-jobs:/zosmf/JOB00896/JRS0C7.JOB00896.JES2.JESYSMSG.4"
         .parse()
         .unwrap();
@@ -90,7 +229,7 @@ fn abend_s0c7() {
         },
     );
 
-    // Diagnostics : l'abend du step GO est la seule erreur.
+    // Diagnostics: the abend of step GO is the only error.
     let published = client.diagnostics();
     assert_eq!(published.uri, uri);
     let errors: Vec<_> = published
@@ -103,7 +242,7 @@ fn abend_s0c7() {
     assert_eq!(errors[0].range.start.line, 130);
     assert!(errors[0].message.contains("COBRUN.GO"));
 
-    // Outline : les trois steps de la procédure, avec leur issue.
+    // Outline: the three procedure steps, with their outcome.
     let symbols = client.request(
         DocumentSymbolRequest::METHOD,
         DocumentSymbolParams {
@@ -113,7 +252,7 @@ fn abend_s0c7() {
         },
     );
     let DocumentSymbolResponse::Nested(symbols) = serde_json::from_value(symbols).unwrap() else {
-        panic!("symboles imbriqués attendus");
+        panic!("expected nested symbols");
     };
     let steps: Vec<_> = symbols
         .iter()
@@ -131,7 +270,7 @@ fn abend_s0c7() {
         assert!(s.range.start <= s.selection_range.start && s.selection_range.end <= s.range.end);
     }
 
-    // Repliage : au moins un bloc par step.
+    // Folding: at least one range per step.
     let folds = client.request(
         FoldingRangeRequest::METHOD,
         FoldingRangeParams {
@@ -145,7 +284,7 @@ fn abend_s0c7() {
         assert!(folds.iter().any(|f| f.start_line == start), "{start}");
     }
 
-    // Fermeture : les diagnostics sont effacés.
+    // Close: diagnostics are cleared.
     client.notify(
         DidCloseTextDocument::METHOD,
         DidCloseTextDocumentParams {
@@ -185,9 +324,9 @@ fn outline_jesjcl() {
         },
     );
     let DocumentSymbolResponse::Nested(symbols) = serde_json::from_value(symbols).unwrap() else {
-        panic!("symboles imbriqués attendus");
+        panic!("expected nested symbols");
     };
-    // JOB → EXEC du job → EXEC de la procédure.
+    // JOB → job EXEC → procedure EXEC.
     assert_eq!(symbols.len(), 1);
     assert_eq!(symbols[0].name, "JRS0C7");
     let exec = &symbols[0].children.as_ref().unwrap()[0];

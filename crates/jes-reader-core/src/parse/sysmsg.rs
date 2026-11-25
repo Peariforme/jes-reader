@@ -1,5 +1,5 @@
-//! JESYSMSG : messages de conversion (numérotés), d'allocation et de fin
-//! de step.
+//! JESYSMSG: conversion messages (numbered), allocation and end-of-step
+//! messages.
 //!
 //! ```text
 //!   STMT NO. MESSAGE
@@ -8,10 +8,10 @@
 //!          CPU:     0 HR  00 MIN  00.01 SEC    SRB:     0 HR  00 MIN …
 //! ```
 //!
-//! Un message commence en col. 2 (offset 1), ou en col. 12 (offset 11)
-//! derrière un numéro d'instruction cadré en col. 2-10. Toute autre ligne
-//! prolonge le message précédent, y compris les suites qui commencent en
-//! col. 2 (`IGD17101I`, `IEC141I`).
+//! A message starts in column 2 (offset 1), or in column 12 (offset 11)
+//! after a statement number right-aligned in columns 2-10. Any other line
+//! continues the previous message, including continuations that start in
+//! column 2 (`IGD17101I`, `IEC141I`).
 
 use super::{Messages, StepNames, value_after};
 use crate::model::{Dd, Message, Step, StepStatus};
@@ -34,8 +34,8 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     dd.steps = steps(&dd.messages, &mut dd.job_name);
 }
 
-/// `         2 IEFC001I …` : numéro d'instruction en col. 2-10, identifiant
-/// en col. 12.
+/// `         2 IEFC001I …`: statement number in columns 2-10, message ID
+/// in column 12.
 fn numbered_message(line: &str) -> Option<(u32, std::ops::Range<usize>)> {
     let number = line.get(1..10)?.trim_start().parse().ok()?;
     if line.as_bytes().get(10) != Some(&b' ') {
@@ -44,7 +44,7 @@ fn numbered_message(line: &str) -> Option<(u32, std::ops::Range<usize>)> {
     Some((number, message_id_at(line, 11)?))
 }
 
-/// Messages qui précèdent les steps ou les suivent, sans appartenir à aucun.
+/// Messages before or after the steps that belong to none of them.
 fn is_job_level(m: &Message) -> bool {
     m.statement.is_some()
         || matches!(
@@ -53,13 +53,13 @@ fn is_job_level(m: &Message) -> bool {
         )
 }
 
-/// Ce qu'on sait d'un step en cours de lecture.
+/// What is known about the step being read.
 #[derive(Default)]
 struct Pending {
     start: Option<usize>,
     name: Option<(String, Option<String>)>,
-    /// Vrai si le nom vient d'un message de fin (`IEF142I`…) et non d'un
-    /// message d'allocation ou d'horodatage.
+    /// True if the name comes from an end-of-step message (`IEF142I`…) rather
+    /// than from an allocation or timestamp message.
     name_is_final: bool,
     status: Option<(StepStatus, usize)>,
 }
@@ -73,8 +73,8 @@ impl Pending {
     }
 
     fn set_status(&mut self, status: StepStatus, line: usize) {
-        // Un premier statut définitif l'emporte : `IEF202I` puis `IEF272I`
-        // décrivent le même step non exécuté.
+        // The first final status wins: `IEF202I` then `IEF272I` describe the
+        // same step that did not run.
         if self.status.is_none() {
             self.status = Some((status, line));
         }
@@ -94,10 +94,10 @@ impl Pending {
     }
 }
 
-/// Découpe les messages en steps. Un step va du premier message qui suit le
-/// step précédent jusqu'à son `IEF032I` (fin de step, avec ses lignes CPU et
-/// mémoire). Son nom et son issue viennent de `IEF142I`, `IEF472I`,
-/// `IEF202I`, `IEF272I`, à défaut de `IEF236I` (allocation) ou `IEF373I`.
+/// Splits the messages into steps. A step runs from the first message after
+/// the previous step to its `IEF032I` (end of step, with its CPU and memory
+/// lines). Its name and outcome come from `IEF142I`, `IEF472I`, `IEF202I`,
+/// `IEF272I`, otherwise from `IEF236I` (allocation) or `IEF373I`.
 fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
     let mut steps = Vec::new();
     let mut pending = Pending::default();
@@ -132,7 +132,7 @@ fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
                 }
             }
             "IEF236I" => {
-                // `ALLOC. FOR JRIGZ COBOL COBRUN` : pas de ` - `.
+                // `ALLOC. FOR JRIGZ COBOL COBRUN`: no ` - `.
                 if let Some(names) = m
                     .text
                     .strip_prefix("ALLOC. FOR ")
@@ -145,7 +145,7 @@ fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
                 }
             }
             "IEF373I" => {
-                // `STEP/GO      /START …` : le nom le plus interne seulement.
+                // `STEP/GO      /START …`: innermost name only.
                 if pending.name.is_none()
                     && let Some(name) = m
                         .text
@@ -161,13 +161,13 @@ fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
             _ => {}
         }
     }
-    // Step en cours (job actif) ou fin de step absente.
+    // Step still running (active job) or missing end of step.
     steps.extend(pending.into_step(last_end));
     steps
 }
 
-/// `COMPLETION CODE - SYSTEM=0C7 USER=0000 REASON=00000007` : abend système
-/// si `SYSTEM` est non nul, abend utilisateur sinon.
+/// `COMPLETION CODE - SYSTEM=0C7 USER=0000 REASON=00000007`: system abend
+/// if `SYSTEM` is not zero, user abend otherwise.
 fn abend(text: &str) -> Option<StepStatus> {
     let system = value_after(text, "SYSTEM=")?;
     let user = value_after(text, "USER=")?;
@@ -176,7 +176,7 @@ fn abend(text: &str) -> Option<StepStatus> {
     } else {
         format!("S{system}")
     };
-    // Une raison nulle (`REASON=00000000`, S322) n'apporte rien.
+    // A zero reason (`REASON=00000000`, S322) says nothing.
     let reason = value_after(text, "REASON=").filter(|r| !r.bytes().all(|c| c == b'0'));
     Some(StepStatus::Abended {
         code,
@@ -189,14 +189,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn message_numerote() {
+    fn numbered_messages() {
         let line = "         2 IEFC001I PROCEDURE ZXP$$CHK WAS EXPANDED";
         assert_eq!(numbered_message(line), Some((2, 11..19)));
         assert_eq!(numbered_message(" IEF142I @VSC1"), None);
     }
 
     #[test]
-    fn codes_abend() {
+    fn abend_codes() {
         let abend = |t| match abend(t) {
             Some(StepStatus::Abended { code, reason }) => (code, reason),
             other => panic!("{other:?}"),

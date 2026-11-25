@@ -1,8 +1,8 @@
-//! Moteur d'analyse des sysouts JES2 z/OS.
+//! Analysis engine for z/OS JES2 sysouts.
 //!
-//! L'unité d'analyse est la DD : Zowe Explorer ouvre les spools DD par DD.
-//! Le modèle suit la hiérarchie Job → DD → step → message. Le parser ne
-//! plante jamais : ce qu'il ne comprend pas reste du texte brut.
+//! The unit of analysis is the DD: Zowe Explorer opens spools one DD at a
+//! time. The model follows the Job → DD → step → message hierarchy. The
+//! parser never fails: whatever it does not understand stays plain text.
 //!
 //! ```
 //! use jes_reader_core::{analyze, parse_file, Options};
