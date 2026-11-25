@@ -2,7 +2,7 @@
 
 A language server that turns a z/OS JES2 sysout into a navigable document: failures in the Problems panel, job steps in the Outline, messages colored by severity. Everything runs on your workstation; nothing is installed or opened on z/OS.
 
-It works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), one DD at a time, and on files you have downloaded.
+It works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), one DD at a time, on files you have downloaded, and on whole spools saved in one file (BMC AMI DevX JES Explorer).
 
 > Status: phases 1 to 3 are done — parser, language server, CLI, VS Code extension, Zowe Explorer integration, hovers, house rules and job summaries. See [docs/ROADMAP.md](docs/ROADMAP.md).
 

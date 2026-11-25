@@ -16,13 +16,15 @@ JES Reader works on the spool files you open from [Zowe Explorer](https://market
 - **Cause and effect**: in the Problems panel, a failed step points to the messages that explain it (for example `IEC141I` for an `S013`), and each of those messages points back to the step.
 - **Syntax highlighting** of message IDs, abend codes, return codes above 4, data set names and JCL statements.
 - **One DD at a time**: Zowe Explorer opens each DD as its own document; JES Reader analyses each one on its own, so you never need to download the whole spool.
+- **Whole spools** too: a file holding every DD of a job, one after the other (as saved by BMC AMI DevX JES Explorer), is cut into its DDs. The Outline has one entry per DD, and links go to the `JESJCL` in the same file. The output of the steps stays one block for now.
+- **Colors that follow the analysis**: message IDs are colored by the severity JES Reader reports, house rules included (semantic highlighting): a message you silence with a rule is no longer red.
 
 ## Which files are recognized
 
 - Documents opened from Zowe Explorer (`<job>.<jobid>.<step>.<DD>.<n>`)
 - Jobs downloaded with Zowe Explorer (`JOBnnnnn/…/<DD>.txt`, also `TSU` and `STC`)
 - `.sysout` and `.joblog` files
-- Any file whose first line is a JES2 header (`J E S 2  J O B  L O G`, `STMT NO. MESSAGE`, or a numbered `JOB` card)
+- Any file whose first line is a JES2 header, a whole spool included when it starts with JESMSGLG (`J E S 2  J O B  L O G`, `STMT NO. MESSAGE`, or a numbered `JOB` card)
 
 For anything else, run **JES Reader: Open as Sysout** from the Command Palette.
 
@@ -84,7 +86,7 @@ Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a 
 ## Known limitations
 
 - JES2 only; JES3 sysouts are not recognized.
-- A whole spool saved as a single file is not split into DDs yet.
+- In a whole spool, the output of the steps (`SYSPRINT`, `SYSOUT`…) is one block: its DDs are not separated or named yet.
 - Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`): silence them with a house rule.
 - A step that runs a program loaded from a previous step (`PGM=*.LKED.SYSLMOD`) shows that reference as its program.
 

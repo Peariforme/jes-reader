@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Whole spools: a file holding every DD of a job (BMC AMI DevX JES Explorer) is cut into its DDs, with one Outline entry per DD and links to the `JESJCL` of the same file.
+- Message IDs are colored by the severity of the analysis (semantic highlighting), house rules included.
+- 19 more messages in the catalog: IDCAMS, Language Environment, COBOL, Db2 and IMS.
 - Step summaries: a code lens above each step of `JESYSMSG` with its program, return code or abend, CPU time and elapsed time.
 - The Outline shows each step's program.
 - House rules by program: `[[steps]]` rules take a `program` pattern (`PGM=` of the EXEC statement, read in `JESJCL`), alone or with `name`.

@@ -14,7 +14,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Opened without downloading, the document is named `<jobname>.<jobid>.<step>.<DD>.<n>` (`JRIDC12.JOB00922.JES2.JESMSGLG.2`), where `n` is the DD number in the spool. For a TSO session the job name is the user ID (`Z99999.TSU00812.JES2.JESYSMSG.4`).
 - The trailing number is the JES data set ID. JES2 numbers the system DDs JESMSGLG 2, JESJCL 3, JESYSMSG 4 (`JRIDC12.JOB00922.JES2.JESMSGLG.2`, `Z99999.TSU00812.JES2.JESYSMSG.4`); the extension relies on it to open the JESJCL of a Zowe document.
 - Consequence for the parser: **the unit of parsing is the DD**. The file name (or URI) gives the DD; the content is the fallback (see "Detection").
-- Whole spool in a single file: _not observed yet_ (separator between DDs unknown).
+- Whole spool in a single file: see "Whole spool" below.
 
 ## ASA carriage control (column 1)
 
@@ -94,6 +94,17 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Step timestamps: `IEF373I STEP/<step>/START yyyyddd.hhmm` and `IEF032I STEP/<step>/STOP yyyyddd.hhmm` (Julian date). To the minute only: the elapsed time read from them is approximate.
 - Step CPU: the first continuation line of `IEF032I`, `CPU:     0 HR  00 MIN  00.04 SEC    SRB:     0 HR  00 MIN  00.00 SEC` (`JOB00885`), to the hundredth of a second.
 - End of job: `IEF375I JOB/<job>/START …` and `IEF033I JOB/<job>/STOP …`.
+
+## Whole spool
+
+Some tools save every DD of a job in one file, one after the other: BMC AMI DevX JES Explorer does, and it is common at French sites. JES2 writes the system DDs first, in this order: JESMSGLG, JESJCL, JESYSMSG, then the step output.
+
+- JESMSGLG starts with its banner (`J E S 2  J O B  L O G`) and ends with the `JES2 JOB STATISTICS` block.
+- JESJCL starts with statement 1, the JOB card, and holds only JCL lines: text from column 11 after a number or a blank number field, `IEFC653I` substitution lines and their continuations included.
+- JESYSMSG starts with `STMT NO. MESSAGE`, or, without conversion messages, with the first line that is not JCL (`ICH70001I`, `JOB00901`). It ends with `IEF033I` (end of job) and its continuation lines.
+- The step output has no signature and its DD names are not in the text.
+
+_Not observed yet_ on a real file: what the tool writes between DDs (a separator, a banner with the DD name, a page eject `1` in column 1), its line width and line endings, and its file extension. The corpus has no whole spool: tests build them by concatenating corpus DDs.
 
 ## Detection (content, when the file name says nothing)
 
