@@ -1,0 +1,101 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "JES2 Sysout",
+  "scopeName": "source.jes-sysout",
+  "patterns": [
+    { "include": "#banner" },
+    { "include": "#timestamp" },
+    { "include": "#jcl" },
+    { "include": "#known-messages" },
+    { "include": "#message-ids" },
+    { "include": "#abends" },
+    { "include": "#return-codes" },
+    { "include": "#phrases" },
+    { "include": "#dataset-names" }
+  ],
+  "repository": {
+    "banner": {
+      "comment": "Bannière JES2 en tête de JESMSGLG, statistiques et en-tête de JESYSMSG.",
+      "patterns": [
+        { "match": "^1\\s+J E S 2  J O B  L O G.*$", "name": "markup.heading.banner.jes-sysout" },
+        { "match": "^0-{6} JES2 JOB STATISTICS -{6}$", "name": "markup.heading.statistics.jes-sysout" },
+        { "match": "^\\s+STMT NO\\. MESSAGE$", "name": "markup.heading.columns.jes-sysout" }
+      ]
+    },
+    "timestamp": {
+      "comment": "Préfixe des lignes de JESMSGLG : heure et identifiant JES.",
+      "match": "^ (\\d\\d\\.\\d\\d\\.\\d\\d) ((?:JOB|TSU|STC)\\d{5})(?= )",
+      "captures": {
+        "1": { "name": "comment.line.time.jes-sysout" },
+        "2": { "name": "comment.line.job-id.jes-sysout" }
+      }
+    },
+    "jcl": {
+      "comment": "Instructions de JESJCL : numéro, commentaires, nom et opération.",
+      "patterns": [
+        {
+          "match": "^ {1,8}(\\d+)(?= (?://|XX|\\+\\+|X/|\\+/))",
+          "captures": { "1": { "name": "constant.numeric.statement.jes-sysout" } }
+        },
+        { "match": "(?://|XX|\\+\\+)\\*.*$", "name": "comment.line.jcl.jes-sysout" },
+        {
+          "match": "(//|XX|\\+\\+|X/|\\+/)([A-Z0-9#$@.]*)\\s+(JOB|EXEC|DD|PROC|PEND|SET|IF|THEN|ELSE|ENDIF|INCLUDE|JCLLIB|OUTPUT|EXPORT|CNTL|ENDCNTL)\\b",
+          "captures": {
+            "1": { "name": "punctuation.definition.jcl.jes-sysout" },
+            "2": { "name": "entity.name.function.jcl.jes-sysout" },
+            "3": { "name": "keyword.control.jcl.jes-sysout" }
+          }
+        }
+      ]
+    },
+    "known-messages": {
+      "comment": "Messages d'erreur dont le suffixe ne dit rien (I) : même liste que le moteur de règles.",
+      "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEF472I|IEF450I)\\b",
+      "name": "token.error-token.message-id.jes-sysout"
+    },
+    "message-ids": {
+      "comment": "Identifiants de message colorés par leur suffixe.",
+      "patterns": [
+        { "match": "\\b[A-Z]{3,5}\\d{3,5}[ES]\\b", "name": "token.error-token.message-id.jes-sysout" },
+        { "match": "\\b[A-Z]{3,5}\\d{3,5}W\\b", "name": "token.warn-token.message-id.jes-sysout" },
+        { "match": "\\b[A-Z]{3,5}\\d{3,5}[IADT]\\b", "name": "token.info-token.message-id.jes-sysout" },
+        { "match": "\\$HASP\\d{3,4}\\b", "name": "token.info-token.message-id.jes-sysout" }
+      ]
+    },
+    "abends": {
+      "comment": "Codes d'abend : ABEND=S0C7, *S0C7 (tableau des steps), SYSTEM=0C7, USER=4038, U4038.",
+      "patterns": [
+        { "match": "\\bABEND=(?!S000\\b)[SU][0-9A-F]{3,4}\\b", "name": "token.error-token.abend.jes-sysout" },
+        { "match": "(?<=\\*)[SU][0-9A-F]{3,4}\\b", "name": "token.error-token.abend.jes-sysout" },
+        { "match": "\\bSYSTEM=(?!000\\b)[0-9A-F]{3}\\b", "name": "token.error-token.abend.jes-sysout" },
+        { "match": "\\bUSER=(?!0000\\b)\\d{4}\\b", "name": "token.error-token.abend.jes-sysout" },
+        { "match": "(?<= )U(?!0000)\\d{4}(?= )", "name": "token.error-token.abend.jes-sysout" },
+        { "match": "\\bABEND[0-9A-F]{3}(?:-[0-9A-F]{2})?\\b", "name": "token.error-token.abend.jes-sysout" }
+      ]
+    },
+    "return-codes": {
+      "comment": "Codes retour : jusqu'à 4 normal, au-delà avertissement (seuil par défaut du serveur).",
+      "patterns": [
+        { "match": "\\b(?:COND CODE |RC=)000[0-4]\\b", "name": "constant.numeric.return-code.jes-sysout" },
+        { "match": "\\b(?:COND CODE |RC=)\\d{4}\\b", "name": "token.warn-token.return-code.jes-sysout" }
+      ]
+    },
+    "phrases": {
+      "patterns": [
+        {
+          "match": "\\b(?:JCL ERROR|NOT FOUND|DUPLICATE NAME EXISTS)\\b",
+          "name": "token.error-token.phrase.jes-sysout"
+        },
+        {
+          "match": "\\b(?:NOT EXECUTED|NOT RUN|NOT CATLGD|FLUSH)\\b",
+          "name": "token.warn-token.phrase.jes-sysout"
+        }
+      ]
+    },
+    "dataset-names": {
+      "comment": "Noms de datasets qualifiés, membre éventuel : SYS1.MACLIB(IHAPSA).",
+      "match": "\\b[A-Z#$@][A-Z0-9#$@-]{0,7}(?:\\.[A-Z#$@][A-Z0-9#$@-]{0,7})+(?:\\([A-Z0-9#$@+-]{1,8}\\))?",
+      "name": "string.unquoted.dataset.jes-sysout"
+    }
+  }
+}

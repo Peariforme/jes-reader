@@ -1,0 +1,23 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00868/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA : oui, 20 lignes
+job : JRIDC8 JOB00868
+fin du job : ReturnCode(8)
+
+steps :
+  L9-9 STEP005 : Completed { return_code: 4 } (L9)
+  L10-10 STEP010 : Completed { return_code: 8 } (L10)
+  L11-11 STEP020 : NotRun (L11)
+
+messages :
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:12:29 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 JRIDC8   STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L13 col.21-28 $HASP395 JRIDC8   ENDED - RC=0008
+
+constats :
+  L10 avertissement [RC] Step STEP010 : code retour 8
+  L11 info [FLUSH] Step STEP020 non exécuté

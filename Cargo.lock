@@ -244,6 +244,7 @@ dependencies = [
  "jes-reader-core",
  "lsp-server",
  "lsp-types",
+ "serde",
  "serde_json",
 ]
 

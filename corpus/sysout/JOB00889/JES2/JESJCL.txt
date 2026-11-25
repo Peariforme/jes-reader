@@ -1,0 +1,13 @@
+        1 //JRJCLERR JOB (ACCT),'JES-READER JCLERR',CLASS=A,MSGCLASS=H,           JOB00889
+          //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
+          //*--------------------------------------------------------------------
+          //* CAS JCL ERROR : DISP=SHR sur un dataset qui n'existe pas.
+          //* Attendu : IEF212I ... DATA SET NOT FOUND, puis JOB NOT RUN.
+          //*--------------------------------------------------------------------
+          IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER JCLERR',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
+        2 //STEP010  EXEC PGM=IEBGENER
+        3 //SYSPRINT DD SYSOUT=*
+        4 //SYSIN    DD DUMMY
+        5 //SYSUT1   DD DSN=&SYSUID..JESREAD.INEXIST,DISP=SHR
+          IEFC653I SUBSTITUTION JCL - DSN=Z99999.JESREAD.INEXIST,DISP=SHR
+        6 //SYSUT2   DD SYSOUT=*

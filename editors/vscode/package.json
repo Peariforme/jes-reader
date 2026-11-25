@@ -1,0 +1,112 @@
+{
+  "name": "jes-reader",
+  "displayName": "JES Reader",
+  "description": "Sysouts JES2 z/OS navigables : erreurs dans Problems, steps dans l'Outline, messages colorés par sévérité.",
+  "version": "0.1.0",
+  "publisher": "peariforme",
+  "license": "(MIT OR Apache-2.0)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Peariforme/jes-reader"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "z/OS",
+    "mainframe",
+    "JES2",
+    "sysout",
+    "spool",
+    "Zowe"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:spool",
+    "onLanguage:jesmsglg",
+    "onLanguage:jesjcl"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "jes-sysout",
+        "aliases": [
+          "JES2 Sysout",
+          "jes-sysout"
+        ],
+        "extensions": [
+          ".sysout",
+          ".joblog"
+        ],
+        "filenamePatterns": [
+          "**/{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9]/**/*.txt",
+          "*.{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9].*.*.[0-9]*"
+        ],
+        "firstLine": "^(1\\s+J E S 2  J O B  L O G|\\s+STMT NO\\. MESSAGE|\\s{8}1 //\\S+\\s+JOB\\b)",
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "jes-sysout",
+        "scopeName": "source.jes-sysout",
+        "path": "./syntaxes/jes-sysout.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "jesReader.openAsSysout",
+        "title": "Ouvrir comme sysout",
+        "category": "JES Reader"
+      },
+      {
+        "command": "jesReader.restartServer",
+        "title": "Redémarrer le serveur",
+        "category": "JES Reader"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "jesReader.openAsSysout",
+          "when": "editorIsOpen"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "JES Reader",
+      "properties": {
+        "jesReader.maxReturnCode": {
+          "type": "integer",
+          "default": 4,
+          "minimum": 0,
+          "maximum": 4095,
+          "markdownDescription": "Code retour au-delà duquel un step est signalé en avertissement."
+        },
+        "jesReader.serverPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Chemin du binaire `jes-reader-lsp`. Vide : binaire embarqué dans l'extension."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build:server": "node scripts/build-server.mjs",
+    "vscode:prepublish": "npm run compile"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "~1.90.0",
+    "typescript": "~5.6.3"
+  }
+}

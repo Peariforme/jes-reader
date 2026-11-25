@@ -1,0 +1,26 @@
+1IDCAMS  SYSTEM SERVICES                                           TIME: 04:42:18        11/25/26     PAGE      1
+0
+   LISTCAT ENTRIES(JESREAD.INEXIST.LISTCAT)
+0IDC3012I ENTRY JESREAD.INEXIST.LISTCAT NOT FOUND
+ IDC3009I ** VSAM CATALOG RETURN CODE IS 8 - REASON CODE IS IGG0CLEG-42
+ IDC1566I ** JESREAD.INEXIST.LISTCAT NOT LISTED
+1IDCAMS  SYSTEM SERVICES                                           TIME: 04:42:18        11/25/26     PAGE      2
+0         THE NUMBER OF ENTRIES PROCESSED WAS:
+0                   AIX -------------------0
+                    ALIAS -----------------0
+                    CLUSTER ---------------0
+                    DATA ------------------0
+                    GDG -------------------0
+                    INDEX -----------------0
+                    NONVSAM ---------------0
+                    PAGESPACE -------------0
+                    PATH ------------------0
+                    SPACE -----------------0
+                    USERCATALOG -----------0
+                    TAPELIBRARY -----------0
+                    TAPEVOLUME ------------0
+                    TOTAL -----------------0
+0         THE NUMBER OF PROTECTED ENTRIES SUPPRESSED WAS 0
+0IDC0001I FUNCTION COMPLETED, HIGHEST CONDITION CODE WAS 4
+0
+0IDC0002I IDCAMS PROCESSING COMPLETE. MAXIMUM CONDITION CODE WAS 4

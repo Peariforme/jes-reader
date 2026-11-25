@@ -1,0 +1,10 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : TSU00812/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA : oui, 4 lignes
+job : Z99999 TSU00812
+
+messages :
+  L4 col.21-28 $HASP373 Z99999   STARTED

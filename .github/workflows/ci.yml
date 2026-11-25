@@ -13,6 +13,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  corpus:
+    name: Corpus anonymisé
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Filet de sécurité si le filtre `anonymize` n'était pas activé
+      # localement : aucun userid Z Xplore (hors Z99999) dans le dépôt,
+      # contenu ou noms de fichiers. Couvre aussi les snapshots de tests et
+      # la documentation, que le filtre ne traite pas.
+      - name: Aucun userid réel
+        run: |
+          pattern='(?<![A-Za-z0-9])Z(?!99999)[0-9]{5}(?![0-9])'
+          status=0
+          if git ls-files | grep -P "$pattern"; then
+            echo "::error::Userid réel dans un nom de fichier"; status=1
+          fi
+          if git grep -nP "$pattern"; then
+            echo "::error::Userid réel dans le dépôt : activer le filtre anonymize (voir README)"; status=1
+          fi
+          exit $status
+
+  vscode:
+    name: Extension VS Code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+
   fmt:
     name: Formatage
     runs-on: ubuntu-latest

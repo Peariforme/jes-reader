@@ -1,0 +1,24 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00885/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA : oui, 22 lignes
+job : JRIGZ JOB00885
+fin du job : Abend("U4038")
+
+steps :
+  L10-10 COBRUN.COBOL : Completed { return_code: 0 } (L10)
+  L11-11 COBRUN.LKED : Completed { return_code: 0 } (L11)
+  L13-13 COBRUN.GO : Abended { code: "U4038", reason: None } (L13)
+
+messages :
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-27 IEF677I WARNING MESSAGE(S) FOR JOB JRIGZ    ISSUED
+  L6 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:48:33 ON WEDNESDAY, NOVEMBER 25, 2026
+  L7 col.21-28 $HASP373 JRIGZ    STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L12 col.21-27 IEF450I JRIGZ GO COBRUN - ABEND=S000 U4038 REASON=00000001
+  L15 col.21-28 $HASP395 JRIGZ    ENDED - ABEND=U4038
+
+constats :
+  L13 erreur [U4038] Step COBRUN.GO : abend U4038

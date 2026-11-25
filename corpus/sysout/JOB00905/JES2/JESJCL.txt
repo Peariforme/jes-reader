@@ -1,0 +1,9 @@
+        1 //JRS806   JOB (ACCT),'JES-READER S806',CLASS=A,MSGCLASS=H,             JOB00905
+          //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
+          //*--------------------------------------------------------------------
+          //* CAS S806 : programme introuvable dans STEPLIB/JOBLIB/LNKLST.
+          //* Attendu : CSV003I REQUESTED MODULE JRNOPGM NOT FOUND, puis S806-04.
+          //*--------------------------------------------------------------------
+          IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER S806',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
+        2 //STEP010  EXEC PGM=JRNOPGM
+        3 //SYSPRINT DD SYSOUT=*

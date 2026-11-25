@@ -10,3 +10,7 @@ editors/vscode/server/
 *.vsix
 
 .DS_Store
+
+# Généré par IBM Z Open Editor
+zapp.yaml
+zapp.yaml

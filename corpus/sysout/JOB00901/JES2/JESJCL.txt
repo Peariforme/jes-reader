@@ -1,0 +1,13 @@
+        1 //JRS013   JOB (ACCT),'JES-READER S013',CLASS=A,MSGCLASS=H,             JOB00901
+          //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
+          //*--------------------------------------------------------------------
+          //* CAS S013 : membre absent d'un PDS existant. L'allocation passe,
+          //* l'OPEN echoue.
+          //* Attendu : IEC141I 013-18, abend S013 au step STEP010.
+          //*--------------------------------------------------------------------
+          IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER S013',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
+        2 //STEP010  EXEC PGM=IEBGENER
+        3 //SYSPRINT DD SYSOUT=*
+        4 //SYSIN    DD DUMMY
+        5 //SYSUT1   DD DSN=SYS1.MACLIB(JRNOMBR),DISP=SHR
+        6 //SYSUT2   DD SYSOUT=*
