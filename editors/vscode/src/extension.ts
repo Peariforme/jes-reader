@@ -6,6 +6,7 @@ import {
   type LanguageClientOptions,
   type ServerOptions,
 } from 'vscode-languageclient/node';
+import { DatasetLinkProvider, OPEN_DATASET_COMMAND, openDataset } from './datasets';
 
 /** Our language ID. */
 const LANGUAGE = 'jes-sysout';
@@ -30,6 +31,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
     vscode.workspace.onDidOpenTextDocument((document) => void openSiblingJcl(document)),
+    vscode.commands.registerCommand(OPEN_DATASET_COMMAND, openDataset),
+    vscode.languages.registerDocumentLinkProvider(
+      [LANGUAGE, ...ZOPEN_LANGUAGES].map((language) => ({ language })),
+      new DatasetLinkProvider(),
+    ),
   );
   await start(context);
   for (const document of vscode.workspace.textDocuments) {
