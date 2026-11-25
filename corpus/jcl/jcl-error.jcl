@@ -2,7 +2,7 @@
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
 //* CAS JCL ERROR : DISP=SHR sur un dataset qui n'existe pas.
-//* Attendu : IEF212I ... DATA SET NOT FOUND, puis JOB NOT RUN.
+//* Attendu : IEFA107I ... NOT FOUND, puis IEF453I JCL ERROR.
 //*--------------------------------------------------------------------
 //STEP010  EXEC PGM=IEBGENER
 //SYSPRINT DD SYSOUT=*

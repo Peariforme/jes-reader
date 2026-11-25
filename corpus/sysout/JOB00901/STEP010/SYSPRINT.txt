@@ -1,0 +1,2 @@
+1DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+-IEB352I WARNING: ONE OR MORE OF THE OUTPUT DCB PARMS COPIED FROM INPUT

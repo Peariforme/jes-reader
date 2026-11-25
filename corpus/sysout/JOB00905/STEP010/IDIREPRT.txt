@@ -1,0 +1,375 @@
+********************************************************************************
+* IBM Fault Analyzer for z/OS V15R1M10 (UO07033 2026/03/05)                    *
+*                                                                              *
+*     Copyright IBM Corp. 2000, 2017.  All rights reserved.                    *
+*     Copyright HCL Technologies Ltd 2017, 2026.  All rights reserved.         *
+********************************************************************************
+
+JOBNAME: JRS806    SYSTEM ABEND: 806              S0W1      2026/11/25  04:53:55
+
+
+<H1> S Y N O P S I S
+
+
+The system load of module JRNOPGM failed. The load module was not found in the
+standard MVS search path.
+
+This is probably a user error.
+
+Possible reasons for this error include:
+
+o   Incorrect program name on the EXEC JCL statement.
+o   Missing JOBLIB or STEPLIB JCL statement specification of library containing
+    the load module.
+o   Module missing from LINKLIST.
+
+The abend was caused by machine instruction 0A0D (ABEND) in an undetermined
+module.
+
+Important messages:
+
+  CSV003I REQUESTED MODULE JRNOPGM  NOT FOUND
+    (See "Event Details" - "Event 1 of 1" - "Associated Messages" for message
+    explanation)
+
+
+<H1> E V E N T   S U M M A R Y
+
+
+The following events are presented in chronological order.
+
+Event           Fail  Module   Program  EP
+#  Type         Point Name     Name     Name     Event Location (*) Description
+-- ------------ ----- -------- -------- -------- ------------------ --------------------------------------------
+ 1 Abend S806   ***** n/a      CSVABEND n/a      P+BA0              From not determined
+
+(*) One or more of the following abbreviations might appear in the "Event
+    Location" column:
+
+    F#n  Source file number (refer to detailed event information for file
+         identification)
+    L#n  Source file line number
+    S#n  Listing file statement number (refer to detailed event information for
+         file identification)
+    M+x  Offset from start of load module
+    P+x  Offset from start of program
+    E+x  Offset from start of entry point
+
+
+<H1> E V E N T   D E T A I L S
+
+
+================================================================================
+<H2> EVENT 1 OF 1: ABEND S806
+
+********************************************************************************
+***********************  P O I N T   O F   F A I L U R E  **********************
+********************************************************************************
+
+Abend Code. . . . . . . . . : S806-X'4' (See "Abend Code S806-X'4' Explanation")
+
+Load Module Name. . . . . . : n/a
+
+CSECT Name. . . . . . . . . : CSVABEND
+
+Machine Instruction . . . . : 0A0D          SVC     13 (ABEND)
+  At Address. . . . . . . . : 0144EF38 (CSECT CSVABEND offset X'BA0')
+  AMODE . . . . . . . . . . : 31
+
+Instructions around point of failure:
+
+  Offset   Hex            Instruction
+  -------- -------------- -----------------------------------------------------------------
+       -22 43C0 5078      IC      R12,120(,R5)
+       -1E 185C           LR      R5,R12
+       -1C 8950 0008      SLL     R5,8
+       -18 16F5           OR      R15,R5
+       -16 1824           LR      R2,R4
+       -14 1837           LR      R3,R7
+       -12 184B           LR      R4,R11
+       -10 18E1           LR      R14,R1
+        -E 89E0 000C      SLL     R14,12
+        -A 54E0 9038      N       R14,56(,R9)
+        -6 A5EA 8400      OILH    R14,X'8400'
+        -2 181E           LR      R1,R14
+  0144EF38 0A0D           SVC     13        (ABEND)
+        +2 18FB           LR      R15,R11
+        +4 180C           LR      R0,R12
+        +6 181D           LR      R1,R13
+        +8 58E0 02FC      L       R14,764
+        +C 58D0 E248      L       R13,584(,R14)
+       +10 0DED           BASR    R14,R13
+       +12 18BF           LR      R11,R15
+
+--------------------------------------------------------------------------------
+<H3> Associated Messages
+
+CSV003I REQUESTED MODULE JRNOPGM  NOT FOUND
+
+  CSV003I REQUESTED MODULE <mod> NOT FOUND
+
+  Explanation:
+
+  The system could not find the module entry point, <mod>, that a LINK, XCTL,
+  ATTACH, or LOAD macro specified. This can result from having an alias which is
+  not associated with an existing primary name, or an alias that matches a
+  primary name in another concatenated library.
+
+  In the message text:
+
+  <mod>
+      The name of the requested module.
+
+  System Action:
+
+  The task ends, unless ERRET is specified.
+
+  System Programmer Response:
+
+  If the error recurs and the program is not in error, look at the messages in
+  the job log for more information. Search problem reporting databases for a fix
+  for the problem. If no fix exists, contact the IBM Support Center. Provide the
+  source program listing for the job.
+
+  Programmer Response:
+
+  Ensure that the requesting program is not incorrectly modified. Ensure that
+  the load module library (or library concatenation) is indicated correctly and
+  that the indicated library (or library concatenation) contains the requested
+  program. For an alias name, ensure that the entry point attributes match that
+  of the load module which was previously loaded (that is, authorization, RMODE,
+  entry point displacement). Also, check that there are no duplicate aliases or
+  related primary module names in the library concatenation. MVS expects that
+  all module names and aliases are unique across every library.
+
+  Module:
+
+  CSVGETMD
+
+  Source:
+
+  Contents supervision (CSV)
+
+  Routing Code:
+
+  11
+
+  Descriptor Code:
+
+  Note 26
+
+
+--------------------------------------------------------------------------------
+<H3> Additional Event Details
+
+Program Status Word (PSW) . : 070C1000 8144EF3A
+  PSW Summary . . . . . . . : Primary Space Mode, PSW Key 0, AMODE 31,
+                              Supervisor State
+
+General Purpose Registers:
+  R0:  0_00003000 (Storage invalid)
+  R1:  0_84806000 (Module GDEIGCA + X'3E000')
+  R2:  0_00000000 (2048 bytes of storage addressable)
+  R3:  0_00000000 (2048 bytes of storage addressable)
+  R4:  0_00000000 (2048 bytes of storage addressable)
+  R5:  0_007ABB70 (1168 bytes of storage addressable)
+  R6:  0_000000FF (1793 bytes of storage addressable)
+  R7:  0_00000000 (2048 bytes of storage addressable)
+  R8:  0_7F5C8050 (10710960 bytes of storage addressable)
+  R9:  0_0144F460 (126213024 bytes of storage addressable)
+  R10: 0_00000000 (2048 bytes of storage addressable)
+  R11: 0_00000000 (2048 bytes of storage addressable)
+  R12: 0_00000000 (2048 bytes of storage addressable)
+  R13: 0_7F5C8050 (10710960 bytes of storage addressable)
+  R14: 0_84806000 (Module GDEIGCA + X'3E000')
+  R15: 0_00000004 (2044 bytes of storage addressable)
+
+--------------------------------------------------------------------------------
+<H3> Abend Code S806-X'4' Explanation
+
+Explanation:  The supervisor, or the Supervisor Call (SVC) for the BLDL (build a
+directory entry list) macro, detected an error during the processing of a
+LINK(X), XCTL(X), ATTACH(X), or LOAD macro with the EP (entry point) or EPLOC
+(EP location (address)) operand.
+
+The reason code in register 15 identifies the error:
+
+Code      Explanation
+
+04        The system could not find the module, whose entry point is the value
+          of the EP or EPLOC operand, in the indicated library (private library,
+          job library, or link library).  This situation can occur when
+          LSEARCH=YES is specified on the macro and the limited library search
+          fails to locate the module.
+
+Source: Contents supervision (CSV)
+
+System Action:  The system issues a message depending on the reason code
+accompanying the abend:
+
+Code      Message
+
+04        CSV003I
+
+The system issues an ABEND dump.
+
+Programmer Response:  If the reason code is X'04', this is probably a user
+error. Make sure that the requesting program was not incorrectly modified. Make
+sure that the source library was indicated correctly and that the indicated
+library does contain the requested program. For an alias name, make sure the
+alias attributes match the attributes of the load module which was already
+loaded; check the library authorization, RMODE, and alias entry point
+displacement).  Correct the error, and run the job step again.
+
+If the reason code is X'14' or X'18', report this completion code to the system
+programmer.
+
+If the reason code is X'0C' or a X'1C', it is a probable user error.  Make sure
+that the DCB for the library is valid and open. Correct the error and run the
+job step again.
+
+System Programmer Response:  For reason code X'08', resubmit the job.  Then have
+the operator enter a START GTF command specifying tape output, MODE=EXT and
+TIME=YES. Have the operator reply TRACE=IO in response to message AHL100A.
+
+Format the output with the IPCS GTFTRACE subcommand.
+
+If the error recurs and the program is not in error, see the system programmer
+response for messages in the job log.
+
+For reason code X'2C' or if the problem persists, search problem reporting data
+bases for a fix for the problem. If no fix exists, contact the IBM Support
+Center. Provide the ABEND dump and the source program listing for the job.
+
+
+<H1> S Y S T E M - W I D E   I N F O R M A T I O N
+
+
+================================================================================
+<H2> MESSAGES
+
+--------------------------------------------------------------------------------
+<H3> Non-Event-Related Messages
+
+CSV028I ABEND806-04  JOBNAME=JRS806    STEPNAME=STEP010
+
+  CSV028I [ABEND<cde>-<return-code>] JOBNAME=<jjj> STEPNAME=<sss>
+
+  Explanation:
+
+  This message follows a related message (of the format CSV0xxI) that indicates
+  an error occurred during the processing of a LINK, LOAD, ATTACH, or XCTL
+  macro. CSV028I indicates which job is associated with the error described in
+  the related CSV0xxI message.
+
+  In the message text:
+
+  <cde>
+      The system completion code.
+  <return-code>
+      The return code.
+  <jjj>
+      The jobname.
+  <sss>
+      The stepname.
+
+  If the ERRET parameter is coded on the macro, ABEND<cde-rc> will not appear in
+  the message.
+
+  System Action:
+
+  Refer to the system action for the CSV0xxI message that was issued before
+  CSV028I.
+
+  Programmer Response:
+
+  Refer to the programmer response for the CSV0xxI message. If <cde> appears in
+  the message text, see the explanation of abend code X'<cde>'.
+
+  Module:
+
+  CSVABEND
+
+  Source:
+
+  Contents supervision (CSV)
+
+  Routing Code:
+
+  9,11
+
+  Descriptor Code:
+
+  Note 26
+
+
+
+<H1> A B E N D   J O B   I N F O R M A T I O N
+
+
+Abend Job Information:
+
+  Abend Date. . . . . . . . : 2026/11/25
+  Abend Time. . . . . . . . : 04:53:55
+  System Name . . . . . . . : S0W1
+  Job Type. . . . . . . . . : Batch
+  Job ID. . . . . . . . . . : JOB00905
+  Job Name. . . . . . . . . : JRS806
+  Job Step Name . . . . . . : STEP010
+  ASID. . . . . . . . . . . : 2F
+  Abend TCB Address . . . . : 007D39C8
+  Job Execution Class . . . : A
+  Region Size . . . . . . . : 1M
+  EXEC Program Name . . . . : JRNOPGM
+  User ID . . . . . . . . . : Z99999
+  Accounting Information. . : ACCT
+
+Execution Environment:
+
+  Operating System. . . . . : z/OS V3R1M0
+  Data Facility Product . . : DFSMS z/OS V3R1M0
+  Job Entry Subsystem . . . : JES2
+  Language Environment. . . : n/a
+  CPU Model . . . . . . . . : 3931 (z16)
+
+
+<H1> O P T I O N S
+
+
+Options in Effect:
+
+  Detail(Medium)
+  NoErrorHandler
+  Language(ENU)
+  NoLocale
+  MaxMiniDumpPages(4096) - not exceeded
+  NoDup(CICSfast(5),NoIncludeExecCicsDump) - not a duplicate
+  NoDup(ImageFast(5)) - not a duplicate
+  NoDup(Normal(24),NoJobname) - not a duplicate
+  NoPermitLangx
+  PreferredFormattingWidth(80)
+  NoPrintInactiveCOBOL
+  RetainDump(Auto)
+  Source
+  SpinIDIREPRT
+  StoragePrintLimit(256K) - not exceeded
+  SystemWidePreferred(StorageAreas(Hex))
+
+  Data Sets:
+
+    The following Fault Analyzer data set or path names were either
+    preallocated, specified via DataSets options, or provided as defaults.
+
+    DDname   Data Set or Path Name
+    -------- --------------------------------------------
+    IDIDOC   ISM402.SIDIDOC1
+    IDIHIST  NULLFILE
+    IDIMAPS  ISM402.SIDIMAPS
+    IDIVSENU ISM402.IDIVSENU
+
+
+Fault Analyzer was invoked via the MVS IEAVTABX exit (IDIXDCAP). Its execution
+time was 2.76 seconds. It used 0.04 CPU seconds and 0.83 megabytes of allocated
+storage.
+
+End of Fault Analyzer report (2026/11/25 04:53:58).

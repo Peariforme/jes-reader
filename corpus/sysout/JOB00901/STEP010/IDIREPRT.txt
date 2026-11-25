@@ -1,0 +1,2448 @@
+********************************************************************************
+* IBM Fault Analyzer for z/OS V15R1M10 (UO07033 2026/03/05)                    *
+*                                                                              *
+*     Copyright IBM Corp. 2000, 2017.  All rights reserved.                    *
+*     Copyright HCL Technologies Ltd 2017, 2026.  All rights reserved.         *
+********************************************************************************
+
+JOBNAME: JRS013    SYSTEM ABEND: 013              S0W1      2026/11/25  04:52:57
+
+
+<H1> S Y N O P S I S
+
+
+A system abend 013 reason code X'18' occurred in module IGC0001I at offset
+X'15C62'.
+
+The abend occurred after executing machine instruction 0A13 (OPEN) in module
+IEBGENER CSECT IEBGENR3 at offset X'318'.
+
+NOTE: Source code information for CSECT IEBGENR3 could not be presented because
+      no compiler listing or side-file data sets were provided.
+
+
+<H1> E V E N T   S U M M A R Y
+
+
+The following events are presented in chronological order.
+
+Event           Fail  Module   Program  EP
+#  Type         Point Name     Name     Name     Event Location (*) Description
+-- ------------ ----- -------- -------- -------- ------------------ --------------------------------------------
+ 1 Call               IEBGENER IEBGENER n/a      P+328              From SYS1.LINKLIB
+ 2 SVC 19       ***** IEBGENER IEBGENR3 n/a      P+318              From SYS1.LINKLIB
+ 3 Abend S013         IGC0001I n/a      n/a      M+15C62            From LPA
+
+(*) One or more of the following abbreviations might appear in the "Event
+    Location" column:
+
+    F#n  Source file number (refer to detailed event information for file
+         identification)
+    L#n  Source file line number
+    S#n  Listing file statement number (refer to detailed event information for
+         file identification)
+    M+x  Offset from start of load module
+    P+x  Offset from start of program
+    E+x  Offset from start of entry point
+
+
+<H1> E V E N T   D E T A I L S
+
+
+================================================================================
+<H2> EVENT 1 OF 3: CALL (DSA ADDRESS 0000E7E8)
+
+NOTE: Source code information for CSECT IEBGENER could not be presented because
+      no compiler listing or side-file data sets were provided.
+
+Load Module Name. . . . . . : SYS1.LINKLIB(IEBGENER)
+  At Address. . . . . . . . : 000087D0
+  Load Module Length. . . . : X'A830'
+  Link-Edit Date and Time . : 2023/04/12  13:38:13
+
+CSECT Name. . . . . . . . . : IEBGENER
+  At Address. . . . . . . . : 0000E160 (Module IEBGENER offset X'5990')
+  CSECT Length. . . . . . . : X'CD0'
+  CSECT Language. . . . . . : Assembler (Compiled using High Level Assembler V1
+                              R6 M0 on 2023/03/20)
+
+Machine Instruction . . . . : 05EF          BALR    R14,R15
+  At Address. . . . . . . . : 0000E488 (CSECT IEBGENER offset X'328')
+  AMODE . . . . . . . . . . : 24
+
+Additional instructions around event offset:
+
+  Offset   Hex            Instruction
+  -------- -------------- -----------------------------------------------------------------
+        -4 58F0 231A      L       R15,794(,R2)
+  0000E488 05EF           BALR    R14,R15
+        +2 18CF           LR      R12,R15
+        +4 4D10 232E      BAS     R1,814(,R2)
+        +8 8000 ED74      SSM     3444(R14)
+        +C 0A14           SVC     20        (CLOSE)
+        +E 4110 2C0E      LA      R1,3086(,R2)
+       +12 9101 1017      TM      23(R1),1
+
+General Purpose Registers:
+  R0:  00000198 (1640 bytes of storage addressable)
+  R1:  0000E830 (Module IEBGENER CSECT IEBGENER + X'6D0')
+  R2:  4000E166 (Module IEBGENER CSECT IEBGENER + X'6')
+  R3:  00014F98 (104 bytes of storage addressable)
+  R4:  00000002 (2046 bytes of storage addressable)
+  R5:  007FB040 (20416 bytes of storage addressable)
+  R6:  007BBFC8 (41016 bytes of storage addressable)
+  R7:  00F96280 (131165568 bytes of storage addressable)
+  R8:  00000000 (2048 bytes of storage addressable)
+  R9:  007D3CB0 (181072 bytes of storage addressable)
+  R10: 01E19C00 (Module IGC00020 + X'CC00')
+  R11: 007F0001 (65535 bytes of storage addressable)
+  R12: 0000000C (2036 bytes of storage addressable)
+  R13: 0000E7E8 (Module IEBGENER CSECT IEBGENER + X'688')
+  R14: 4000E48A (Module IEBGENER CSECT IEBGENER + X'32A')
+  R15: 0000C1B0 (Module IEBGENER CSECT IEBGENR3 + X'0')
+
+--------------------------------------------------------------------------------
+<H3> Associated Storage Areas
+
+See "System-Wide Information" - "Storage Areas" - "Hex-Dumped Storage" for
+unformatted storage areas related to this event.
+
+
+================================================================================
+<H2> EVENT 2 OF 3: SUPERVISOR CALL (SVC 19)
+
+********************************************************************************
+***********************  P O I N T   O F   F A I L U R E  **********************
+********************************************************************************
+
+This supervisor call (SVC) in CSECT IEBGENR3 resulted in the S013 abend.
+
+NOTE: Source code information for CSECT IEBGENR3 could not be presented because
+      no compiler listing or side-file data sets were provided.
+
+Load Module Name. . . . . . : SYS1.LINKLIB(IEBGENER)
+  At Address. . . . . . . . : 000087D0
+  Load Module Length. . . . : X'A830'
+  Link-Edit Date and Time . : 2023/04/12  13:38:13
+
+CSECT Name. . . . . . . . . : IEBGENR3
+  At Address. . . . . . . . : 0000C1B0 (Module IEBGENER offset X'39E0')
+  CSECT Length. . . . . . . : X'1FAB'
+  CSECT Language. . . . . . : Assembler (Compiled using High Level Assembler V1
+                              R6 M0 on 2023/03/20)
+
+Machine Instruction . . . . : 0A13          SVC     19 (OPEN)
+  At Address. . . . . . . . : 0000C4C8 (CSECT IEBGENR3 offset X'318')
+  AMODE . . . . . . . . . . : 24
+
+Instructions around point of failure:
+
+  Offset   Hex            Instruction
+  -------- -------------- -----------------------------------------------------------------
+  0000C4C8 0A13           SVC     19        (OPEN)
+        +2 950C 7B95      CLI     2965(R7),12
+        +6 4780 78EE      BC      8,2286(,R7)
+        +A 9104 7BFC      TM      3068(R7),4
+        +E 4780 2342      BC      8,834(,R2)
+       +12 41F0 000C      LA      R15,12
+       +16 40F0 7B94      STH     R15,2964(,R7)
+
+Program Status Word (PSW) . : 078D1000 0000C4CA
+  PSW Summary . . . . . . . : Primary Space Mode, PSW Key 8, AMODE 24, Problem
+                              State
+
+General Purpose Registers:
+  R0:  0_00000B00 (Storage invalid)
+  R1:  0_0000C4C4 (Module IEBGENER CSECT IEBGENR3 + X'314')
+  R2:  0_0000C1B0 (Module IEBGENER CSECT IEBGENR3 + X'0')
+  R3:  0_00014F98 (104 bytes of storage addressable)
+  R4:  0_00014A98 (1384 bytes of storage addressable)
+  R5:  0_0000E01C (Module IEBGENER CSECT IEBGENR3 + X'1E6C')
+  R6:  0_007BBFC8 (41016 bytes of storage addressable)
+  R7:  0_0000D1B0 (Module IEBGENER CSECT IEBGENR3 + X'1000')
+  R8:  0_00000000 (2048 bytes of storage addressable)
+  R9:  0_007D3CB0 (181072 bytes of storage addressable)
+  R10: 0_01E19C00 (Module IGC00020 + X'CC00')
+  R11: 0_007F0001 (65535 bytes of storage addressable)
+  R12: 0_0000000C (2036 bytes of storage addressable)
+  R13: 0_0000DCAC (Module IEBGENER CSECT IEBGENR3 + X'1AFC')
+  R14: 0_4000E48A (Module IEBGENER CSECT IEBGENER + X'32A')
+  R15: 0_00000004 (2044 bytes of storage addressable)
+
+--------------------------------------------------------------------------------
+<H3> Associated Storage Areas
+
+See "System-Wide Information" - "Storage Areas" - "Hex-Dumped Storage" for
+unformatted storage areas related to this event.
+
+
+================================================================================
+<H2> EVENT 3 OF 3: ABEND S013
+
+Abend Code. . . . . . . . . : S013-X'18' (See "Abend Code S013-X'18'
+                              Explanation")
+
+Load Module Name. . . . . . : IGC0001I (In Link Pack Area)
+  At Address. . . . . . . . : 00E21000
+  Load Module Length. . . . : X'16078'
+
+Machine Instruction . . . . : 0A0D          SVC     13 (ABEND)
+  At Address. . . . . . . . : 00E36C62 (Module IGC0001I offset X'15C62')
+  AMODE . . . . . . . . . . : 31
+
+Additional instructions around event offset:
+
+  Offset   Hex            Instruction
+  -------- -------------- -----------------------------------------------------------------
+       -2C 989E 41A8      LM      R9,R14,424(R4)
+       -28 5800 41C0      L       R0,448(,R4)
+       -24 1BFF           SR      R15,R15
+       -22 43F0 41CF      IC      R15,463(,R4)
+       -1E 4810 41D8      LH      R1,472(,R4)
+       -1A 8810 0004      SRL     R1,4
+       -16 8910 0014      SLL     R1,20
+       -12 8810 0008      SRL     R1,8
+        -E 4100 00A4      LA      R0,164
+        -A 8900 0018      SLL     R0,24
+        -6 1610           OR      R1,R0
+        -4 4100 302C      LA      R0,44(,R3)
+  00E36C62 0A0D           SVC     13        (ABEND)
+        +2 010D           SAM31
+        +4 A7E5 014B      BRAS    R14,*+662
+        +8 5820 4238      L       R2,568(,R4)
+        +C 4310 420E      IC      R1,526(,R4)
+       +10 B20A 1000      SPKA    0(R1)
+       +14 9620 2030      OI      48(R2),32
+       +18 A7E5 0151      BRAS    R14,*+674
+
+--------------------------------------------------------------------------------
+<H3> Associated Messages
+
+IEC141I 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,
+SYS1.MACLIB(JRNOMBR)
+
+  IEC141I 013-<rc>,<mod>,<jjj>,<sss>, <ddname>[-<#>] [,<dev>,<volser>,
+  <dsname>(<member>)]
+
+  Explanation:
+
+  An error occurred during the processing of an OPEN macro. System completion
+  code 013, with the return code, accompanies this message.
+
+  In the message text:
+
+  <rc>
+      The return code.
+  <mod>
+      The name of the module in which the error was detected.
+  <jjj>
+      The job name.
+  <sss>
+      The step name.
+  <ddname>[-<#>]
+      A data definition (DD) name, followed by a concatenation number (<#>) if the
+      DD statement is part of a concatenation and not the first DD statement in the
+      concatenation.
+  <dev>
+      The device number.
+  <volser>
+      The volume serial number.
+  <dsname>(<member>)
+      The data set name. Member name if specified.
+
+  For a subsystem data set, such as SYSIN or SYSOUT, or a z/OS UNIX file, the
+  <dev>, <volser>, and <dsname> fields do not appear.
+
+  Explanations of the hexadecimal return codes follow.
+
+  Return Code
+      Explanation
+  04
+      One of the following problems occurred:
+          * ISO/ANSI tape labels were specified in the LABEL parameter of the DD
+          statement (as AL), but the system does not support them.
+          * OPTCD=Q processing was specified, but the system does not support it.
+  08
+      ISO/ANSI tape labels were specified in the LABEL parameter of the DD statement
+      (as AL), but the UNIT parameter specified a 7-track tape drive. ISO/ANSI tape
+      labels are not valid for 7-track drives. Correct the LABEL or UNIT parameter,
+      or both, in the DD statement.
+  0C
+      A buffer length of 0 was specified for a BDAM data set for which dynamic
+      buffering was requested. Correct the data control block (DCB) by specifying a
+      valid buffer length.
+  10
+      An OPEN macro instruction was issued for a dummy data set; the BLKSIZE and
+      BUFL values are both 0. Correct the DCB by specifying a BLKSIZE or BUFL value
+      other than 0.
+  14
+      One of the following problems occurred:.
+          * An OPEN macro instruction was issued with OUTPUT or OUTIN specified. The DCB
+          specifies DSORG=PO or POU, but the data set control block (DSCB) indicates
+          that the data set is not partitioned.
+          Take one of these actions to correct the problem:
+              * Change the DCB macro instruction DSORG subparameter to PS.
+              * Delete and recreate the data set and imply partitioned organization by
+              allocating space for the directory in the SPACE parameter of the DD statement.
+              * Verify that the values of the DSNAME and VOLUME parameters in the DD
+              statement are correct.
+
+          * An OPEN macro instruction was issued with INPUT specified. The DSCB
+          indicates that the DSORG value is PO, but the DCB specifies neither DSORG=PO
+          nor DSORG=PS.
+  18
+      An OPEN macro instruction was issued for a partitioned data set. The DSNAME
+      parameter specified a member that could not be found.
+  1C
+      An OPEN macro instruction was issued for a partitioned data set, but an I/O
+      error occurred during a search of the directory.
+  20
+      An OPEN macro instruction was issued for a sequential data set using queued
+      access. BLKSIZE is not a multiple of LRECL, or LRECL is 0 with RECFM=FB or
+      RECFM=FBS, or BLKSIZE is not at least four bytes greater than LRECL with
+      RECFM=V.
+  24
+      An OPEN macro instruction was issued with INPUT, INOUT, RDBACK, or UPDATE
+      specified, but the DCB did not specify a MACRF value of EXCP, GET, or READ.
+  28
+      An OPEN macro instruction was issued with OUTPUT, OUTIN, OUTINX, or EXTEND
+      specified, but the DCB did not specify a MACRF value of EXCP, PUT, or WRITE.
+  2C
+      A sequential data set using queued access with exchange buffering was opened
+      for input, and the buffer control-block address was 0. Verify that DCBBUFCB
+      was not incorrectly modified. This type of error often occurs if two or more
+      tasks share a DCB or if the DCB is opened and closed several times within one
+      job step.
+  30
+      A sequential data set using the queued access technique with exchange
+      buffering was opened for output, but the buffer control-block address is 0.
+      Verify that DCBBUFCB was not incorrectly modified. This type of error often
+      occurs if a DCB is shared or is opened and closed several times within one job
+      step.
+  34
+      The system detected one of these conditions:
+          * The following combination was specified: QSAM, MACRF=GD or PD, and a RECFM
+          value that is not VS, VBS, DS, or DBS.
+          * An OPEN macro instruction was issued for a data set with BLKSIZE and BUFL
+          equal to 0. The system determined that it had to obtain buffers but was unable
+          to do so.
+          * RECFM was specified with both the A and M attributes.
+          * The following combination was specified: QSAM, LRECL=0, and a RECFM value
+          that is not V or VB.
+          * The following combination was specified: RECFM=V or VB and LRECL greater
+          than the quantity BLKSIZE minus 4.
+          * The following combination was specified: QSAM and BLKSIZE=0. No nonzero
+          BLKSIZE value was available from any source and the system could not determine
+          one. Coding BLKSIZE=0 in the JCL never has an effect except when overriding a
+          cataloged procedure variable.
+          * The following combination was specified: RECFM not variable or undefined and
+          LRECL greater than BLKSIZE.
+          * The following combination was specified: BFTEK=A, RECFM=VBS, and LRECL=0.
+  38
+      An OPEN macro instruction was issued for a sequential data set on a direct
+      access device with track overflow, but the buffer control block address was
+      zero. Verify that DCBBUFCB was not incorrectly modified. This type of error
+      often occurs if a DCB is reused or is opened and closed several times within
+      one job step.
+  3C
+      A sequential data set was opened for INPUT, OUTPUT, or EXTEND, but the next
+      available buffer address in the buffer control block was 0. Verify that
+      DCBBUFCB was not incorrectly modified. This type of error often occurs if a
+      DCB is reused or is opened and closed several times within one job step.
+  40
+      A sequential or direct data set was opened for INPUT, but the next available
+      buffer address in the buffer control block was 0. Verify that DCBBUFCB was not
+      incorrectly modified. This type of error often occurs if a DCB is reused or is
+      opened and closed several times within one job step.
+  44
+      An OPEN macro instruction was issued for a data set on a direct access device
+      for which chained scheduling was specified, but the next available buffer
+      address in the buffer control block was 0. Verify that DCBBUFCB was not
+      incorrectly modified. This type of error often occurs if a DCB is reused or is
+      opened and closed several times within one job step.
+  48
+      An OPEN macro instruction was issued for a sequential data set using the
+      queued access techniques, but the next available buffer address in the buffer
+      control block was 0. This means the DCB has an existing buffer pool that does
+      not have enough available buffers.
+  4C
+      An OPEN macro instruction was issued for a data set using queued access. The
+      system determined that a buffer pool existed for this data set and checked the
+      buffer length value as follows, detecting an error:
+          * If the data was to be sent directly to a unit record device (no spooling),
+          the buffer length value in the buffer control block had to be equal to or
+          greater than the value specified in the DCB for LRECL. This type of error
+          often occurs if a DCB is shared by two or more tasks or is opened or closed
+          several times within one job step.
+          * Otherwise, the buffer length value in the buffer control block or in DCBBUFL
+          had to be equal to or greater than the value specified in the data control
+          block extension (DCBE) or DCB for BLKSIZE.
+  50
+      An OPEN macro instruction issued for a data set allocated to a printer did not
+      have OUTPUT specified as an OPEN option.
+  58
+      An OPEN macro instruction was issued for a paper-tape data set, but
+      concatenation with unlike attributes was specified; that is, the DCBOFLGS bit
+      4 was 1. Set the DCBOFLGS bit 4 to 0 and do not attempt to concatenate a data
+      set on paper tape with data sets of unlike attributes.
+  5C
+      One of the following events occurred:
+          * An OPEN macro instruction was issued for a sequential data set using queued
+          access. The data set contained spanned variable-length records larger than
+          32756, but GET locate mode was not specified, or the logical record interface
+          (LRI) and LRECL=<x> were both specified.
+          * An OPEN macro instruction was issued for a sequential data set with the DCB
+          specifying BFTEK=A logical record interface and MACRF=GM or MACRF=PM.
+  60
+      An OPEN macro instruction was issued for a data set with the DCB specifying
+      RECFM=F, but the BLKSIZE value was not equal to LRECL. Correct the DCB
+      parameters to specify RECFM=FB, or make LRECL and BLKSIZE equal.
+  64
+      An OPEN macro instruction was issued for a dummy data set using an access
+      method other than QSAM or BSAM. Correct the DD statement to specify a real
+      data set, or access the data set using BSAM or QSAM.
+  68
+      An OPEN macro instruction was issued for a data set for which the DCB or DCBE
+      specified a block size and key length whose sum is greater than the maximum
+      allowed for the allocated device. For information about the maximum block size
+      and key length, see z/OS DFSMS Using Data Setsz/OS DFSMS Using Data Sets.
+  6C
+      An OPEN macro instruction was issued for a data set with RECFM=T in the DCB,
+      requesting track overflow, but the direct access device allocated does not
+      support track overflow. Correct the DCB or specifically request a device that
+      supports track overflow, through the unit parameter or through a generic name
+      that applies only to the needed devices.
+  70
+      One of the following events occurred:
+          * An OPEN macro instruction was issued for a data set on magnetic tape. A
+          conflict exists between LABEL parameters in the DD statement and the DCBRECFM,
+          DCBOPTCD, DCBBUFOF, and DCBUSASI fields, which give the appearance of mixed
+          ASCII and EBCDIC attributes for the data set; or TRTCH was specified for a
+          9-track tape.
+          Some examples of conflicts are that you cannot use RECFM=V, VB, or U with AL
+          tapes, and the BLKSIZE value must be no more than 2048 with AL Version 1
+          tapes. For details about AL tape restrictions, see z/OS DFSMS Using Magnetic
+          Tapesz/OS DFSMS Using Magnetic Tapes. Most utilities (except IEHINITT) do not
+          support ASCII.
+          * An OPEN macro instruction was issued for a data set not on magnetic tape.
+          Either OPTCD=Q was specified, or OPEN was issued for an ISAM data set using
+          QSAM.
+  74
+      An OPEN macro instruction was issued for an optical character reader data set,
+      but option 1 in the OPEN macro instruction did not specify input.
+  78
+      An OPEN macro instruction was issued for an optical character reader data set.
+      The BUFL parameter in the DCB was either specified as zero or incorrectly
+      modified during processing.
+  7C
+      An OPEN macro instruction was issued for an optical character reader data set,
+      but the LRECL parameter value in the DCB was zero. Specify an LRECL value
+      other than zero, and rerun the job.
+  80
+      An OPEN macro was issued for an optical character reader data set, but the
+      specified BUFL value was less than LRECL. Specify BUFL equal to, or greater
+      than, LRECL, and rerun the job.
+  84
+      An OPEN macro instruction was issued for an optical character reader data set.
+      The number of buffers specified in the buffer pool control block is not the
+      same as the number of buffers specified in the DCBBUFNO field.
+  88
+      An OPEN macro instruction was issued for a BSAM, BPAM or QSAM DCB for a
+      telecommunications device, but the DD statement or dynamic allocation did not
+      specify TERM=TS, which would signify a TSO terminal.
+  8C
+      RECFM was not specified for a direct organization (BDAM) data set. Specify the
+      correct RECFM value in the DCB.
+  90
+      An OPEN macro instruction was issued for a 3890 document processor. It did not
+      specify INPUT.
+  94
+      An OPEN macro instruction was issued for a 3890 document processor. The BUFL
+      or BLKSIZE parameter in the DCB was less than 16 times the LRECL parameter in
+      the DCB.
+  98
+      An OPEN macro instruction was issued for a 3890 document processor. The RECFM
+      parameter in the DCB did not specify F or FB.
+  9C
+      An OPEN macro instruction was issued for a 3890 document processor. The MACRF
+      parameter in the DCB was not GM, or the DSORG parameter in the DCB was not PS.
+  A0
+      An OPEN macro instruction was issued for a 3890 document processor. The LRECL
+      parameter in the DCB was not specified or was less than 12 or greater than 48.
+  A4
+      A DCB was opened for a subsystem data set, such as SYSIN or SYSOUT, but DSORG
+      was not specified as PS.
+  A8
+      An incorrect record format was requested for a SYSIN, SYSOUT, or subsystem
+      data set with BSAM or QSAM or for a z/OS UNIX directory with BPAM. One of the
+      following conditions was detected:
+          * RECFM=D was specified.
+          * Variable spanned records (VS or VBS) were requested for input.
+          * Both ANSI and machine control characters were specified.
+  AC
+      An OPEN macro instruction was issued for a sequential data set using the
+      queued access technique. However, a key length that is not supported for using
+      the queued access technique was specified in the DCB.
+  B0
+      An OPEN macro instruction specified the RDBACK option, and the DCB specified a
+      record format of variable spanned records. These are conflicting parameters.
+  B4
+      An OPEN macro instruction specified the INOUT, OUTIN, or OUTINX option, and
+      the DCB specified QSAM MACRF values. These are conflicting parameters.
+  B8
+      An OPEN macro instruction was issued for a 3890 document processor. The DCBHDR
+      parameter was not specified in the DCB.
+  BC
+      A subsystem DCB, such as SYSIN, SYSOUT, or a z/OS UNIX FIFO file, was opened
+      with incorrect options. One of these was true:
+          * The OPEN option 1 specified UPDAT or RDBACK.
+          * For BSAM, the NOTE and POINT macro function was selected (MACRF=RP or WP)
+          for a FIFO file. Repositioning or updating a FIFO file is not permitted. It is
+          also not permitted to open the file for writing with the PATHOPTS=OAPPEND
+          option.
+          * For a subsystem data set, the OPEN option 1 was OUTINX.
+          * Both the CNTRL and POINT macros were requested as if MACRF=RCP or WCP were
+          coded. The CNTRL and POINT options are mutually exclusive.
+  C0
+      An open failure occurred for a subsystem data set. Possible failures follow:
+          * A SYSIN or SYSOUT data set opened by JES
+          * A SYSIN or SYSOUT data set opened under the master subsystem
+          * A z/OS UNIX file
+          * A subsystem data set (specified with SUBSYS= on the DD statement or dynamic
+          allocation equivalent)
+          For JES2, a SYSOUT data set incurred a subsystem JCL failure (SJF), and JES2
+          might issue a $HASP708 message to further describe the error. For JES3, a
+          reserved DD name, such as JOURNAL, might have been specified in a DD
+          statement. In either case, the failing DCB was not opened; processing for
+          other DCBs opened in parallel continues normally.
+  C4
+      During the creation of a direct data set, the open routine found that the DCB
+      specified READ (R) or GET (G) in the MACRF field. Only WRITE LOAD (WL) is
+      allowed.
+  C8
+      One of the following events occurred:
+          * The open subsystem module was passed an error return code in register 15
+          after issuing the IEFSSREQ macro to connect the access method control block
+          (ACB) to the subsystem. This indicates that the subsystem was not operating,
+          unless the recovery routine recovered from a prior program check.
+          * IEFSSREQ failed. SMS is not available.
+  CC
+      An OPEN macro instruction was issued for the IBM 3800 Printing Subsystem, but
+      the SETPRT processing to set up the device failed. For the reason for the
+      failure, see the accompanying IEC162I message.
+  D0
+      An incorrect record format of FBS or FS was specified for a partitioned data
+      set. RECFM=FS or FBS is not supported with BPAM.
+  D4
+      A DS/DBS record format has been specified for QSAM locate mode, but the
+      logical record interface is not present in the associated buffer control
+      block; that is, segment mode is implied.
+  D8
+      A conflict has occurred for the extended logical record interface (XLRI) of
+      the spanned record format.
+  E0
+      The DEVTYPE macro issued during open processing had an error (register 15 was
+      nonzero). This is probably a system error.
+  E1
+      A magnetic tape data set with a block size greater than 32760 is being opened
+      for input or output extend processing, but the large block interface is not
+      being used.
+  E4
+      In a partitioned concatenation, the sum of the following numbers exceeded 255:
+      the number of partitioned data sets extended (PDSEs), the number of UNIX
+      directories, and the number of partitioned data set (PDS) extents. Before z/OS
+      1.5, the limit was approximately 120.
+  E8
+      The open verification function of the IEFSSREQ macro passed an error return
+      code in register 15. This indicates an error in connecting to the subsystem or
+      a failure in the subsystem verification processing for the data set.
+  EC
+      An OPEN macro instruction was issued with a DCB that specified an LRECL value
+      different from that specified by the format-1 DSCB. The data set was a PDSE.
+      For data sets in the compressed format, this return code is issued only if the
+      data set is open for output and RECFM=FB.
+  F0
+      A catalog error occurred during an attempt to update the catalog record for a
+      data set on a direct access device.
+  F4
+      An error occurred in reading the catalog record during an attempt to open an
+      extended-format data set. Reading this record is required to determine the
+      stripe count.
+  F8
+      OPEN was issued for a DCB that specifies QSAM, RECFM=F or FB, a block size
+      greater than 32767, and no LRECL value. Correct the DCB parameters by
+      specifying an LRECL value.
+  FC
+      OPEN was issued for a DCB that specifies that the system is to obtain and
+      build the buffer pool. However, the calculated size of the buffer pool is
+      greater than the maximum size that can be requested. The calculated size of
+      the buffer pool is the size of the buffer control block plus the product of
+      BUFNO (or NCP) and the buffer length. Unless the DCB specified QSAM and
+      RMODE31=BUFF is coded in the DCBE, the maximum buffer storage request is
+      16777208 bytes.
+  FD
+      OPEN was issued for a DCB that specifies both the large block interface and
+      OPTCD=H.
+  FE
+      OPEN was issued with the UPDAT option for a DCB that specifies the large block
+      interface.
+  FF
+      OPEN was issued for a DCB that specifies both the large block interface and
+      exchange buffering.
+
+  System Action:
+
+  The system issues a WTP message to give the ABEND and return codes, records
+  pertinent control blocks on the GTF data set, and abnormally ends the job.
+
+  System Programmer Response:
+
+  If the error recurs and the program is not in error, see the messages in the
+  job log for more information. Search problem reporting databases for a fix for
+  the problem. If no fix exists, contact the IBM Support Center and provide the
+  SYSOUT output for the job.
+
+  Programmer Response:
+
+  Correct the error that caused the abnormal end, as indicated by the return
+  code in the message text. Then rerun the job.
+
+  If <ddname> is part of a concatenation, the error is probably because of a
+  violation of the sequential concatenation requirements. For more information,
+  see z/OS DFSMS Using Data Setsz/OS DFSMS Using Data Sets.
+
+  A C8 return code indicates that the subsystem was not operating when OPEN was
+  issued. Notify your system programmer.
+
+  If the return code is D4, specify the logical record interface by using the
+  BUILDRCD macro before OPEN processing or by specifying A for the DCB BFTEK
+  operand. If records are greater than 32 KB, specify the extended logical
+  record interface (XLRI) by using 0K for the DCB LRECL operand.
+
+  If the return code is D8, follow these rules:
+      * LRECL=<nnnnn>K for JCL, or dynamic allocation requires the DCB to indicate
+      the K format. You can indicate the DCB K format by specifying LRECL=0K in the
+      DCB macro instruction or by a DCB exit during open setting DCBBFTEK=DCBBFTK
+      and DCBLRECL=0. Do not specify LRECL=0K in a JCL DD statement. The use of XLRI
+      is not required for an LRECL value less than 32760.
+      * A spanned-record-format data set with a logical record length greater than
+      32760 requires the use of XLRI. The record length can come from the label for
+      input data sets with the spanned format, up to 99999 bytes.
+      * LRECL=X is not valid for spanned record format.
+      * The value for XLRI LRECL cannot exceed 16383K (in which K indicates
+      1024-byte multiples).
+      * XLRI is valid only for an ISO/ANSI-label (AL) tape. The DCB must indicate
+      spanned record format (DS or DBS); and the access method must be QSAM locate
+      mode.
+
+  If the return code is F0, notify your system programmer to correct the catalog
+  error, and then rerun the job.
+
+  If the return code is F4, notify your system programmer to correct the catalog
+  error, and then rerun the job.
+
+  Source:
+
+  DFSMSdfp
+
+  Module:
+
+  IFG0194F, IGGS0OPN, IGG0193K, IGG0203K
+
+  Routing Code:
+
+  11
+
+  Descriptor Code:
+
+  6
+
+--------------------------------------------------------------------------------
+<H3> Additional Event Details
+
+Program Status Word (PSW) . : 075C1000 80E36C64
+  PSW Summary . . . . . . . : Primary Space Mode, PSW Key 5, AMODE 31,
+                              Supervisor State
+
+General Purpose Registers:
+  R0:       0_00E36F6C (Module IGC0001I + X'15F6C')
+  R1:  7CBB84_A4013000 (Storage invalid)
+  R2:       0_0000DFB8 (Module IEBGENER CSECT IEBGENR3 + X'1E08')
+  R3:       0_00E36F40 (Module IGC0001I + X'15F40')
+  R4:       0_007CD410 (207856 bytes of storage addressable)
+  R5:       0_007CD7A4 (206940 bytes of storage addressable)
+  R6:       0_007CD74C (207028 bytes of storage addressable)
+  R7:       0_007CD7A4 (206940 bytes of storage addressable)
+  R8:       0_007CD76C (206996 bytes of storage addressable)
+  R9:       0_0000E080 (Module IEBGENER CSECT IEBGENR3 + X'1ED0')
+  R10:      0_00FCB2D0 (130948400 bytes of storage addressable)
+  R11:      0_7F5C8CE8 (792 bytes of storage addressable)
+  R12:      0_00000008 (2040 bytes of storage addressable)
+  R13:      0_007CD7A4 (206940 bytes of storage addressable)
+  R14:      0_80E364C2 (Module IGC0001I + X'154C2')
+  R15:      0_00000018 (2024 bytes of storage addressable)
+
+--------------------------------------------------------------------------------
+<H3> Abend Code S013-X'18' Explanation
+
+  013
+
+  Explanation: The error occurred during processing of an OPEN macro
+  instruction. This system completion code is accompanied by message IEC141I.
+  Refer to the explanation of message IEC141I for complete information about the
+  task that was ended and for an explanation of the return code in register 15
+  (which is provided in the IEC141I message text).
+
+  Application Programmer Response: Respond as indicated for message IEC141I.
+
+  System programmer response: If the error recurs and the program is not in
+  error, look at the messages in the job log for more information. Search
+  problem reporting data bases for a fix for the problem. If no fix exists,
+  contact the IBM Support Center. Provide the JCL and the program listing for
+  the job.
+
+  Source: DFSMSdfp
+
+
+
+<H1> S Y S T E M - W I D E   I N F O R M A T I O N
+
+
+================================================================================
+<H2> OPEN FILES
+
+--------------------------------------------------------------------------------
+<H3> Non-Event-Related Open Files
+
+File Name . . . . . . . . . : SYSPRINT
+  Data Set Name . . . . . . : Z99999.JRS013.JOB00901.D0000101.?
+  File Attributes . . . . . : ORGANIZATION=SEQUENTIAL, ACCESS MODE=n/a,
+                              RECFM=FIXED BLOCKED  ASA
+  Last I/O Function . . . . : WRITE
+  Open Status . . . . . . . : OUTPUT
+
+  Current Record. . . . . . : Record data length 120
+  Address  Offset     Hex                                 EBCDIC
+  -------- ---------  ----------------------------------- ------------------
+  0000EC5D            C9C5C2F3 F5F2C940 E6C1D9D5 C9D5C77A *IEB352I WARNING:*
+  0000EC6D       +10  40D6D5C5 40D6D940 D4D6D9C5 40D6C640 * ONE OR MORE OF *
+  0000EC7D       +20  E3C8C540 D6E4E3D7 E4E340C4 C3C240D7 *THE OUTPUT DCB P*
+  0000EC8D       +30  C1D9D4E2 40C3D6D7 C9C5C440 C6D9D6D4 *ARMS COPIED FROM*
+  0000EC9D       +40  40C9D5D7 E4E34040 40404040 40404040 * INPUT          *
+  0000ECAD       +50  40404040 40404040 40404040 40404040 *                *
+  0000ECBD       +60  40404040 40404040 40404040 40404040 *                *
+  0000ECCD       +70  40404040 40404040                   *                *
+
+
+================================================================================
+<H2> STORAGE AREAS
+
+--------------------------------------------------------------------------------
+<H3> Hex-Dumped Storage
+
+Address  Offset     Hex                                 EBCDIC
+-------- ---------  ----------------------------------- ------------------
+         Event 1 CSECT IEBGENER GPR 4 (Address 00000002)
+00000002                0000                            *  ..            *
+         Event 2 CSECT IEBGENR3 GPR 15 (Address 00000004)
+00000004                     00000000 00000000          *    ........    *
+         Event 1 CSECT IEBGENER GPR 12 (Address 0000000C)
+         Event 2 CSECT IEBGENR3 GPR 12 (Address 0000000C)
+0000000C                                       00000000 *            ....*
+00000010        +4  00FD6368 00000000 7FFFF000 7FFFF000 *........".0.".0.*
+00000020       +14  7FFFF000 7FFFF000 7FFFF000 7FFFF000 *".0.".0.".0.".0.*
+00000030       +24  00000000 00000000 7FFFF000 7FFFF000 *........".0.".0.*
+00000040       +34  00000000 00000000 00000000 00FD6368 *................*
+00000050       +44  00000000 00000000 00000000 00000000 *................*
+         Lines 00000060-00000070 (X'20' bytes) same as above
+00000080       +74  00000000 00001005 00020078 00040016 *................*
+00000090       +84  00000002 00000000 00000000 00000000 *................*
+000000A0       +94  00000001 00000000 00000000 7F5EB400 *............";..*
+000000B0       +A4  00000000 00000000 00010027 0267F2D0 *..............2}*
+000000C0       +B4  28000000 00000000 FBEBFFFB FEFFFF7C *...............@*
+000000D0       +C4  07FCE000 00000000 77003B98 04800000 *..\........q....*
+000000E0       +D4  EC000000 00000000 00000000 00000000 *................*
+000000F0       +E4  00000000 00000000 00000000 00000000 *................*
+00000100       +F4  00000000 00000000 00000000 00000000 *................*
+00000110      +104  00000000 014AB3F0 00000000 00000000 *.....¢.0........*
+00000120      +114  00000000 00000000 00000000 00000000 *................*
+00000130      +124  07040000 80000000 00000000 1AB55FDC *..............^.*
+00000140      +134  07041000 80000000 00000000 1AB58BEC *................*
+00000150      +144  07042400 80000000 00000000 0175D02A *..............}.*
+00000160      +154  00000000 00000000 00000000 00000000 *................*
+00000170      +164  07060000 00000000 00000000 00000000 *................*
+00000180      +174  00000000 00000000 00000000 00000000 *................*
+00000190      +184  00000000 00000000                   *........        *
+         Event 1 CSECT IEBGENER GPR 0 (Address 00000198)
+00000198                              00000000 00000000 *        ........*
+000001A0        +8  04040000 80000000 00000000 017512C0 *...............{*
+000001B0       +18  04040000 80000000 00000000 014E6618 *.............+..*
+000001C0       +28  04040000 80000000 00000000 01DD4500 *................*
+000001D0       +38  00000000 80000000 00000000 7FCB4078 *............". .*
+000001E0       +48  00000000 80000000 00000000 7FCB60D8 *............".-Q*
+000001F0       +58  04040000 80000000 00000000 01746500 *................*
+00000200       +68  D7E2C140 00014001 0291E720 7EE8C720 *PSA .. ..jX.=YG.*
+00000210       +78  0251A100 024B6100 007D2058 007D2058 *..~.../..'...'..*
+00000220       +88  00FD7000 00F96280 00000000 00000000 *.....9..........*
+00000230       +98  00000000 00000000 00000000 0000000B *................*
+00000240       +A8  0C000000 00000000 00000081 7F4B9260 *...........a".k-*
+00000250       +B8  040C0000 814EB41C 00000000 00000000 *....a+..........*
+00000260       +C8  AD040000 00000000 00000000 00000000 *[...............*
+00000270       +D8  AD070950 00000000 00000704 00000000 *[..&............*
+00000280       +E8  00FD5400 00000000 00FD5500 00000000 *................*
+00000290       +F8  00000000 00000000 00000000 00000000 *................*
+000002A0      +108  00000000 00000000 00FD5600 00000000 *................*
+000002B0      +118  00FD5B00 00000000 00000000 00000000 *..$.............*
+000002C0      +128  00000000 00FD5C00 00000000 00000000 *......*.........*
+000002D0      +138  01E3CC00 00FD5D00 00FD5E00 00000000 *.T....)...;.....*
+000002E0      +148  00000000 00000000 00000000 00000000 *................*
+000002F0      +158  00000000 00004001 00000000 00FED8A0 *...... .......Q.*
+00000300      +168  00000000 7CA08003 00000000 00040000 *....@...........*
+00000310      +178  7ED7C958 00000000 00010001 7CA08003 *=PI.........@...*
+00000320      +188  00000000 00000000 00000000 00000000 *................*
+         Lines 00000330-00000360 (X'40' bytes) same as above
+00000370      +1D8  00000000 00000000 00000B0E 0B0E0610 *................*
+00000380      +1E8  00001900 00001900 02226158 00001900 *........../.....*
+00000390      +1F8  022494F8 00000000 02226DE0 00001900 *..m8......_\....*
+000003A0      +208  02227A68 00001900 022286F0 02227A68 *..:.......f0..:.*
+000003B0      +218  02229378 00000000 0224A180 00000000 *..l.......~.....*
+000003C0      +228  00000000 00000000 00000000 00000000 *................*
+000003D0      +238  02248870 00001900 02247BE8 00000000 *..h.......#Y....*
+000003E0      +248  070C0000 80FF000A 00000000 00000000 *................*
+000003F0      +258  8007D000 581003F0 0A0D1000 00000000 *..}....0........*
+00000400      +268  00000000 00000000 00C94EE8 00000000 *.........I+Y....*
+00000410      +278  02735928 02250000 040C0000 817503F4 *............a..4*
+00000420      +288  070C0000 8175054C 07540000 80000000 *....a..<........*
+00000430      +298  00000000 052E93DE 00000000 00000000 *......l.........*
+00000440      +2A8  04040000 80000000 00000000 04CE713C *................*
+00000450      +2B8  00000000 00000000 00000000 00000000 *................*
+00000460      +2C8  07850400 80000000 00000000 1C1CBA9E *.e..............*
+00000470      +2D8  FFFFFFFF FFFFFED4 00000000 00000000 *.......M........*
+00000480      +2E8  07042400 80000000 00000000 0175D02A *..............}.*
+00000490      +2F8  00000000 00000000 00000000 00000000 *................*
+000004A0      +308  00000007 00000000 00000000 00000000 *................*
+000004B0      +318  00000000 00FEDEA4 7F492DC0 01747B88 *.......u"..{..#h*
+000004C0      +328  0255BF80 00000000 00000000 00000000 *................*
+000004D0      +338  00000000 00000000 00000000 00000000 *................*
+         Lines 000004E0-00000570 (X'A0' bytes) same as above
+00000580      +3E8  00000000 00000000 00100000 9F9CEE20 *................*
+00000590      +3F8  9F98EE20 00000000 00000000 00000000 *.q..............*
+000005A0      +408  070C0000 9B74A4E4 00000000 00000000 *......uU........*
+000005B0      +418  02735000 02733188 00000000 FFFF018C *..&....h........*
+000005C0      +428  0000FE73 00000000 FFFFFFFD FFFF018C *................*
+000005D0      +438  00000002 0000FE73 00860002 9F98EE20 *.........f...q..*
+000005E0      +448  B8000000 814F096A E0000000 01748A7C *....a|.¦\......@*
+000005F0      +458  E3A27EA2 ABE9D192 E3A27EA2 ABEA3914 *Ts=s.ZJkTs=s....*
+00000600      +468  00000000 00000000 00000000 00000000 *................*
+         Lines 00000610-00000640 (X'40' bytes) same as above
+00000650      +4B8  00000000 00000488 00000000 00000488 *.......h.......h*
+00000660      +4C8  FFFFFFFF 00000000 00000000 00000000 *................*
+00000670      +4D8  00000000 00000000 00000000 00000000 *................*
+         Lines 00000680-000006A0 (X'30' bytes) same as above
+000006B0      +518  00000000 00000000 00000000 0000E188 *...............h*
+000006C0      +528  00000000 0002C000 00000001 8000002F *......{.........*
+000006D0      +538  00000001 0000002F 00000000 00000000 *................*
+000006E0      +548  00000000 00000000 00000000 00000000 *................*
+         Lines 000006F0-00000790 (X'B0' bytes) same as above
+000007A0      +608  00000000 01E19418 00000000 01799078 *......m......`..*
+000007B0      +618  55F007E4 A7440004 41F00030 5EF007E0 *.0.Ux....0..;0.\*
+000007C0      +628  ACFB04A3 58F0F000 0CEFAD04 04A318E0 *...t.00...[..t.\*
+000007D0      +638  0B0E0000 00000000 00000000 00000000 *................*
+000007E0      +648  7FCB5948 0000003C 7FF6B6E0 00000000 *"......."6.\....*
+000007F0      +658  00000000 F97D46E0 00FEFD08 00FEFB40 *....9'.\....... *
+         Address range 00000800-00000AFF invalid
+         Event 2 CSECT IEBGENR3 GPR 0 (Address 00000B00)
+         Address range 00000B00-00001AFF invalid
+
+         Event 1 CSECT IEBGENER GPR 15 (Address 0000C1B0)
+         Event 2 CSECT IEBGENR3 GPR 2 (Address 0000C1B0)
+0000C1B0            90ECD00C 182F47F0 207CF5F6 F9F460C1 *..}....0.@5694-A*
+0000C1C0       +10  F0F140C3 D6D7E8D9 C9C7C8E3 40F1F9F9 *01 COPYRIGHT 199*
+0000C1D0       +20  F26BF2F0 F1F44040 C9C2D440 C3D6D9D7 *2,2014  IBM CORP*
+0000C1E0       +30  40D3C9C3 C5D5E2C5 C440D4C1 E3C5D9C9 * LICENSED MATERI*
+0000C1F0       +40  C1D34060 40D7D9D6 C7D9C1D4 40D7D9D6 *AL - PROGRAM PRO*
+0000C200       +50  D7C5D9E3 E840D6C6 40C9C2D4 C9C5C2C7 *PERTY OF IBMIEBG*
+0000C210       +60  C5D5D9F3 F0F361F2 F061F2F3 C8C4E9F2 *ENR303/20/23HDZ2*
+0000C220       +70  F2F2F040 D5D6D5C5 40404040 41720FFF *220 NONE    ....*
+0000C230       +80  41770001 41307AFC 503D0008 50D30004 *......:.&...&L..*
+0000C240       +90  18D35010 7B90D703 7F6C7F6C 96807BFE *.L&.#.P."%"%o.#.*
+0000C250       +A0  58310000 1841D200 7BDE305C 91FF7BDE *......K.#..*j.#.*
+0000C260       +B0  474020BC 471020BC 96807BDE 91B07BDE *. ......o.#.j.#.*
+0000C270       +C0  478020C8 92012EC8 95403008 478020E6 *...Hk..Hn .....W*
+0000C280       +D0  18A341AA 00089201 2EC84100 A0001B11 *.t....k..H......*
+0000C290       +E0  0A085000 7AC09140 7BDE4710 20F29202 *..&.:{j #....2k.*
+0000C2A0       +F0  2ED89540 30104780 211018A3 41AA0010 *.Qn .......t....*
+0000C2B0      +100  92022ED8 4100A000 1B110A08 50007AC8 *k..Q........&.:H*
+0000C2C0      +110  91907BDE 4780211C 92032ECC 95403018 *j.#.....k...n ..*
+0000C2D0      +120  4780213A 18A341AA 00189203 2ECC4100 *.....t....k.....*
+0000C2E0      +130  A0001B11 0A085000 7AC49198 7BDE4780 *......&.:Djq#...*
+0000C2F0      +140  21469204 2EDC9540 30204780 216418A3 *..k...n .......t*
+0000C300      +150  41AA0020 92042EDC 4100A000 1B110A08 *....k...........*
+0000C310      +160  50007ACC 1814D200 7BDC305D D2007BDD *&.:...K.#..)K.#.*
+0000C320      +170  305ED207 7A983050 D2017E3A 7E00D201 *.;K.:q.&K.=.=.K.*
+0000C330      +180  7E9E7E02 1B445943 00584780 2198D203 *=.=..........qK.*
+0000C340      +190  2ED43058 920A2ED4 91407BDE 4710220A *.M..k..Mj #.....*
+0000C350      +1A0  18414110 02800700 47F021B0 10000052 *.........0......*
+0000C360      +1B0  180158F0 21AC1B11 0A785010 7AA09108 *...0......&.:.j.*
+0000C370      +1C0  7BDE4710 22064110 02800700 47F021D4 *#............0.M*
+0000C380      +1D0  10000052 180158F0 21D01B11 0A785010 *.......0.}....&.*
+0000C390      +1E0  7A989120 7BDE4710 22064110 02800700 *:qj.#...........*
+0000C3A0      +1F0  47F021F8 10000052 180158F0 21F41B11 *.0.8.......0.4..*
+0000C3B0      +200  0A785010 7A9C1814 1B444111 00044150 *..&.:..........&*
+0000C3C0      +210  7E085941 00184780 2220D207 50281018 *=.........K.&...*
+0000C3D0      +220  D2077BE2 50285941 00204150 7E6C4780 *K.#S&......&=%..*
+0000C3E0      +230  2238D207 50281020 D2077BEA 50284110 *..K.&...K.#.&...*
+0000C3F0      +240  79BC4100 7BEA5000 10049680 10024100 *`...#.&...o.....*
+0000C400      +250  79D85000 100C4100 00205000 10104100 *`Q&.......&.....*
+0000C410      +260  79D45000 10141B00 0A1850F0 7D68D600 *`M&.......&0'.O.*
+0000C420      +270  501A7BDD 9142501A 47402280 94BF501A *&.#.j.&.. ..m.&.*
+0000C430      +280  D7AF7C5C 7C5C0700 4D102290 8000E01C *P.@*@*..(.....\.*
+0000C440      +290  0A401BFF 91C07CB3 471022DA 41107D54 *. ..j{@.......'.*
+0000C450      +2A0  96081002 94FB1002 0A1B50F0 7D6412FF *o...m.....&0'...*
+0000C460      +2B0  477022F8 91027D92 478022F8 95027BDD *...8j.'k...8n.#.*
+0000C470      +2C0  478022F8 D5077C88 7F784770 22F894BF *...8N.@h"....8m.*
+0000C480      +2D0  501A9602 501A47F0 22F89102 7CBE4710 *&.o.&..0.8j.@...*
+0000C490      +2E0  22ECD502 7CFC7FA4 478022F8 94BF501A *..N.@."u...8m.&.*
+0000C4A0      +2F0  9602501A 96027D92 92F07C02 58407A98 *o.&.o.'kk0@.. :q*
+0000C4B0      +300  41440000 50407AD0 96807BE1 92007B9D *....& :}o.#.k.#.*
+0000C4C0      +310  4D102318                            *(...            *
+         Event 2 CSECT IEBGENR3 GPR 1 (Address 0000C4C4)
+0000C4C4                     8000DFB8 0A13              *    ......      *
+         Event 2 CSECT IEBGENR3 PSW (Address 0000C4CA)
+0000C4CA                                  950C 7B954780 *          n.#n..*
+0000C4D0        +6  78EE9104 7BFC4780 234241F0 000C40F0 *..j.#......0.. 0*
+0000C4E0       +16  7B944110 00428910 00084140 004347F0 *#m....i.... ...0*
+0000C4F0       +26  78E6940F 7B9C41E0 7E0841F0 7BE29110 *.Wm.#..\=..0#Sj.*
+0000C500       +36  E0304780 726C41E0 7E6C9110 E0304710 *\....%.\=%j.\...*
+0000C510       +46  23B095FF 7BFA4770 239C41F0 7C039200 *..n.#......0@.k.*
+0000C520       +56  7BFA58E0 7ABCD207 E005F000 41100005 *#..\:.K.\.0.....*
+0000C530       +66  89100008 41400005 1A1458F0 7AB405EF *i.... .....0:...*
+0000C540       +76  91407B9C 471071E4 47F078EE 41E07E6C *j #....U.0...\=%*
+0000C550       +86  41F07BEA 9110E030 4780726C 47F023C0 *.0#.j.\....%.0.{*
+0000C560       +96  95FF7BFA 477023C0 41F07C2B 47F0236E *n.#....{.0@..0.>*
+0000C570       +A6  950C7B95 477023D8 41100001 89100008 *n.#n...Q....i...*
+0000C580       +B6  41400002 47F078E6 91807C00 478023F8 *. ...0.Wj.@....8*
+0000C590       +C6  41F00010 45E027E2 41100016 89100008 *.0...\.S....i...*
+0000C5A0       +D6  41400016 47F02388 91207BDE 47802418 *. ...0.hj.#.....*
+0000C5B0       +E6  41F00008 45E027E2 41100017 89100008 *.0...\.S....i...*
+0000C5C0       +F6  41400017 47F02388 91017C58 471072AC *. ...0.hj.@.....*
+0000C5D0      +106  91027C58 471072D0 91FF7BDC 4710247E *j.@....}j.#....=*
+0000C5E0      +116  41607E6C 91C06024 47E0244A D5037ECC *.-=%j{-..\.¢N.=.*
+0000C5F0      +126  7F8847D0 244A47F0 24604150 7E0891C0 *"h.}.¢.0.-.&=.j{*
+0000C600      +136  502447E0 247ED503 7E687F88 47D0247E *&..\.=N.=."h.}.=*
+0000C610      +146  41100044 89100008 41110045 58F07AB4 *....i........0:.*
+0000C620      +156  05EF41F0 000C40F0 7B9447F0 78EE9400 *...0.. 0#m.0..m.*
+0000C630      +166  7C024150 7E084160 7E6C5810 7B905811 *@..&=..-=%..#...*
+0000C640      +176  00001B44 43407BDE 4241005C 58107B90 *..... #....*..#.*
+0000C650      +186  91087B9C 47102724 91017EA9 47102724 *j.#.....j.=z....*
+0000C660      +196  94007C02 96802ECC 010C0700 47F024C4 *m.@.o........0.D*
+0000C670      +1A6  0000A788 58F024C0 05EF45E0 27E249F0 *..xh.0.{...\.S.0*
+0000C680      +1B6  7B984780 78EE49F0 7B964780 78EE4110 *#q.....0#o......*
+0000C690      +1C6  7E089110 10304780 24F60700 4D1024F4 *=.j......6..(..4*
+0000C6A0      +1D6  8000DFB8 0A145840 7AC41244 47802508 *....... :D......*
+0000C6B0      +1E6  41407BBC 45E0790C 95FF7BFA 92F024FD *. #..\`.n.#.k0..*
+0000C6C0      +1F6  4770251C 41F07C50 47F0236E 92027C02 *.....0@&.0.>k.@.*
+0000C6D0      +206  96807BE1 92007B9D 58407A9C 41440000 *o.#.k.#.. :.....*
+0000C6E0      +216  50407AE4 41107E6C 91101030 4780260A *& :U..=%j.......*
+0000C6F0      +226  4D102548 8000E01C 0A144110 7E089101 *(.....\.....=.j.*
+0000C700      +236  10174710 25AA4110 7E089101 10174710 *........=.j.....*
+0000C710      +246  25AA1FFF BFF71015 96011017 1BEE1B11 *.....7..o.......*
+0000C720      +256  BF13F006 9110F004 47802580 5810F010 *..0.j.0.......0.*
+0000C730      +266  43E0F005 1C0E4800 F0069110 F0044710 *.\0.....0.j.0...*
+0000C740      +276  25A24100 00089140 F00447E0 25A24100 *.s....j 0..\.s..*
+0000C750      +286  00101A01 4110F000 0A0A4110 7E6C9101 *......0.....=%j.*
+0000C760      +296  10174710 260A4110 7E6C9101 10174710 *........=%j.....*
+0000C770      +2A6  260A1FFF BFF71015 96011017 1BEE1B11 *.....7..o.......*
+0000C780      +2B6  BF13F006 9110F004 478025E0 5810F010 *..0.j.0....\..0.*
+0000C790      +2C6  43E0F005 1C0E4800 F0069110 F0044710 *.\0.....0.j.0...*
+0000C7A0      +2D6  26024100 00089140 F00447E0 26024100 *......j 0..\....*
+0000C7B0      +2E6  00101A01 4110F000 0A0A5840 7ACC1244 *......0.... :...*
+0000C7C0      +2F6  4780261C 41407BCA 45E0790C 95FF7BFA *..... #..\`.n.#.*
+0000C7D0      +306  92F02611 47702630 41F07C48 47F0236E *k0.......0@..0.>*
+0000C7E0      +316  58107AA0 41101000 12114780 26584100 *..:.............*
+0000C7F0      +326  02800700 47F0264C 00000003 58F02648 *.....0.<.....0..*
+0000C800      +336  0A78D703 7AA07AA0 58107A98 41101000 *..P.:.:...:q....*
+0000C810      +346  12114780 26804100 02800700 47F02674 *.............0..*
+0000C820      +356  00000003 58F02670 0A78D703 7A987A98 *.....0....P.:q:q*
+0000C830      +366  58107A9C 41101000 12114780 26A84100 *..:..........y..*
+0000C840      +376  02800700 47F0269C 00000003 58F02698 *.....0.......0.q*
+0000C850      +386  0A78D703 7A9C7A9C BF0F7C38 478026DA *..P.:.:...@.....*
+0000C860      +396  58107C3C 41101000 91807BFE 471026CA *..@.....j.#.....*
+0000C870      +3A6  41101000 0A0A47F0 26DA0700 47F026D4 *.......0.....0.M*
+0000C880      +3B6  00000003 58F026D0 0A78BF1F 7D404780 *.....0.}....' ..*
+0000C890      +3C6  270E9508 7D4C47B0 270E1B33 43307D44 *..n.'<........'.*
+0000C8A0      +3D6  1B00BF07 7D450700 47F02700 00000300 *....'....0......*
+0000C8B0      +3E6  181118F3 89F00008 BFFD26FC 0A7845E0 *...3i0.........\*
+0000C8C0      +3F6  798048F0 7B9458DD 000458E0 D00C980C *`..0#m.....\}.q.*
+0000C8D0      +406  D01407FE 94007C02 91047B9C 4710273C *}...m.@.j.#.....*
+0000C8E0      +416  91017EA9 47E027B6 94007C01 4D102744 *j.=z.\..m.@.(...*
+0000C8F0      +426  9000DFB8 0A149101 7C3347E0 275A94FE *......j.@..\.!m.*
+0000C900      +436  7C339101 7EA94710 27760700 4D102764 *@.j.=z......(...*
+0000C910      +446  B000E01C 0A14D201 7E3A7E04 D2017E9E *..\...K.=.=.K.=.*
+0000C920      +456  7E0647F0 27849200 2ED09680 2ECCD201 *=..0.dk..}o...K.*
+0000C930      +466  7E3A7E04 4D10278C 8000DFB8 0A1341E0 *=.=.(..........\*
+0000C940      +476  7E089110 E0304780 726C41E0 7E6C9110 *=.j.\....%.\=%j.*
+0000C950      +486  E0304780 726C5810 7B909101 7E4547E0 *\....%..#.j.=..\*
+0000C960      +496  27B6947F 7C019680 2ECC010C 47F027C4 *..m"@.o......0.D*
+0000C970      +4A6  0000EE30 58F027C0 05EF45E0 27E249F0 *.....0.{...\.S.0*
+0000C980      +4B6  7B984780 78EE49F0 7B964780 78EE47F0 *#q.....0#o.....0*
+0000C990      +4C6  24DE49F0 7B94074E 40F07B94 07FE9201 *...0#m.+ 0#m..k.*
+0000C9A0      +4D6  7C025840 7A984144 00005040 7AD05840 *@.. :q....& :}. *
+0000C9B0      +4E6  7AA04144 00005040 7AA49680 7BE19200 *:.....& :uo.#.k.*
+0000C9C0      +4F6  7B9D9180 2EE847E0 2AB41744 17664160 *#.j..Y.\.......-*
+0000C9D0      +506  7E6C5840 021C5840 40B45840 41405840 *=%. ...  .. . . *
+0000C9E0      +516  400C010D 58304010 D5076028 30044780 * ..... .N.-.....*
+0000C9F0      +526  284EBF4F 40504770 283447F0 2AB45040 *.+.| &.....0..& *
+0000CA00      +536  7F7045E0 79801863 1B334110 7F40D72B *"..\`......." P.*
+0000CA10      +546  10001000 D2031000 7F8CD201 10047F98 *....K...".K..."q*
+0000CA20      +556  96801008 D6011009 7F9A9641 100BD203 *o...O...".o...K.*
+0000CA30      +566  100C7F6C D2031018 7F7058F0 001058FF *.."%K..."..0....*
+0000CA40      +576  030458FF 01A8B218 F000D203 7F6C100C *.....y..0.K."%..*
+0000CA50      +586  183012FF 478028D4 58E072A8 D207E007 *.......M.\.yK.\.*
+0000CA60      +596  6004010C 4110000F 89100008 41400010 *-.......i.... ..*
+0000CA70      +5A6  1A1458F0 7AB405EF 41507E08 41607E6C *...0:....&=..-=%*
+0000CA80      +5B6  47F07688 BF1F7F6C 4780295E 58101008 *.0.h.."%...;....*
+0000CA90      +5C6  BF6F1004 4780295E 91807BFE 47E0293E *.?.....;j.#..\..*
+0000CAA0      +5D6  91FF6002 47E0293E 91806000 4710293E *j.-..\..j.-.....*
+0000CAB0      +5E6  D502600D 7FA74780 293E1816 41E02932 *N.-."x.......\..*
+0000CAC0      +5F6  0BE041F0 292056F0 291C0B0F 80000000 *.\.0...0........*
+0000CAD0      +606  58F00010 58FF007C 58FF00D0 58FF0098 *.0.....@...}...q*
+0000CAE0      +616  07FF9108 10074710 293E947F 7BFE91A0 *..j.......m"#.j.*
+0000CAF0      +626  60124780 2AB49520 60124780 295E9680 *-.....n.-....;o.*
+0000CB00      +636  7BFC9101 7C9E47E0 295E9601 7BDE010C *#.j.@..\.;o.#...*
+0000CB10      +646  96117C33 41107E6C D2001048 7CC6D200 *o.@...=%K...@FK.*
+0000CB20      +656  10147CB4 D5017CC2 7F9C4770 29AA5840 *..@.N.@B"...... *
+0000CB30      +666  7D409180 40024780 29AA17FF 43F04003 *' j. ........0 .*
+0000CB40      +676  89F00003 1AF44140 7F08D203 7ECCF00C *i0...4. ".K.=.0.*
+0000CB50      +686  D203401C F00C47F0 29B0D201 7ECE7CC2 *K. .0..0..K.=.@B*
+0000CB60      +696  D2011052 7CC4D200 10247CC0 91807BFC *K...@DK...@{j.#.*
+0000CB70      +6A6  47E029D0 91407CB3 47E02AB4 47F07170 *.\.}j @..\...0..*
+0000CB80      +6B6  91C07CB3 471029FA D5037ECC 7F904780 *j{@.....N.=."...*
+0000CB90      +6C6  2A08D501 10527F9C 47802A08 D5001024 *..N...".....N...*
+0000CBA0      +6D6  7FAA4780 2A0847F0 7170D503 7ECC7F90 *"......0..N.=.".*
+0000CBB0      +6E6  47802A4A 47F07170 58F07D64 12FF4770 *...¢.0...0'.....*
+0000CBC0      +6F6  2A4A4110 7E6CD503 7ECC7F90 47702A26 *.¢..=%N.=.".....*
+0000CBD0      +706  D2017ECE 7D96D501 10527F9C 47702A36 *K.=.'oN...".....*
+0000CBE0      +716  D2011052 7D98D500 10247FAA 47707170 *K...'qN...".....*
+0000CBF0      +726  D2001024 7D9447F0 71709148 10244710 *K...'m.0..j.....*
+0000CC00      +736  2A649104 7B9C47E0 2A8AD201 7E9E7E06 *..j.#..\..K.=.=.*
+0000CC10      +746  47F02AB4 D5011052 7F9C4780 2AB4D501 *.0..N...".....N.*
+0000CC20      +756  10527F9E 47202AB4 95807C01 47802AB4 *..".....n.@.....*
+0000CC30      +766  D2017E9E 7E0647F0 2AA291C0 7CB247E0 *K.=.=..0.sj{@..\*
+0000CC40      +776  2AB44140 7E089148 40244710 2AA247F0 *... =.j. ....s.0*
+0000CC50      +786  2AB491FF 7BDC47E0 2AAE47F0 2AB4D201 *..j.#..\...0..K.*
+0000CC60      +796  7E9E7E06 010C94EF 7C339680 2EE09200 *=.=...m.@.o..\k.*
+0000CC70      +7A6  2EE85810 7E6CD203 101C7ECC 4D102AD4 *.Y..=%K...=.(..M*
+0000CC80      +7B6  8F00E01C 0A134110 7E6C5840 10009104 *..\.....=%. ..j.*
+0000CC90      +7C6  401147E0 2AF0D203 7ECC401C 47F02AF6 * ..\.0K.=. ..0.6*
+0000CCA0      +7D6  D2017ECE 103E95FF 7BFD4770 2B164110 *K.=...n.#.......*
+0000CCB0      +7E6  00438910 00084140 00441A14 58F07AB4 *..i.... .....0:.*
+0000CCC0      +7F6  05EF9200 7BFD9680 7BE15840 7AC81244 *..k.#.o.#.. :H..*
+0000CCD0      +806  4780716A 41407BAE 45E0790C 47F0716A *...¦. #..\`..0.¦*
+0000CCE0      +816  41300B30 1BF3182F 41720FFF 41770001 *.....3..........*
+0000CCF0      +826  50E07B8C 92047B9E 91801008 47102C3A *&\#.k.#.j.......*
+0000CD00      +836  47F02B92 91017C02 47802B8C 12FF4780 *.0.kj.@.........*
+0000CD10      +846  2B8C5831 00001233 47802B8C 1B444340 *............... *
+0000CD20      +856  7AA04144 00014240 7AA05840 7AA4D24F *:...... :.. :uK|*
+0000CD30      +866  40003000 41440050 50407AA4 58E07B8C * ......&& :u.\#.*
+0000CD40      +876  07FE5831 00001233 47802BD6 95F13003 *...........On1..*
+0000CD50      +886  47702BA8 96807BE1 91F07C02 47802BD6 *...yo.#.j0@....O*
+0000CD60      +896  91B07BDE 47802BD6 43407A98 41440001 *j.#....O. :q....*
+0000CD70      +8A6  42407A98 58407AD0 D24F4000 30004144 *. :q. :}K| .....*
+0000CD80      +8B6  00505040 7AD09180 7BE14780 2C1C58F0 *.&& :}j.#......0*
+0000CD90      +8C6  7AC012FF 47802C1C 43E07B9D 41EE0001 *:{.......\#.....*
+0000CDA0      +8D6  42E07B9D 05EF42F0 7B9F91F0 7C024780 *.\#....0#.j0@...*
+0000CDB0      +8E6  2C2A9138 7BDE4780 2C2A12FF 47802C1C *..j.#...........*
+0000CDC0      +8F6  49F07B96 47702B54 96807C00 947F7BE1 *.0#o....o.@.m"#.*
+0000CDD0      +906  1BFF43F0 7B9E47F0 2B5449F0 7B964770 *...0#..0...0#o..*
+0000CDE0      +916  2B5496FF 7BFA47F0 2B544140 7BA045E0 *..o.#..0... #..\*
+0000CDF0      +926  2E3C47F0 2BD64130 0C461BF3 182F4172 *...0.O.....3....*
+0000CE00      +936  0FFF4177 000150E0 7B8C9204 7B9E9180 *......&\#.k.#.j.*
+0000CE10      +946  10084710 2CFC5831 00001233 47802CD4 *...............M*
+0000CE20      +956  91F07BFB 47102C84 96807BE1 92007B9D *j0#....do.#.k.#.*
+0000CE30      +966  92007B9F 91B07BDE 47802CD4 91801004 *k.#.j.#....Mj...*
+0000CE40      +976  47E02CD4 91F07BFB 47102CB2 92F07BFB *.\.Mj0#.....k0#.*
+0000CE50      +986  58407A9C 41440000 50407AE4 1B444240 *. :.....& :U... *
+0000CE60      +996  7A9C4340 7A9C4144 00014240 7A9C5840 *:.. :...... :.. *
+0000CE70      +9A6  7AE45831 0000D24F 40003000 41440050 *:U....K| ......&*
+0000CE80      +9B6  50407AE4 91807BE1 47802C1C 58F07AC4 *& :Uj.#......0:D*
+0000CE90      +9C6  12FF4780 2C1C43E0 7B9D41EE 000142E0 *.......\#......\*
+0000CEA0      +9D6  7B9D05EF 42F07B9F 47F02C02 41407BBC *#....0#..0... #.*
+0000CEB0      +9E6  45E02E3C 47F02CD4 41300D08 1BF3182F *.\...0.M.....3..*
+0000CEC0      +9F6  41720FFF 41770001 50E07B8C 92087B9E *........&\#.k.#.*
+0000CED0      +A06  91801008 47102D96 91017C02 47802D66 *j......oj.@.....*
+0000CEE0      +A16  1B444340 7A981244 47802D8E 58310000 *... :q..........*
+0000CEF0      +A26  12334780 2D660640 42407A98 58407AD0 *....... . :q. :}*
+0000CF00      +A36  D24F3000 40004144 00505040 7AD09180 *K|.. ....&& :}j.*
+0000CF10      +A46  7BE14780 2C1C58F0 7AC812FF 47802C1C *#......0:H......*
+0000CF20      +A56  43E07B9D 41EE0001 42E07B9D 05EF42F0 *.\#......\#....0*
+0000CF30      +A66  7B9F9101 7C024780 2C2A47F0 2C029200 *#.j.@......0..k.*
+0000CF40      +A76  7B9E47F0 2D664140 7BAE45E0 2E3C47F0 *#..0... #..\...0*
+0000CF50      +A86  2D664130 0DA21BF3 182F4172 0FFF4177 *.....s.3........*
+0000CF60      +A96  000150E0 7B8C9208 7B9E9180 10084710 *..&\#.k.#.j.....*
+0000CF70      +AA6  2E309102 7C024780 2E001B44 43407A9C *..j.@........ :.*
+0000CF80      +AB6  12444780 2E280640 42407A9C 58407AE4 *....... . :.. :U*
+0000CF90      +AC6  58310000 12334780 2E00D24F 30004000 *..........K|.. .*
+0000CFA0      +AD6  41440050 50407AE4 91807BE1 47802C1C *...&& :Uj.#.....*
+0000CFB0      +AE6  58F07ACC 12FF4780 2C1C43E0 7B9D41EE *.0:........\#...*
+0000CFC0      +AF6  000142E0 7B9D05EF 42F07B9F 91027C02 *...\#....0#.j.@.*
+0000CFD0      +B06  47802C2A 47F02C02 92007B9E 47F02E00 *.....0..k.#..0..*
+0000CFE0      +B16  41407BCA 45E02E3C 47F02E00 90D17AE8 *. #..\...0...J:Y*
+0000CFF0      +B26  41D07B44 58107AB0 D20D1000 40004110 *.}#...:.K... ...*
+0000D000      +B36  001A8910 00084140 001A1A14 58F07AB4 *..i.... .....0:.*
+0000D010      +B46  05EF9200 7B9E41F0 000C45E0 27E292FF *..k.#..0...\.Sk.*
+0000D020      +B56  7BFF98D1 7AE807FE 91801008 47102EB4 *#.qJ:Y..j.......*
+0000D030      +B66  1B444340 7AA01244 47802EC4 58310000 *... :......D....*
+0000D040      +B76  12334780 2EC40640 42407AA0 58407AA4 *.....D. . :.. :u*
+0000D050      +B86  D24F3000 40004144 00505040 7AA441F0 *K|.. ....&& :u.0*
+0000D060      +B96  000807FE 50E07B8C 41407BAE 45E02E3C *....&\#.. #..\..*
+0000D070      +BA6  58E07B8C 1BFF07FE 0100CCE0 0300CDF6 *.\#........\...6*
+0000D080      +BB6  8500D09C 00000000 0200CEB8 0400CF52 *e.}.............*
+0000D090      +BC6  8500D320 1300DEE0 0000DE0C 90DE7AD4 *e.L....\......:M*
+0000D0A0      +BD6  91C01024 47402EFC 96C01024 95001014 *j{... ..o{..n...*
+0000D0B0      +BE6  47802F0E D2001048 101447F0 2F1A9500 *....K......0..n.*
+0000D0C0      +BF6  10484770 2F1A9205 10489563 104847D0 *......k...n....}*
+0000D0D0      +C06  2F269263 10489200 10145830 021C5830 *..k...k.........*
+0000D0E0      +C16  30B45830 31405830 300C010D 58403010 *..... ....... ..*
+0000D0F0      +C26  D5077BE2 40044780 2F56BF3F 30504780 *N.#S ........&..*
+0000D100      +C36  70AE47F0 2F3C5030 7F701755 186145E0 *...0..&."..../.\*
+0000D110      +C46  79804110 7F40D72B 10001000 D2031000 *`..." P.....K...*
+0000D120      +C56  7F8CD201 10047F98 96801008 D6011009 *".K..."qo...O...*
+0000D130      +C66  7F9A9641 100BD203 100C7F6C D2031018 *".o...K..."%K...*
+0000D140      +C76  7F7058F0 001058FF 030458FF 01A8B218 *"..0.........y..*
+0000D150      +C86  F000D203 7F6C100C 185012FF 47802FDC *0.K."%...&......*
+0000D160      +C96  58E072A8 D207E007 4004010C 4110000F *.\.yK.\. .......*
+0000D170      +CA6  89100008 41F00010 1A1F58F0 7AB405EF *i....0.....0:...*
+0000D180      +CB6  41507E08 41607E6C 47F07688 BF1F7F6C *.&=..-=%.0.h.."%*
+0000D190      +CC6  47802FF4 58101008 BFEF1004 47802FF4 *...4...........4*
+0000D1A0      +CD6  47F0700C 91044003 47107074 91024003 *.0..j. .....j. .*
+         Event 2 CSECT IEBGENR3 GPR 7 (Address 0000D1B0)
+0000D1B0            47107074 96087BFC 47F07074 91807BFE *....o.#..0..j.#.*
+0000D1C0       +10  47E07066 185E91FF E00247E0 70669180 *.\...;j.\..\..j.*
+0000D1D0       +20  E0004710 7066D502 E00D7FA7 47807066 *\.....N.\."x....*
+0000D1E0       +30  181E41E0 705A0BE0 41F07048 56F07044 *...\.!.\.0...0..*
+0000D1F0       +40  0B0F0000 80000000 58F00010 58FF007C *.........0.....@*
+0000D200       +50  58FF00D0 58FF0098 07FF9108 10074710 *...}...q..j.....*
+0000D210       +60  7066947F 7BFE18E5 9580E012 47707074 *..m"#..Vn.\.....*
+0000D220       +70  96407BFC 18169102 30224780 70AE9104 *o #...j.......j.*
+0000D230       +80  30254710 70AEBF3F 30504780 70AE5840 *.........&..... *
+0000D240       +90  30109201 10489620 7BFC9180 7BFE47E0 *..k...o.#.j.#..\*
+0000D250       +A0  70A647F0 2F569160 7BFC47E0 2F56010C *.w.0..j-#..\....*
+0000D260       +B0  91607BFC 47E070DC 41407E08 91C04024 *j-#..\... =.j{ .*
+0000D270       +C0  471070DC 91804052 471070DC 41407E6C *....j. ...... =%*
+0000D280       +D0  9102401A 471070DC 960C7B9C 58F07D64 *j. .....o.#..0'.*
+0000D290       +E0  12FF4770 71109108 7BFC4710 71109102 *......j.#.....j.*
+0000D2A0       +F0  7D924780 71109502 7BDD4780 7110D507 *'k....n.#.....N.*
+0000D2B0      +100  7C887F78 47707110 96047BFC 47F0716A *@h".....o.#..0.¦*
+0000D2C0      +110  D2011018 7B9A5840 7AC01244 47807130 *K...#.. :{......*
+0000D2D0      +120  41407BA0 45E0790C 95FF7BFA 4780716A *. #..\`.n.#....¦*
+0000D2E0      +130  58107E08 91407BFC 47807158 91201010 *..=.j #.....j...*
+0000D2F0      +140  47807158 D503101C 7F8847D0 7158D203 *....N..."h.}..K.*
+0000D300      +150  7E68101C 47F027EE 94FB1011 41107E08 *=....0..m.....=.*
+0000D310      +160  D2017E6A 103E47F0 27EE98DE 7AD407FE *K.=¦...0..q.:M..*
+0000D320      +170  947F79BA 91C01024 47407188 47107188 *m"`.j{... .h...h*
+0000D330      +180  96C01024 968079BA 95001014 4780719A *o{..o.`.n.......*
+0000D340      +190  D2001048 101447F0 71A69500 10484770 *K......0.wn.....*
+0000D350      +1A0  71A69205 10489563 104847D0 71B29263 *.wk...n....}..k.*
+0000D360      +1B0  10489200 1014D201 10187B9A 90DE7ADC *..k...K...#...:.*
+0000D370      +1C0  91107C33 471071E0 58107E6C BF5F101C *j.@....\..=%.^..*
+0000D380      +1D0  477071DC 41107E6C 4851003E 50507ECC *......=%....&&=.*
+0000D390      +1E0  47F072E8 41107E6C 98DE7ADC 91107C33 *.0.Y..=%q.:.j.@.*
+0000D3A0      +1F0  47102A4A 58107E6C 91201010 47807244 *...¢..=%j.......*
+0000D3B0      +200  D5037ECC 7F904770 722C9103 7BFC47E0 *N.=.".....j.#..\*
+0000D3C0      +210  7220D503 7E687F88 47D07244 47F07258 *..N.=."h.}...0..*
+0000D3D0      +220  91017BFC 47107258 47F07244 D5037ECC *j.#......0..N.=.*
+0000D3E0      +230  7F8847D0 7244D203 101C7ECC 41107E6C *"h.}..K...=...=%*
+0000D3F0      +240  47F07258 94FB1011 D203101C 7F904110 *.0..m...K..."...*
+0000D400      +250  7E6CD201 103E7ECE D5037ECC 7F904770 *=%K...=.N.=."...*
+0000D410      +260  726692FF 7BFD4110 7E6C07FE 95FF7BFF *..k.#...=%..n.#.*
+0000D420      +270  4770727C 92007BFF 47F078EE 58E072A8 *...@k.#..0...\.y*
+0000D430      +280  D207E007 F0004110 000F8910 00084140 *K.\.0.....i.... *
+0000D440      +290  00101A14 58F07AB4 05EF41F0 000C40F0 *.....0:....0.. 0*
+0000D450      +2A0  7B9447F0 78EE0000 00010A78 41F0000C *#m.0.........0..*
+0000D460      +2B0  40F07B94 41100011 89100008 41400011 * 0#m....i.... ..*
+0000D470      +2C0  91027C58 47E078E6 1A1458F0 7AB405EF *j.@..\.W...0:...*
+0000D480      +2D0  41F0000C 40F07B94 41100012 89100008 *.0.. 0#m....i...*
+0000D490      +2E0  41400012 47F078E6 96407B9C 41507E08 *. ...0.Wo #..&=.*
+0000D4A0      +2F0  41607E6C 91087BFC 47E07334 D5037E68 *.-=%j.#..\..N.=.*
+0000D4B0      +300  7F904770 733ED501 50527F9C 4770733E *".....N.&.".....*
+0000D4C0      +310  92FF7C59 960A503F D2037E68 7F94D201 *k.@.o.&.K.=."mK.*
+0000D4D0      +320  50527FA0 95FF7C59 4780733E 96017C58 *&.".n.@.....o.@.*
+0000D4E0      +330  47F0733E D5037E68 7F904780 7314D501 *.0..N.=.".....N.*
+0000D4F0      +340  50527F9C 4770738E 91C05024 4710738E *&.".....j{&.....*
+0000D500      +350  91485024 4710738A 91405024 47107372 *j.&.....j &.....*
+0000D510      +360  91105024 47107384 D2015052 7E6A47F0 *j.&....dK.&.=¦.0*
+0000D520      +370  738E4130 00045840 7E681B43 40450052 *....... =... ...*
+0000D530      +380  47F0738E D2015052 7E6A9601 7C58D503 *.0..K.&.=¦o.@.N.*
+0000D540      +390  7ECC7F90 477074A2 D5016052 7F9C4780 *=."....sN.-."...*
+0000D550      +3A0  73C89180 79BA4780 73BC91C0 50244710 *.Hj.`.....j{&...*
+0000D560      +3B0  745AD200 60245024 47F07484 91C06024 *.!K.-.&..0.dj{-.*
+0000D570      +3C0  47107400 47F074A2 918079BA 478073EE *.....0.sj.`.....*
+0000D580      +3D0  D2006024 5024D507 7C5C7F80 4780743A *K.-.&.N.@*".....*
+0000D590      +3E0  D5037E68 7F904770 73FA47F0 746091C0 *N.=."......0.-j{*
+0000D5A0      +3F0  602447E0 73D64710 7400D201 60525052 *-..\.O....K.-.&.*
+0000D5B0      +400  D2017ECE 503ED503 7E6879E4 4720741A *K.=.&.N.=.`U....*
+0000D5C0      +410  D2037ECC 7E6847F0 74849180 505247E0 *K.=.=..0.dj.&..\*
+0000D5D0      +420  74844110 001C8910 00084140 001C41F0 *.d....i.... ...0*
+0000D5E0      +430  000C45E0 27E247F0 2388D201 60525052 *...\.S.0.hK.-.&.*
+0000D5F0      +440  D5015052 7F9C4780 7400D201 603E5052 *N.&.".....K.-.&.*
+0000D600      +450  D2017ECE 605247F0 7484D201 7ECE6052 *K.=.-..0.dK.=.-.*
+0000D610      +460  D5037E68 79E44720 74789103 7BFC4770 *N.=.`U....j.#...*
+0000D620      +470  7478D203 7ECC7E68 D2016052 5052D200 *..K.=.=.K.-.&.K.*
+0000D630      +480  60245024 91107BFC 47107688 41100033 *-.&.j.#....h....*
+0000D640      +490  89100008 41110034 58F07AB4 05EF9610 *i........0:...o.*
+0000D650      +4A0  7BFCD503 7ECC7F90 477075F0 47F074B0 *#.N.=."....0.0..*
+0000D660      +4B0  58400010 58440000 58440004 584400B4 *. ..............*
+0000D670      +4C0  58404140 58404024 010D5040 7F705880 *. . .  ...& "...*
+0000D680      +4D0  4010D507 7BEA8004 478074E8 BF4F4050 * .N.#......Y.| &*
+0000D690      +4E0  478075A4 47F074CA 50407F70 1B441B33 *...u.0..& ".....*
+0000D6A0      +4F0  45E07980 41107F40 D72B1000 1000D203 *.\`..." P.....K.*
+0000D6B0      +500  10007F8C D2011004 7F989680 1008D601 *..".K..."qo...O.*
+0000D6C0      +510  10097F9A 9641100B D203100C 7F6CD203 *..".o...K..."%K.*
+0000D6D0      +520  10187F70 58F00010 58FF0304 58FF01A8 *.."..0.........y*
+0000D6E0      +530  B218F000 D2037F6C 100C1830 12FF4780 *..0.K."%........*
+0000D6F0      +540  756E58E0 72A8D207 E0078004 010C4110 *.>.\.yK.\.......*
+0000D700      +550  000F8910 00084140 00101A14 58F07AB4 *..i.... .....0:.*
+0000D710      +560  05EF4150 7E084160 7E6C47F0 7688BF1F *...&=..-=%.0.h..*
+0000D720      +570  7F6C4780 75B65810 1008BF4F 10044770 *"%.........|....*
+0000D730      +580  7594BF4F 7ECC4770 75B6D201 7ECE6052 *.m.|=.....K.=.-.*
+0000D740      +590  47F075B6 91204012 471075F0 91804012 *.0..j. ....0j. .*
+0000D750      +5A0  471075F0 960A7ECF D2016052 7FA09602 *...0o.=.K.-.".o.*
+0000D760      +5B0  7C5847F0 75F0D503 7ECC7F90 477075F0 *@..0.0N.=."....0*
+0000D770      +5C0  91FF7BDC 47E075F0 91028003 47E075E2 *j.#..\.0j....\.S*
+0000D780      +5D0  91106024 47E075F0 D2037ECC 7E6847F0 *j.-..\.0K.=.=..0*
+0000D790      +5E0  75F0010C D2017ECE 5052D201 603E5052 *.0..K.=.&.K.-.&.*
+0000D7A0      +5F0  010C91C0 602447E0 76209120 60244710 *..j{-..\..j.-...*
+0000D7B0      +600  76209104 60244710 76209180 79BA4780 *..j.-.....j.`...*
+0000D7C0      +610  7620D200 60245024 947F79BA 47F07484 *..K.-.&.m"`..0.d*
+0000D7D0      +620  D5016052 7F9C4770 768891C0 60244710 *N.-."....hj{-...*
+0000D7E0      +630  76889148 60244710 76729140 60244710 *.hj.-.....j -...*
+0000D7F0      +640  764E9110 60244710 767247F0 768291FF *.+j.-......0.bj.*
+0000D800      +650  7BDC4780 7660D201 60525052 47F07484 *#....-K.-.&..0.d*
+0000D810      +660  41300004 58407ECC 1B434046 005247F0 *..... =... ....0*
+0000D820      +670  768891FF 7BDC4780 767E47F0 76569602 *.hj.#....=.0..o.*
+0000D830      +680  7C58D201 60527ECE 413072AC 91405024 *@.K.-.=.....j &.*
+0000D840      +690  47107752 91105024 471076DE 19564780 *....j.&.........*
+0000D850      +6A0  76C0D501 50527E6A 478077A0 D5037E68 *.{N.&.=¦....N.=.*
+0000D860      +6B0  7F904780 77A0D201 50527E6A 47F07742 *".....K.&.=¦.0..*
+0000D870      +6C0  D5015052 7ECE4780 77C2D503 7ECC7F90 *N.&.=....BN.=.".*
+0000D880      +6D0  478077C2 D2015052 7ECE47F0 77421B88 *...BK.&.=..0...h*
+0000D890      +6E0  19564780 77165890 7E684845 00521949 *........=.......*
+0000D8A0      +6F0  478077A0 19894780 77A0D501 50527FA2 *.....i....N.&."s*
+0000D8B0      +700  47D077A0 1D841288 478077A0 D2015052 *.}...d.h....K.&.*
+0000D8C0      +710  7E6A47F0 77425890 7ECC4845 00521949 *=¦.0....=.......*
+0000D8D0      +720  478077C2 19894780 77C2D501 50527FA2 *...B.i...BN.&."s*
+0000D8E0      +730  47D077C2 1D841288 478077C2 D2015052 *.}.B.d.h...BK.&.*
+0000D8F0      +740  7ECE920C 300B920B 30139602 7C5847F0 *=.k...k...o.@..0*
+0000D900      +750  77A09188 50244770 77A01956 47807782 *..jh&..........b*
+0000D910      +760  48950052 41990004 59907E68 47D077A0 *.n...r....=..}..*
+0000D920      +770  D5037E68 7F904780 77A05090 7E6847F0 *N.=.".....&.=..0*
+0000D930      +780  77A04895 00524199 00045990 7ECC47D0 *...n...r....=..}*
+0000D940      +790  77C2D503 7ECC7F90 478077C2 50907ECC *.BN.=."....B&.=.*
+0000D950      +7A0  19564780 77C291C0 502447E0 77B4D201 *.....Bj{&..\..K.*
+0000D960      +7B0  50527E6A 18564130 72D09202 774B47F0 *&.=¦.....}k....0*
+0000D970      +7C0  768C4150 7E089148 50244710 77DA9148 *...&=.j.&.....j.*
+0000D980      +7D0  60244710 783E47F0 71E4D500 60245024 *-......0.UN.-.&.*
+0000D990      +7E0  4770783E D5016052 50524770 783ED503 *....N.-.&.....N.*
+0000D9A0      +7F0  7ECC7E68 4770783E 91FF7BDC 4780783E *=.=.....j.#.....*
+0000D9B0      +800  91805052 47107818 91806052 47107818 *j.&.....j.-.....*
+0000D9C0      +810  91607BFC 4710783E 92807C01 91087B9C *j-#.....k.@.j.#.*
+0000D9D0      +820  471071E4 41100022 89100008 41110022 *...U....i.......*
+0000D9E0      +830  58F07AB4 05EF9608 7B9C47F0 71E49180 *.0:...o.#..0.Uj.*
+0000D9F0      +840  50524780 78669110 7C3347E0 71E44110 *&.....j.@..\.U..*
+0000DA00      +850  001C8910 00084140 001C41F0 000C45E0 *..i.... ...0...\*
+0000DA10      +860  27E247F0 23889180 60524710 78469120 *.S.0.hj.-.....j.*
+0000DA20      +870  7E7D4780 78969500 7E7C4780 78964110 *='...on.=@...o..*
+0000DA30      +880  00148910 00084140 001441F0 000C45E0 *..i.... ...0...\*
+0000DA40      +890  27E247F0 23889120 7E194780 78BE9500 *.S.0.hj.=.....n.*
+0000DA50      +8A0  7E184780 78BE4110 00158910 00084140 *=.........i.... *
+0000DA60      +8B0  001541F0 000C45E0 27E247F0 23889502 *...0...\.S.0.hn.*
+0000DA70      +8C0  7BDD4780 78CE960C 7B9C47F0 71E44110 *#.....o.#..0.U..*
+0000DA80      +8D0  001D8910 00084140 001D41F0 000C45E0 *..i.... ...0...\*
+0000DA90      +8E0  27E247F0 23881A14 58F07AB4 05EF48F0 *.S.0.h...0:....0*
+0000DAA0      +8F0  7B949400 2ED89680 2ED89400 2EC89680 *#mm..Qo..Qm..Ho.*
+0000DAB0      +900  2EC847F0 24DE0000 47F024DE 50E07B8C *.H.0.....0..&\#.*
+0000DAC0      +910  58107AA8 1BEE43E0 7B9D41EE 00F042E1 *..:y...\#....0..*
+0000DAD0      +920  0000D20D 100B4000 41100018 89100008 *..K... .....i...*
+0000DAE0      +930  41400018 1A1458F0 7AB405EF 1B551B44 *. .....0:.......*
+0000DAF0      +940  43507B9F 4130000A 1D435810 7AAC4144 *.&#.........:...*
+0000DB00      +950  00F04155 00F04251 00154241 00164110 *.0...0..........*
+0000DB10      +960  00198910 00084140 00191A14 58F07AB4 *..i.... .....0:.*
+0000DB20      +970  05EF9200 7B9D9200 7B9F58E0 7B8C07FE *..k.#.k.#..\#...*
+0000DB30      +980  90247AE8 50E07AF4 17221733 BF4F7F6C *..:Y&\:4.....|"%*
+0000DB40      +990  478079B0 43240000 BF374001 18028900 *..`....... ...i.*
+0000DB50      +9A0  00181603 41104000 0A0A1744 50407F6C *...... .....& "%*
+0000DB60      +9B0  98247AE8 58E07AF4 07FE8000 18018000 *q.:Y.\:4........*
+0000DB70      +9C0  0000DD9A 00000000 0000DB88 00000020 *...........h....*
+0000DB80      +9D0  0000DB84 00010420 80000000 00000000 *...d............*
+0000DB90      +9E0  00000000 00007FF8 00000000 00007FF8 *......"8......"8*
+0000DBA0      +9F0  00000000 00007FF8 C4C5C24B C1D9C5C1 *......"8DEB.AREA*
+0000DBB0      +A00  00000000 00000000 00000000 00000000 *................*
+         Lines 0000DBC0-0000DC30 (X'80' bytes) same as above
+0000DC40      +A90  00000000 00000000 00014A98 00014818 *..........¢q....*
+0000DC50      +AA0  00014D18 00014D18 00010C68 00010CA6 *..(...(........w*
+0000DC60      +AB0  00010CE4 0000E9CE 00D02800 0000DDBB *...U..Z..}......*
+0000DC70      +AC0  00000000 00000000 00000000 00000000 *................*
+0000DC80      +AD0  00014A98 0000DCAC 00FD63B8 0000DCAC *..¢q............*
+0000DC90      +AE0  00FD63B8 00000000 0000C1B0 007BC024 *..........A..#{.*
+0000DCA0      +AF0  007D00E8 8000CA06 00000000          *.'.Y........    *
+         Event 2 CSECT IEBGENR3 GPR 13 (Address 0000DCAC)
+0000DCAC                                       00000000 *            ....*
+0000DCB0        +4  0000E7E8 00000000 0000EC3C 00D91680 *..XY.........R..*
+0000DCC0       +14  0000EC5C 0000EC5C 5000EB64 A000EC14 *...*...*&.......*
+0000DCD0       +24  0000E0B8 0000DFB8 0000E01C 0000D1B0 *..\.......\...J.*
+0000DCE0       +34  00000000 007D3CB0 01E19C00 007F0001 *.....'......."..*
+0000DCF0       +44  0000000C 00000000 00000000 00000000 *................*
+0000DD00       +54  00000000 00000000 00000000 00000000 *................*
+         Lines 0000DD10-0000DD30 (X'30' bytes) same as above
+0000DD40       +94  0000E830 00000010 000C0000 40000000 *..Y......... ...*
+0000DD50       +A4  40C9D5D7 E4E34040 C8C5C1C4 C5D9D6E4 * INPUT  HEADEROU*
+0000DD60       +B4  E3D7E4E3 4040C8C5 C1C4C5D9 40C9D5D7 *TPUT  HEADER INP*
+0000DD70       +C4  E4E340E3 D9C1C9D3 C5D9D6E4 E3D7E4E3 *UT TRAILEROUTPUT*
+0000DD80       +D4  40E3D9C1 C9D3C5D9 00000000 FF008000 * TRAILER........*
+0000DD90       +E4  0080E2E8 E2E4E3F1 4040E2E8 E2E4E3F2 *..SYSUT1  SYSUT2*
+0000DDA0       +F4  40404040 40404040 40400000 13008000 *          ......*
+0000DDB0      +104  000001F1 40C8C5C1 C4C5D9E2 E8E2E4E3 *...1 HEADERSYSUT*
+0000DDC0      +114  40404040 40404040 40C5E7C9 E34060D9 *         EXIT -R*
+0000DDD0      +124  C5D84BD1 D6C240E3 C5D9D4F2 40C8C5C1 *EQ.JOB TERM2 HEA*
+0000DDE0      +134  C4C5D901 00000000 00000000 00000000 *DER.............*
+0000DDF0      +144  E2E8E2E4 E3F24040 F240E3D9 C1C9D3D9 *SYSUT2  2 TRAILR*
+0000DE00      +154  F140E3D9 C1C9D3D9 00000000 E9F6F7F6 *1 TRAILR....Z676*
+0000DE10      +164  F4F54BD1 D9E2F0F1 F34BD1D6 C2F0F0F9 *45.JRS013.JOB009*
+0000DE20      +174  F0F14BC4 F0F0F0F0 F1F0F24B 6F404040 *01.D0000102.?   *
+0000DE30      +184  40404040 40404040 40404040 40404040 *                *
+0000DE40      +194  20000000 00000000 00000000 00000200 *................*
+0000DE50      +1A4  00000000 00000000 00000000 7E014900 *............=...*
+0000DE60      +1B4  00000081 00000000 00000000 00000000 *...a............*
+0000DE70      +1C4  00000000 00000000 00000000 00000000 *................*
+0000DE80      +1D4  00004040 40404040 40404040 40404040 *..              *
+0000DE90      +1E4  40404040 40404040 40404040 40404040 *                *
+0000DEA0      +1F4  00000000 00000000 00000000 00000000 *................*
+0000DEB0      +204  00000000 00000000 00000100 0024C1D9 *..............AR*
+0000DEC0      +214  00000000 00000000 00000000 00000000 *................*
+0000DED0      +224  00000000 00000000 00000000 00000000 *................*
+0000DEE0      +234  0024C1D9 00000000 00000000 00000000 *..AR............*
+0000DEF0      +244  00013E98 000000E0 00010001 00000000 *...q...\........*
+0000DF00      +254  00000000 C1000800 0000DE0C 0000DE82 *....A..........b*
+0000DF10      +264  0000DF1C 00000004 00000000 00000000 *................*
+0000DF20      +274  00000000 00000000 00000000 00000000 *................*
+         Lines 0000DF30-0000DFA0 (X'80' bytes) same as above
+0000DFB0      +304  20000020 50000050 0000E080 00000000 *....&..&..\.....*
+0000DFC0      +314  00000000 00F43026 002FE5A2 00000001 *.....4....Vs....*
+0000DFD0      +324  00004000 00000001 8600DAB8 9000D078 *.. .....f.....}.*
+0000DFE0      +334  E2E8E2E4 E3F14040 02002000 00000001 *SYSUT1  ........*
+0000DFF0      +344  0000DAB8 00006D10 00000000 00000001 *......_.........*
+0000E000      +354  04000001 00000001 00000050 00000000 *...........&....*
+0000E010      +364  00000000 00000001 00006D10          *.........._.    *
+         Event 2 CSECT IEBGENR3 GPR 5 (Address 0000E01C)
+0000E01C                                       0000E0B8 *            ..\.*
+0000E020        +4  00000000 00000000 00000000 00020000 *................*
+0000E030       +14  00000001 00004000 00007B90 86000001 *...... ...#.f...*
+0000E040       +24  9000D084 00540020 007CBC00 92DE1056 *..}d.....@..k...*
+0000E050       +34  00DE1074 0000DAB8 08006D10 00000000 *.........._.....*
+0000E060       +44  00007A30 05000001 00000001 00000050 *..:............&*
+0000E070       +54  00000001 00000000 00000001 00006D10 *.............._.*
+0000E080       +64  C4C3C2C5 00380000 00000000 00000000 *DCBE............*
+0000E090       +74  00000000 B0000000 00000000 00000000 *................*
+0000E0A0       +84  00000000 00000000 00000000 00000000 *................*
+0000E0B0       +94  00000000 00000102 C4C3C2C5 00380000 *........DCBE....*
+0000E0C0       +A4  0000E01C 00000000 C0000000 B0000000 *..\.....{.......*
+0000E0D0       +B4  00000000 00000000 00000000 00000000 *................*
+0000E0E0       +C4  00000000 00000000 00000000 00000102 *................*
+0000E0F0       +D4  C4C4E2E5 002C0000 80800041 00007CC8 *DDSV..........@H*
+0000E100       +E4  00000000 00000000 007D00E8 00000000 *.........'.Y....*
+0000E110       +F4  00000000 00000000 00000000 00007CC8 *..............@H*
+0000E120      +104  007D00E8 00000000 40404040 40404040 *.'.Y....        *
+0000E130      +114  D5E4D3D3 C6C9D3C5 00007FF8 C4C4E2E5 *NULLFILE.."8DDSV*
+0000E140      +124  00000000 0000000A 002C8000 00007FFF *..............".*
+0000E150      +134  00050001 000000E2 D4E20000 00000000 *.......SMS......*
+0000E160      +144  90ECD00C 052047F0 2076F5F6 F9F460C1 *..}....0..5694-A*
+0000E170      +154  F0F140C3 D6D7E8D9 C9C7C8E3 40F1F9F9 *01 COPYRIGHT 199*
+0000E180      +164  F26BF2F0 F1F04040 C9C2D440 C3D6D9D7 *2,2010  IBM CORP*
+0000E190      +174  40D3C9C3 C5D5E2C5 C440D4C1 E3C5D9C9 * LICENSED MATERI*
+0000E1A0      +184  C1D34060 40D7D9D6 C7D9C1D4 40D7D9D6 *AL - PROGRAM PRO*
+0000E1B0      +194  D7C5D9E3 E840D6C6 40C9C2D4 C9C5C2C7 *PERTY OF IBMIEBG*
+0000E1C0      +1A4  C5D5D9E3 F0F361F2 F061F2F3 C8C4E9F1 *ENRT03/20/23HDZ1*
+0000E1D0      +1B4  C3F1F040 D5D6D5C5 40404040 90DE267A *C10 NONE    ...:*
+0000E1E0      +1C4  41D02682 92002AF6 D72726CE 26CE5831 *.}.bk..6P.......*
+0000E1F0      +1D4  00001233 47D020C2 D5013000 2CB24780 *.....}.BN.......*
+0000E200      +1E4  20C29500 30024770 20C21BAA 1B99BFA3 *.Bn......B...r.t*
+0000E210      +1F4  3000BF93 30024190 900415A9 478020BE *...l.......z....*
+0000E220      +204  41302CB4 47F0216A 91801000 4710216A *.....0.¦j......¦*
+0000E230      +214  58410004 12444780 21164884 00001288 *...........d...h*
+0000E240      +224  47C02116 41900048 19894740 20EA1889 *.{.......i. ...i*
+0000E250      +234  41900020 198947D0 21161B89 06804280 *.....i.}...i....*
+0000E260      +244  20FDD227 26CE4022 1B885980 26D64780 *..K... ..h...O..*
+0000E270      +254  21164180 2C0ED207 802826D6 95801004 *......K....On...*
+0000E280      +264  4780216A 58510008 48850000 41900004 *...¦.....e......*
+0000E290      +274  19894740 216A0680 44802150 44802156 *.i. .¦.....&....*
+0000E2A0      +284  F332215E 2167D603 215E2CAA D203275D *3..;..O..;..K..)*
+0000E2B0      +294  215E47F0 2170D200 21625002 F2702162 *.;.0..K...&.2...*
+0000E2C0      +2A4  21620000 00000000 00000000 00000000 *................*
+0000E2D0      +2B4  D203275D 27714180 00008980 00025A80 *K..)......i...!.*
+0000E2E0      +2C4  29365888 0000D227 26F68000 4D10218E *...h..K..6..(...*
+0000E2F0      +2D4  8F00ED74 0A1341E0 2C0E9110 E03041C0 *.......\..j.\..{*
+0000E300      +2E4  000C4780 24444100 02004110 26F645E0 *.............6.\*
+0000E310      +2F4  29F69110 26764780 21D04110 00138910 *.6j......}....i.*
+0000E320      +304  00084190 00131A19 41F02868 05EF41C0 *.........0.....{*
+0000E330      +314  000440C0 2C021B44 1B88BF83 30004740 *.. {.....h.c... *
+0000E340      +324  22CC0700 47F021EA 00000068 10000052 *.....0..........*
+0000E350      +334  580021E2 58F021E6 1B110A78 501026CA *...S.0.W....&...*
+0000E360      +344  5810260A 58400010 584044C0 91F0400D *..... ... .{j0 .*
+0000E370      +354  4780223A 9130400D 4710223A 4780222A *....j. .........*
+0000E380      +364  9120400D 47802232 92021000 47F0223E *j. .....k....0..*
+0000E390      +374  92011000 47F0223E 92001000 47F0223E *k....0..k....0..*
+0000E3A0      +384  92031000 41400002 19844740 22E64720 *k.... ...d. .W..*
+0000E3B0      +394  2256D501 3002276F 4780248A 95003002 *..N....?....n...*
+0000E3C0      +3A4  47702262 47F022E6 41900009 19894720 *.....0.W.....i..*
+0000E3D0      +3B4  22CCD503 30022CAE 477022CC D5023006 *..N.........N...*
+0000E3E0      +3C4  2CB84770 228447F0 228ED504 30062CBB *.....d.0..N.....*
+0000E3F0      +3D4  47702296 92021000 47F022E6 D5043006 *...ok....0.WN...*
+0000E400      +3E4  2CC04770 22A89201 100047F0 22E6D504 *.{...yk....0.WN.*
+0000E410      +3F4  30062CC5 477022BA 92031000 47F022E6 *...E....k....0.W*
+0000E420      +404  D5013006 2CB64770 22CC9200 100047F0 *N.........k....0*
+0000E430      +414  22E64110 00018910 00084190 00021A19 *.W....i.........*
+0000E440      +424  41F02868 05EF47F0 252C0700 47F022EE *.0.....0.....0..*
+0000E450      +434  000117C0 411022F6 47F022FA 0000E834 *...{...6.0....Y.*
+0000E460      +444  58F022EA 05EF47F0 230847F0 252C5830 *.0.....0...0....*
+0000E470      +454  26CAD267 30001000 411026CA 47F0231E *..K..........0..*
+0000E480      +464  0000C1B0 58F0231A 05EF18CF 4D10232E *..A..0......(...*
+0000E490      +474  8000ED74 0A144110 2C0E9101 10174710 *..........j.....*
+0000E4A0      +484  23841FFF BFF71015 96011017 1BEE1B11 *.d...7..o.......*
+0000E4B0      +494  BF13F006 9110F004 4780235A 5810F010 *..0.j.0....!..0.*
+0000E4C0      +4A4  43E0F005 1C0E4800 F0069110 F0044710 *.\0.....0.j.0...*
+0000E4D0      +4B4  237C4100 00089140 F00447E0 237C4100 *.@....j 0..\.@..*
+0000E4E0      +4C4  00101A01 4110F000 0A0A5830 26CA1233 *......0.........*
+0000E4F0      +4D4  47802444 91FF2C0C 4710242C 48530060 *....j..........-*
+0000E500      +4E4  12554780 23B85813 00404110 10001805 *......... ......*
+0000E510      +4F4  47F023B2 00000003 58F023AE 0A784853 *.0.......0......*
+0000E520      +504  00621255 478023E4 58130044 41101000 *.......U........*
+0000E530      +514  41400008 1B144105 00080700 47F023DE *. ...........0..*
+0000E540      +524  00000003 58F023DA 0A784853 00641255 *.....0..........*
+0000E550      +534  47802408 58130048 41101000 18050700 *................*
+0000E560      +544  47F02402 00000003 58F023FE 0A784853 *.0.......0......*
+0000E570      +554  00661255 4780242C 5813004C 41101000 *...........<....*
+0000E580      +564  18050700 47F02426 00000003 58F02422 *.....0.......0..*
+0000E590      +574  0A781813 41101000 41000068 47F0243E *.............0..*
+0000E5A0      +584  00000003 58F0243A 0A7818FC 49F02C02 *.....0.......0..*
+0000E5B0      +594  47202452 48F02C02 98DE267A 982CD01C *.....0..q..:q.}.*
+0000E5C0      +5A4  07FE4180 2C0E4850 803E1255 47802482 *.......&.......b*
+0000E5D0      +5B4  1B444860 80521D46 1244078E 92102676 *...-........k...*
+0000E5E0      +5C4  D201803E 805207FE 9279803F 07FE0700 *K.......k`......*
+0000E5F0      +5D4  47F02492 000117C0 4110249A 47F0249E *.0.k...{.....0..*
+0000E600      +5E4  8000E834 58F0248E 05EF5840 26CA96FF *..Y..0..... ..o.*
+0000E610      +5F4  2C0C4190 00081998 47802522 4130300A *.......q........*
+0000E620      +604  1B885983 00004770 24D29240 4000D23E *.h.c.....Kk  .K.*
+0000E630      +614  40014000 47F024DC 58930000 D23F4000 * . ..0...l..K. .*
+0000E640      +624  9000D20F 40403004 D7174050 40505984 *..K.  ..P. & &.d*
+0000E650      +634  00404780 24F49202 405E5984 00484770 *. ...4k. ;.d....*
+0000E660      +644  250096F0 405D5984 0044960F 405D4770 *..o0 ).d..o. )..*
+0000E670      +654  2312D23E 40014000 D70F4040 4040D701 *..K. . .P.    P.*
+0000E680      +664  405D405D 47F02312 92404000 1B8847F0 * ) ).0..k  ..h.0*
+0000E690      +674  24E80700 4D102536 8000ED74 0A144110 *.Y..(...........*
+0000E6A0      +684  2C0E9101 10174710 258C1FFF BFF71015 *..j..........7..*
+0000E6B0      +694  96011017 1BEE1B11 BF13F006 9110F004 *o.........0.j.0.*
+0000E6C0      +6A4  47802562 5810F010 43E0F005 1C0E4800 *......0..\0.....*
+0000E6D0      +6B4  F0069110 F0044710 25844100 00089140 *0.j.0....d....j *
+0000E6E0      +6C4  F00447E0 25844100 00101A01 4110F000 *0..\.d........0.*
+0000E6F0      +6D4  0A0A5870 26069110 70304780 25FE0700 *......j.........*
+0000E700      +6E4  4D1025A2 00000000 BE771001 92801000 *(..s........k...*
+0000E710      +6F4  0A141817 91011017 471025FE 1FFFBFF7 *....j..........7*
+0000E720      +704  10159601 10171BEE 1B11BF13 F0069110 *..o.........0.j.*
+0000E730      +714  F0044780 25D45810 F01043E0 F0051C0E *0....M..0..\0...*
+0000E740      +724  4800F006 9110F004 471025F6 41000008 *..0.j.0....6....*
+0000E750      +734  9140F004 47E025F6 41000010 1A014110 *j 0..\.6........*
+0000E760      +744  F0000A0A 41F0000C 47F02446 00009380 *0....0...0....l.*
+0000E770      +754  0000DDAC 582F0008 47F0261A 0000E166 *.........0......*
+0000E780      +764  47F02620 0300BFF8 261E0A44 D219278D *.0.....8....K...*
+0000E790      +774  1031D234 27BA104B 95E2107F 47702646 *..K.....nS."....*
+0000E7A0      +784  D2192802 1088D235 282E10A2 47F0264C *K....hK....s.0.<*
+0000E7B0      +794  FF00BFF8 264A0A44 41102776 0A234110 *...8.¢..........*
+0000E7C0      +7A4  27AE0A23 411027F6 0A234110 28220A23 *.......6........*
+0000E7D0      +7B4  41F0000C 47F02446 8500E5C2 00000000 *.0...0..e.VB....*
+0000E7E0      +7C4  00007F68 80FD63B8                   *..".....        *
+         Event 1 CSECT IEBGENER GPR 13 (Address 0000E7E8)
+0000E7E8                              00000000 00000000 *        ........*
+0000E7F0        +8  0000DCAC 4000E48A 0000C1B0 00000198 *.... .U...A....q*
+0000E800       +18  0000E830 4000E166 00014F98 00000002 *..Y. .....|q....*
+0000E810       +28  007FB040 007BBFC8 00F96280 00000000 *.". .#.H.9......*
+0000E820       +38  007D3CB0 01E19C00 007F0001 0000000C *.'......."......*
+         Event 1 CSECT IEBGENER GPR 1 (Address 0000E830)
+0000E830            00014F98 00000000 00000000 00000000 *..|q............*
+0000E840       +10  00000000 00000000 00000000 00000000 *................*
+0000E850       +20  00000000 00000000 00000000 C4C1E3C1 *............DATA*
+0000E860       +30  40E2C5E3 40E4E3C9 D3C9E3E8 406040C7 * SET UTILITY - G*
+0000E870       +40  C5D5C5D9 C1E3C540 40404040 40404040 *ENERATE         *
+0000E880       +50  40404040 40404040 40404040 40404040 *                *
+         Lines 0000E890-0000E8A0 (X'20' bytes) same as above
+0000E8B0       +80  40404040 40404040 40404040 4040D7C1 *              PA*
+0000E8C0       +90  C7C540F0 F0F0F140 40404040 40404040 *GE 0001         *
+0000E8D0       +A0  40404040 37C9D5F0 F0F0F100 00318000 *    .IN0001.....*
+0000E8E0       +B0  C9C5C2F3 F5F1C940 C961D640 C5D9D9D6 *IEB351I I/O ERRO*
+0000E8F0       +C0  D9404040 40404040 40404040 40404040 *R               *
+0000E900       +D0  40404040 40404040 40404040 40020000 *             ...*
+0000E910       +E0  20000000 00418000 C9C5C2F3 F5F1C940 *........IEB351I *
+0000E920       +F0  40404040 40404040 40404040 40404040 *                *
+         Lines 0000E930-0000E940 (X'20' bytes) same as above
+0000E950      +120  40404040 40020000 20000000 00288000 *     ...........*
+0000E960      +130  C9C5C2F3 F5F1C940 40404040 40404040 *IEB351I         *
+0000E970      +140  40404040 40404040 40404040 40404040 *                *
+0000E980      +150  40404040 02000020 00428000 C9C5C2F3 *    ........IEB3*
+0000E990      +160  F5F1C940 40404040 40404040 40404040 *51I             *
+0000E9A0      +170  40404040 40404040 40404040 40404040 *                *
+0000E9B0      +180  40404040 40404040 40404040 40404040 *                *
+0000E9C0      +190  40404040 40404040 40400200 00209200 *          ....k.*
+0000E9D0      +1A0  F1341801 89000018 88000018 88100008 *1...i...h...h...*
+0000E9E0      +1B0  8B100002 5A10F0CE 58110000 D23DF0DA *....!.0.....K.0.*
+0000E9F0      +1C0  10004900 F0CA4770 F0489280 F133D21A *....0...0.k.1.K.*
+0000EA00      +1D0  F118103E 95E21058 4770F048 9280F134 *1...nS....0.k.1.*
+0000EA10      +1E0  D24FF135 10595960 F39E4780 F09C4110 *K|1....-3...0...*
+0000EA20      +1F0  F0D24E00 F0B2F311 F0D6F0B8 96F0F0D7 *0K+.0.3.0O0.o00P*
+0000EA30      +200  9580F133 4780F072 41000045 47F0F18E *n.1...0......01.*
+0000EA40      +210  9200F133 41000061 4540F18E 9580F134 *k.1..../. 1.n.1.*
+0000EA50      +220  4770F098 D24FF0DA F1359200 F1344100 *..0qK|0.1.k.1...*
+0000EA60      +230  005847F0 F18E47F0 F1B44110 F0DA4100 *...01..01...0...*
+0000EA70      +240  003D47F0 F18E0000 000100FF 00FF0000 *...01...........*
+0000EA80      +250  00000000 0000052C 40404040 40404040 *........        *
+0000EA90      +260  40404040 40404040 00330000 000105D8 *        .......Q*
+0000EAA0      +270  C9C5C2F3 F5F2C940 E6C1D9D5 C9D5C77A *IEB352I WARNING:*
+0000EAB0      +280  40D6D5C5 40D6D940 D4D6D9C5 40D6C640 * ONE OR MORE OF *
+0000EAC0      +290  E3C8C540 D6E4E3D7 E4E340C4 C3C240D7 *THE OUTPUT DCB P*
+0000EAD0      +2A0  C1D9D4E2 40C3D6D7 C9C5C440 C6D9D6D4 *ARMS COPIED FROM*
+0000EAE0      +2B0  40C9D5D7 E4E30000 00000000 00000000 * INPUT..........*
+0000EAF0      +2C0  00000000 00000000 00000000 00000000 *................*
+0000EB00      +2D0  00000040 40404040 40404040 40404040 *...             *
+0000EB10      +2E0  40404040 40404040 40404040 40404040 *                *
+         Lines 0000EB20-0000EB40 (X'30' bytes) same as above
+0000EB50      +320  40404000 4100004F 47F0F008 05F090E3 *   ....|.00..0.T*
+0000EB60      +330  F0E20520 910220E6 47102024 910120E6 *0S..j..W....j..W*
+0000EB70      +340  47102032 D50021EA 21EB4740 204247F0 *....N...... ...0*
+0000EB80      +350  208E98E3 20DC07FE D2782172 10004530 *..qT....K.......*
+0000EB90      +360  204A47F0 201E9560 20F84780 201E4530 *.¢.0..n-.8......*
+0000EBA0      +370  204A47F0 201E4530 204A47F0 208E91FF *.¢.0.....¢.0..j.*
+0000EBB0      +380  20F84780 206EF273 20FC21D9 4FF020FC *.8...>2....R|0..*
+0000EBC0      +390  41FF0001 4EF020FC F33721D9 20FC96F0 *....+0..3..R..o0*
+0000EBD0      +3A0  21DC92F1 20F89204 21EBD277 20F92172 *..k1.8k...K..9..*
+0000EBE0      +3B0  503020F4 453020C8 926020F8 583020F4 *&..4...Hk-.8...4*
+0000EBF0      +3C0  07F343E0 21EB41EE 000142E0 21EB9240 *.3.\.......\..k *
+0000EC00      +3D0  20F9D276 20FA20F9 98EF20E4 44E020C2 *.9K....9q..U.\.B*
+0000EC10      +3E0  453020C8 924020F8 49E0220C 477020BE *...Hk .8.\......*
+0000EC20      +3F0  07F447F0 201ED200 20F9F000 41102210 *.4.0..K..90.....*
+0000EC30      +400  410020F8 1FFFBFF7 10310DEF 07F30000 *...8...7.....3..*
+0000EC40      +410  4000D64E 5000EB5E 00000045 0000EAA0 * .O+&..;........*
+0000EC50      +420  0000C1B0 00000000 B000EB92 40C9C5C2 *..A........k IEB*
+0000EC60      +430  F3F5F2C9 40E6C1D9 D5C9D5C7 7A40D6D5 *352I WARNING: ON*
+0000EC70      +440  C540D6D9 40D4D6D9 C540D6C6 40E3C8C5 *E OR MORE OF THE*
+0000EC80      +450  40D6E4E3 D7E4E340 C4C3C240 D7C1D9D4 * OUTPUT DCB PARM*
+0000EC90      +460  E240C3D6 D7C9C5C4 40C6D9D6 D440C9D5 *S COPIED FROM IN*
+0000ECA0      +470  D7E4E340 40404040 40404040 40404040 *PUT             *
+0000ECB0      +480  40404040 40404040 40404040 40404040 *                *
+0000ECC0      +490  40404040 40404040 40404040 40404040 *                *
+0000ECD0      +4A0  40404040 4000C4C1 E3C140E2 C5E340E4 *     .DATA SET U*
+0000ECE0      +4B0  E3C9D3C9 E3E84060 40C7C5D5 C5D9C1E3 *TILITY - GENERAT*
+0000ECF0      +4C0  C5404040 40404040 40404040 40404040 *E               *
+0000ED00      +4D0  40404040 40404040 40404040 40404040 *                *
+         Lines 0000ED10-0000ED20 (X'20' bytes) same as above
+0000ED30      +500  40404040 40404040 D7C1C7C5 40F0F0F0 *        PAGE 000*
+0000ED40      +510  F1404040 40404040 40404040 40403705 *1             ..*
+0000ED50      +520  00000000 00000000 00000000 00000000 *................*
+0000ED60      +530  00000000 00000000 00000000 5C5C5C5C *............*****
+0000ED70      +540  00610000 0000EDD4 00000000 00000000 *./.....M........*
+0000ED80      +550  02000000 00020000 01013F78 00794000 *.............` .*
+0000ED90      +560  00007E48 86000001 9400E7D8 00180050 *..=.f...m.XQ...&*
+0000EDA0      +570  007CE048 92D91680 00000001 0000E774 *.@\.kR........X.*
+0000EDB0      +580  08090079 00000000 00007CE8 00013FF9 *...`......@Y...9*
+0000EDC0      +590  00013FF9 00000079 00000001 00000000 *...9...`........*
+0000EDD0      +5A0  00000001 C4C3C2C5 00380000 0000ED74 *....DCBE........*
+0000EDE0      +5B0  00000000 C0000000 B0000000 00000000 *....{...........*
+0000EDF0      +5C0  00000000 00000000 00000000 00000000 *................*
+0000EE00      +5D0  00000000 00000000 00000000 00000000 *................*
+0000EE10      +5E0  F0F0F0F0 E2C4C27E 0000FFFF D5D6E8C5 *0000SDB=....NOYE*
+0000EE20      +5F0  E2E2D4C1 D3D3D3C1 D9C7C5C9 D5D7E4E3 *SSMALLLARGEINPUT*
+0000EE30      +600  90ECD00C 18BF47F0 B07CF5F6 F9F460C1 *..}....0.@5694-A*
+0000EE40      +610  F0F140C3 D6D7E8D9 C9C7C8E3 40F1F9F9 *01 COPYRIGHT 199*
+0000EE50      +620  F26B40F2 F0F1F140 C9C2D440 C3D6D9D7 *2, 2011 IBM CORP*
+0000EE60      +630  40D3C9C3 C5D5E2C5 C440D4C1 E3C5D9C9 * LICENSED MATERI*
+0000EE70      +640  C1D34060 40D7D9D6 C7D9C1D4 40D7D9D6 *AL - PROGRAM PRO*
+0000EE80      +650  D7C5D9E3 E840D6C6 40C9C2D4 C9C5C2C7 *PERTY OF IBMIEBG*
+0000EE90      +660  C5D5E2F3 F0F361F2 F061F2F3 C8C4E9F1 *ENS303/20/23HDZ1*
+0000EEA0      +670  C4F1F040 D5D6D5C5 40404040 4130B001 *D10 NONE    ....*
+0000EEB0      +680  41330FFF 41A03500 50AD0008 90DE3548 *........&[......*
+0000EEC0      +690  41D03500 58A10000 50A035D8 D20F35DC *.}...~..&..QK...*
+0000EED0      +6A0  A040D200 35ECA05D D20034AB A05ED207 *. K....)K....;K.*
+0000EEE0      +6B0  35A8A050 D20335BC A058D200 36B9A05C *.y.&K.....K....**
+0000EEF0      +6C0  58C03688 D202C021 3691D202 C0393695 *.{.hK.{..jK.{..n*
+0000EF00      +6D0  D2003763 C0485840 3680D202 40393699 *K...{.. ..K. ..r*
+0000EF10      +6E0  504035B4 D200375F 40489540 A0004780 *& ..K..^ .n ....*
+0000EF20      +6F0  B1029680 36B84100 A0001B11 0A085000 *..o...........&.*
+0000EF30      +700  36A09102 34AB4780 B12658A0 36809148 *..j...........j.*
+0000EF40      +710  A02447E0 B1264110 001D8910 00084140 *...\......i.... *
+0000EF50      +720  001D47F0 BD405810 B5689180 10004780 *...0] ....j.....*
+0000EF60      +730  B586D202 5021368D 58605000 91046011 *.fK.&....-&.j.-.*
+0000EF70      +740  4780B14C 5860601C 47F0B150 4865003E *...<.--..0.&....*
+0000EF80      +750  1BAA43A5 00101A6A 18164A10 36BC8810 *...v...¦..¢...h.*
+0000EF90      +760  00028910 00025010 37484C10 375E5010 *..i...&...<..;&.*
+0000EFA0      +770  373C5810 37484C10 37625010 37389089 *......<...&....i*
+0000EFB0      +780  36EC1F88 41900014 5C803760 1F001A09 *...h....*..-....*
+0000EFC0      +790  41900014 1F885C80 375C1A09 5A003738 *.....h*..*..!...*
+0000EFD0      +7A0  5A00373C 58103760 5A10375C 4C10376C *!......-!..*<..%*
+0000EFE0      +7B0  1A0158A0 374889A0 00015AA0 37481AA0 *......i...!.....*
+0000EFF0      +7C0  58103678 50A10000 5810369C 91801000 *....&~......j...*
+0000F000      +7D0  4710B1E0 180A4510 B1DA0A0A 47F0B1F2 *...\.........0.2*
+0000F010      +7E0  47F0B1E8 10000052 180A58F0 B1E41B11 *.0.Y.......0.U..*
+0000F020      +7F0  0A7858A0 367C501A 00005010 B56C5A10 *.....@&...&..%!.*
+0000F030      +800  37485010 B5705A10 37485010 B5745A10 *..&...!...&...!.*
+0000F040      +810  37485880 37641FFF 41001008 D2071000 *............K...*
+0000F050      +820  374C4110 100850F0 101418F1 D2131000 *.<....&0...1K...*
+0000F060      +830  3770927F 1000D203 10083688 41901018 *..k"..K....h....*
+0000F070      +840  5090100C 5A903748 18195A80 37645980 *&...!.....!.....*
+0000F080      +850  376047D0 B21C1810 50103734 50F01014 *.-.}....&...&0..*
+0000F090      +860  50F03730 58803764 41010008 1FFF1819 *&0..............*
+0000F0A0      +870  41001008 D2071000 37544110 100850F0 *....K.........&0*
+0000F0B0      +880  101418F1 D2131000 3784927F 1000D203 *...1K....dk"..K.*
+0000F0C0      +890  10083680 41901018 5090100C 5A903748 *........&...!...*
+0000F0D0      +8A0  18195A80 37645980 375C47D0 B2741810 *..!......*.}....*
+0000F0E0      +8B0  50F01014 50F0372C 988936EC 908936EC *&0..&0..qi...i..*
+0000F0F0      +8C0  58803730 1898D203 B56C800C 50803734 *.....qK..%..&...*
+0000F100      +8D0  45C0BAC0 58808014 19894770 B2CC5080 *.{.{.....i....&.*
+0000F110      +8E0  3730D203 B56C800C 988936EC 58603680 *..K..%..qi...-..*
+0000F120      +8F0  96FFB584 5850B56C 58103730 1B444110 *o..d.&.%........*
+0000F130      +900  100058E0 10081BFF BFF7E035 0DEF5810 *...\.....7\.....*
+0000F140      +910  37405A10 37645010 37409101 B5844710 *. !...&.. j..d..*
+0000F150      +920  B3869102 B5844710 B34E5810 372C1B44 *.fj..d...+......*
+0000F160      +930  58401010 12444770 B33E47F0 B34E4110 *. .........0.+..*
+0000F170      +940  100058E0 10081BFF BFF7E035 0DEF94FD *...\.....7\...m.*
+0000F180      +950  B5840700 47F0B35C 00012DD8 4110B364 *.d...0.*...Q....*
+0000F190      +960  47F0B370 0000F3A4 0000F3A0 0000F3AC *.0....3u..3...3.*
+0000F1A0      +970  58F0B358 05EFD203 B580B57C 58103730 *.0....K....@....*
+0000F1B0      +980  D203B56C 100C94FE B5845810 373058A0 *K..%..m..d......*
+0000F1C0      +990  10105890 36885860 90009104 60114780 *.....h.-..j.-...*
+0000F1D0      +9A0  B3B05BA0 3798D203 B578A000 47F0B3BE *..$..qK......0..*
+0000F1E0      +9B0  48AA000E 4899003E 1B9A5090 B5785810 *.....r....&.....*
+0000F1F0      +9C0  3730D203 B56C100C 47F0B3D0 00012DD8 *..K..%...0.}...Q*
+0000F200      +9D0  4110B3D8 47F0B3E4 0000F3A0 0000F39C *...Q.0.U..3...3.*
+0000F210      +9E0  0000F3A8 58F0B3CC 05EFD203 B57CB578 *..3y.0....K..@..*
+0000F220      +9F0  58103730 50103734 D2033730 10149104 *....&...K.....j.*
+0000F230      +A00  B5844710 B4125860 B57445C0 B70245C0 *.d.....-...{...{*
+0000F240      +A10  B4F894FB B5845850 B56C45C0 BAC05850 *.8m..d.&.%.{.{.&*
+0000F250      +A20  B57045C0 B82A47F0 B2F84110 00078910 *...{...0.8....i.*
+0000F260      +A30  00084140 000747F0 B6C058F0 B57812FF *... ...0.{.0....*
+0000F270      +A40  4780BD7C 58F0B580 12FF4780 B4745810 *..]@.0..........*
+0000F280      +A50  372C1B44 58401010 12444770 B46247F0 *..... .........0*
+0000F290      +A60  B4724110 100058E0 10081BFF BFF7E035 *.......\.....7\.*
+0000F2A0      +A70  0DEF0700 47F0B47C 00012DD8 4110B484 *.....0.@...Q...d*
+0000F2B0      +A80  47F0B490 0000F3A4 0000F3A0 0000F3AC *.0....3u..3...3.*
+0000F2C0      +A90  58F0B478 05EFD203 B580B57C 5860B574 *.0....K....@.-..*
+0000F2D0      +AA0  45C0B702 45C0B4F8 58903730 41109000 *.{...{.8........*
+0000F2E0      +AB0  58E01008 1BFFBFF7 E0350DEF 5890372C *.\.....7\.......*
+0000F2F0      +AC0  18A91B44 58409010 12444770 B4D69541 *.z... .......On.*
+0000F300      +AD0  90004770 B4E64110 900058E0 10081BFF *.....W.....\....*
+0000F310      +AE0  BFF7E035 0DEF5890 9014199A 4770B4D6 *.7\............O*
+0000F320      +AF0  47F0BD7C 47F0BCD8 58A0B580 58103680 *.0]@.0.Q........*
+0000F330      +B00  D5016004 10524720 BDCA904A 36EC5840 *N.-.....]..¢... *
+0000F340      +B10  10009104 40114780 B51E50A0 401C5810 *..j. .....&. ...*
+0000F350      +B20  372C5840 100C40A0 10065850 37481875 *... .. ....&....*
+0000F360      +B30  0E464110 10009220 100558F0 1008BFF7 *......k....0...7*
+0000F370      +B40  F03105EF 58103744 5A103764 50103744 *0.......!...&...*
+0000F380      +B50  5810372C 47F0B55E D203372C 10149400 *.....0.;K.....m.*
+0000F390      +B60  B555984A 36EC07FC 0000DDB1 00000000 *..q¢............*
+0000F3A0      +B70  00000000 00000000 00000000 00000000 *................*
+0000F3B0      +B80  00000000 FF0045E0 BF125850 35705860 *.......\...&...-*
+0000F3C0      +B90  357C5060 357CD200 36E635EC 91FF35EC *.@&-.@K..W..j...*
+0000F3D0      +BA0  4710B5B8 4740B5B8 589035E4 91209000 *..... .....Uj...*
+0000F3E0      +BB0  4710B5B8 96F035EC 58103688 58503570 *....o0.....h.&..*
+0000F3F0      +BC0  18051FFF BFF71031 0DEF5890 36889180 *.....7.......hj.*
+0000F400      +BD0  90244780 B60295C0 90244770 B5FA58A0 *......n{........*
+0000F410      +BE0  90009104 A0114780 B5FA58A0 90445BA0 *..j...........$.*
+0000F420      +BF0  379C58A0 A00047F0 B60A48A9 005247F0 *.......0...z...0*
+0000F430      +C00  B60A48A5 00004150 500450A0 349840A0 *...v...&&.&..q .*
+0000F440      +C10  349C4870 349C4070 35A258C0 3688D501 *...... ..s.{.hN.*
+0000F450      +C20  35A235EE 4720BDCA 9180C024 4710B650 *.s....].j.{....&*
+0000F460      +C30  D50135A2 36D24740 BDCA9104 C0244780 *N..s.K. ].j.{...*
+0000F470      +C40  B672D501 35A236D4 4740BDCA 47F0B672 *..N..s.M. ]..0..*
+0000F480      +C50  D50135A2 36CE4780 B65E47F0 B6729120 *N..s.....;.0..j.*
+0000F490      +C60  349E47E0 BDCA9150 C01147E0 BDCA47F0 *...\].j&{..\]..0*
+0000F4A0      +C70  B5B891F0 35EC4780 B6A045C0 BAFA4700 *..j0.......{....*
+0000F4B0      +C80  B6B096F0 B67F4180 00009180 34AA4710 *..o0."....j.....*
+0000F4C0      +C90  B6B04180 8004D201 600236CE 47F0B67E *......K.-....0.=*
+0000F4D0      +CA0  4700B6B0 45C0BAD8 96F0B6A1 47F0B67E *.....{.Qo0.~.0.=*
+0000F4E0      +CB0  45C0BAFA 47F0B7EE 4A8035A0 47F0B6CC *.{...0..¢....0..*
+0000F4F0      +CC0  1A1458F0 36C405EF 47F0BC64 918034AA *...0.D...0..j...*
+0000F500      +CD0  4710B6D8 47F0B6F2 918034AA 4780B6F2 *...Q.0.2j......2*
+0000F510      +CE0  58A03680 12884780 B79E408A 005247F0 *.....h.... ....0*
+0000F520      +CF0  B6F25080 35945860 357C45C0 B70247F0 *.2&..m.-.@.{...0*
+0000F530      +D00  B7429180 36B84780 B7405060 35B04110 *..j...... &-....*
+0000F540      +D10  35B058F0 36A005EF 49F036CC 4740B724 *...0.....0... ..*
+0000F550      +D20  40F036CC 49F036A4 4780BCC0 49F036A8 * 0...0.u...{.0.y*
+0000F560      +D30  4780BCCC 49F036A6 4780B740 47F0BCD8 *.....0.w... .0.Q*
+0000F570      +D40  07FC5810 36801806 1FFFBFF7 10310DEF *...........7....*
+0000F580      +D50  5860357C 92006000 41660001 50603580 *.-.@k.-.....&-..*
+0000F590      +D60  58603594 06605060 35940700 47F0B774 *.-.m.-&-.m...0..*
+0000F5A0      +D70  00012DD8 4110B77C 47F0B788 000103B0 *...Q...@.0.h....*
+0000F5B0      +D80  000103AC 000103C4 58F0B770 05EF58A0 *.......D.0......*
+0000F5C0      +D90  35DCD207 3554A002 D703355C 355C91FF *..K.....P..*.*j.*
+0000F5D0      +DA0  36BF4780 B7D645C0 BA8A489A 000041A0 *.....O.{........*
+0000F5E0      +DB0  A00A1299 4780B7CE 9280355F D2073554 *...r....k..^K...*
+0000F5F0      +DC0  A00045C0 BA8A41A0 A0084690 B7B850A0 *...{..........&.*
+0000F600      +DD0  35DC9400 36BF4700 B93A5860 357C4180 *..m........-.@..*
+0000F610      +DE0  00009180 34AA4710 B81A4180 80044700 *..j.............*
+0000F620      +DF0  B93A940F B6B59180 34AA4710 B81A4890 *..m...j.........*
+0000F630      +E00  35A04190 90044090 36D8D201 600036D8 *...... ..QK.-..Q*
+0000F640      +E10  D2016002 36CE4160 60045060 35905050 *K.-....--.&-..&&*
+0000F650      +E20  358C45C0 B82A47F0 B89A5890 35D850C0 *...{...0.....Q&{*
+0000F660      +E30  36B41299 4780B894 95409028 4780B894 *...r...mn .....m*
+0000F670      +E40  41990028 58C03688 18A550A0 B85C50C0 *.r...{.h.v&..*&{*
+0000F680      +E50  B8600700 4110B85C 47F0B864 00000000 *.-.....*.0......*
+0000F690      +E60  00000000 45F0B870 00000000 00000000 *.....0..........*
+0000F6A0      +E70  41009000 5000F000 0A061B11 45C0BC6C *....&.0......{.%*
+0000F6B0      +E80  47F0B894 41100007 89100008 41400007 *.0.m....i.... ..*
+0000F6C0      +E90  47F0B6C0 58C036B4 07FC90EC 331045A0 *.0.{.{..........*
+0000F6D0      +EA0  326898EC 3310FA50 337437A0 91F035EC *..q....&....j0..*
+0000F6E0      +EB0  4780B8E6 45C0BB96 D201359A 35A00700 *...W.{.oK.......*
+0000F6F0      +EC0  47F0B8C8 00012DD8 4110B8D0 47F0B8DC *.0.H...Q...}.0..*
+0000F700      +ED0  000103C0 000103BC 000103C8 58F0B8C4 *...{.......H.0.D*
+0000F710      +EE0  05EF47F0 B93645C0 BB96D201 35A235A0 *...0...{.oK..s..*
+0000F720      +EF0  1BFF58F0 35904AF0 35FC50F0 35840700 *...0..¢0..&0.d..*
+0000F730      +F00  47F0B908 0000A3AE 4110B910 47F0B928 *.0....t......0..*
+0000F740      +F10  00010410 000103C0 000103B4 000103BC *.......{........*
+0000F750      +F20  000103D2 00010418 58F0B904 05EF47F0 *...K.....0.....0*
+0000F760      +F30  B93647F0 BB7E4A60 35A0910F 35EC4710 *...0.=¢-..j.....*
+0000F770      +F40  B94A95FF 36C04780 B9524700 BA5C47F0 *.¢n..{.......*.0*
+0000F780      +F50  B5B89200 36C05890 35E45090 359C9102 *..k..{...U&...j.*
+0000F790      +F60  34AB4780 B972910F 90004780 B9BE96FF *......j.......o.*
+0000F7A0      +F70  36BF919F 90004780 B9864740 B986960F *..j......f. .fo.*
+0000F7B0      +F80  35EC47F0 B5B8918F 90004780 B9BE4740 *...0..j........ *
+0000F7C0      +F90  B9BE960F 35EC4700 BA5C96F0 B9974110 *..o......*o0.p..*
+0000F7D0      +FA0  000D8910 00085060 36DC5860 36E058F0 *..i...&-...-.\.0*
+0000F7E0      +FB0  36C405EF 586036DC 1B4447F0 BD4C4190 *.D...-.....0]<..*
+0000F7F0      +FC0  900C5090 35E49500 36E64770 B9D247F0 *..&..Un..W...K.0*
+0000F800      +FD0  B9DE91F0 35EC4710 B5B847F0 BA4A5890 *..j0.......0.¢..*
+0000F810      +FE0  359C914F 90004780 BA1E4740 BA1E5890 *..j|....... ....*
+0000F820      +FF0  35E09180 90004710 BA024190 900847F0 *.\j............0*
+
+         Event 2 CSECT IEBGENR3 GPR 4 (Address 00014A98)
+00014A98                              00000000 00000000 *        ........*
+00014AA0        +8  00000000 00000000 00000000 00000000 *................*
+         Lines 00014AB0-00014F80 (X'4E0' bytes) same as above
+00014F90      +4F8  00000000 00000000                   *........        *
+         Event 1 CSECT IEBGENER GPR 3 (Address 00014F98)
+         Event 2 CSECT IEBGENR3 GPR 3 (Address 00014F98)
+00014F98                              40404040 40404040 *                *
+00014FA0        +8  40404040 40404040 40404040 40404040 *                *
+         Lines 00014FB0-00014FC0 (X'20' bytes) same as above
+00014FD0       +38  40404040 40404040 00000000 00000000 *        ........*
+00014FE0       +48  00000000 00000000 00000000 00000000 *................*
+00014FF0       +58  00000000 00FF0000 00000000 00000000 *................*
+         Address range 00015000-00015F97 invalid
+
+         Event 1 CSECT IEBGENER GPR 6 (Address 007BBFC8)
+         Event 2 CSECT IEBGENR3 GPR 6 (Address 007BBFC8)
+007BBFC8                              007BBFD0 00007FE0 *        .#.}.."\*
+007BBFD0        +8  D1D9E2F0 F1F34040 E2E3C5D7 F0F1F040 *JRS013  STEP010 *
+007BBFE0       +18  40404040 40404040 14010102 E2E8E2D7 *        ....SYSP*
+007BBFF0       +28  D9C9D5E3 00000900 80000000 14010100 *RINT............*
+007BC000       +38  E2E8E2C9 D5404040 00001900 80000000 *SYSIN   ........*
+007BC010       +48  14010100 E2E8E2E4 E3F14040 00001F00 *....SYSUT1  ....*
+007BC020       +58  80FCB2D0 14010102 E2E8E2E4 E3F24040 *...}....SYSUT2  *
+007BC030       +68  00002500 80000000 14010100 C9C4C9E3 *............IDIT*
+007BC040       +78  D9C1C3C5 00003100 80000000 14010100 *RACE............*
+007BC050       +88  E2E8E2F0 F0F0F1F9 00003B00 80FA5400 *SYS00019........*
+007BC060       +98  14010102 C9C4C9D9 C5D7D9E3 00004300 *....IDIREPRT....*
+007BC070       +A8  80000000 14010100 E2E8E2F0 F0F0F2F0 *........SYS00020*
+007BC080       +B8  00004900 80FA52D0 14010100 E2E8E2F0 *.......}....SYS0*
+007BC090       +C8  F0F0F2F1 00005100 80FA52D0 14010100 *0021.......}....*
+007BC0A0       +D8  E2E8E2F0 F0F0F2F2 00005900 80FA5400 *SYS00022........*
+007BC0B0       +E8  14010100 E2E8E2F0 F0F0F2F3 00006100 *....SYS00023../.*
+007BC0C0       +F8  80FA52D0 14010100 E2E8E2F0 F0F0F2F4 *...}....SYS00024*
+007BC0D0      +108  00006900 80FA52D0 00000000 00000000 *.......}........*
+007BC0E0      +118  00000000 00000000 00000000 00000000 *................*
+         Lines 007BC0F0-007BCFB0 (X'ED0' bytes) same as above
+007BCFC0      +FF8  00000000 00000000                   *........        *
+
+         Event 1 CSECT IEBGENER GPR 9 (Address 007D3CB0)
+         Event 2 CSECT IEBGENR3 GPR 9 (Address 007D3CB0)
+007D3CB0            00000004 007FB040 007D3F80 7F51E000 *.....". .'..".\.*
+007D3CC0       +10  FF000304 00000000 007D3C24 007D3C00 *.........'...'..*
+007D3CD0       +20  00000000 00000000 00000000 00000000 *................*
+007D3CE0       +30  00000000 00000000 001AD24B 001AD24E *..........K...K+*
+007D3CF0       +40  00000000 00000000 00000000 00000000 *................*
+         Lines 007D3D00-007D3D20 (X'30' bytes) same as above
+007D3D30       +80  00000000 00000000 00000000 7F599D18 *............"...*
+007D3D40       +90  7F59AC10 7F56D000 007DBD40 00000000 *"...".}..'] ....*
+007D3D50       +A0  00000000 00000000 00000000 00000000 *................*
+007D3D60       +B0  007D3FB4 00000000 0391E230 00000000 *.'.......jS.....*
+007D3D70       +C0  03D3A178 F5000030 E2E3C5D7 F0F1F040 *.L~.5...STEP010 *
+007D3D80       +D0  E3C3E340 40404040 80000000 00000000 *TCT     ........*
+007D3D90       +E0  00000000 7F642848 7F642AF0 00000000 *...."..."..0....*
+007D3DA0       +F0  00000000 00000000 00000000 00000000 *................*
+007D3DB0      +100  00000000 00000000 00000000 001AD24A *..............K¢*
+007D3DC0      +110  0126329F 7F6B1000 7F6B1000 00FF1000 *....",..",......*
+007D3DD0      +120  00000001 0000000D 00000154 00000148 *................*
+007D3DE0      +130  00000000 00000000 000000FF 00000000 *................*
+007D3DF0      +140  00000000 00000000 00000000 00000000 *................*
+         Lines 007D3E00-007D3E20 (X'30' bytes) same as above
+007D3E30      +180  00000000 D1C5E2F2 7F642788 7F59C348 *....JES2"..h".C.*
+007D3E40      +190  7F59BDC8 7F59C5D0 7F59C088 7F59C858 *".]H".E}".{h".H.*
+007D3E50      +1A0  E3A27E9F C2B0A889 00000000 00000000 *Ts=.B.yi........*
+007D3E60      +1B0  00000000 00000000 00000000 00000000 *................*
+         Lines 007D3E70-007D3E80 (X'20' bytes) same as above
+007D3E90      +1E0  00000000 001EE489 0391E230 03D3A178 *......Ui.jS..L~.*
+007D3EA0      +1F0  7F59CAE0 7F59CE88 7F59D230 7F6427F0 *"..\"..h".K."..0*
+007D3EB0      +200  7F59D5D8 7F59D850 7F59DAC8 00000000 *".NQ".Q&"..H....*
+007D3EC0      +210  00000000 00000000 00000000 00000000 *................*
+         Lines 007D3ED0-007D3EE0 (X'20' bytes) same as above
+007D3EF0      +240  00000000 00000000 00000000 7F59DD40 *............".. *
+007D3F00      +250  7F59DF80 00000000 00000000 00000000 *"...............*
+007D3F10      +260  00000000 00000000 00000000 00000000 *................*
+         Lines 007D3F20-007D3F50 (X'40' bytes) same as above
+007D3F60      +2B0  00000000 7F568050 0000000C 00000000 *...."..&........*
+007D3F70      +2C0  00000000 00000000 00000000 00000000 *................*
+007D3F80      +2D0  00034000 0004C000 00000000 00006000 *.. ...{.......-.*
+007D3F90      +2E0  00BB9000 01231000 007FA000 64E00000 *........."...\..*
+007D3FA0      +2F0  00000200 00000000 00000000 00000C00 *................*
+007D3FB0      +300  01000000 00000000 00000000 007FD024 *............."}.*
+007D3FC0      +310  80FF44E4 00000000 007D2058 00000001 *...U.....'......*
+007D3FD0      +320  007FA728 007FA7C0 007FA788 80FF4CA0 *."x.."x{."xh..<.*
+007D3FE0      +330  00C88138 02682530 029AE72C 00FCFC48 *.Ha.......X.....*
+007D3FF0      +340  FFFFFFFD 00000001 00001980 00000000 *................*
+007D4000      +350  E2E6C140 C2D3D6C3 D240D7D6 D6D340F3 *SWA BLOCK POOL 3*
+007D4010      +360  40404040 40404040 00000000 007D4C28 *        .....'<.*
+007D4020      +370  7EE62A80 00000000 00000001 837D4028 *=W..........c' .*
+007D4030      +380  000000B0 D1C3E340 7D402800 8000C890 *....JCT ' ....H.*
+007D4040      +390  D1D9E2F0 F1F34040 00000000 00000000 *JRS013  ........*
+007D4050      +3A0  00000000 000000C1 7D41A800 7D40E800 *.......A'.y.' Y.*
+007D4060      +3B0  7D456800 00000000 00000000 00000000 *'...............*
+007D4070      +3C0  00000000 00000000 00000000 00000000 *................*
+007D4080      +3D0  00000000 00000000 00000000 00000000 *................*
+007D4090      +3E0  00002D00 04000001 00000000 00000000 *................*
+007D40A0      +3F0  00000000 00000012 7D41A800 05004040 *........'.y...  *
+007D40B0      +400  40404040 40404040 40404040 40407D43 *              '.*
+007D40C0      +410  E800E400 0000001A D24A1AD2 4A26329F *Y.U.....K¢.K¢...*
+007D40D0      +420  00000000 0026329F E9F6F7F6 F4F54040 *........Z99999  *
+007D40E0      +430  00000000 00003900 00000002 837D40E8 *............c' Y*
+007D40F0      +440  300000B0 D1C3E3E7 7D40E830 40404040 *....JCTX' Y.    *
+007D4100      +450  40404040 00000000 00000000 00000000 *    ............*
+007D4110      +460  00000400 00000000 00000000 00000000 *................*
+007D4120      +470  00000000 00000000 00000000 00000001 *................*
+007D4130      +480  00000006 00000000 00000002 7F53C020 *............".{.*
+007D4140      +490  00000000 00000000 00000000 00000000 *................*
+007D4150      +4A0  0126329F 0126329F 00000000 00000000 *................*
+007D4160      +4B0  00000000 00000000 00000000 00000000 *................*
+007D4170      +4C0  00000000 00000000 00000000 00000000 *................*
+007D4180      +4D0  00000000 00000000 C1404040 40404040 *........A       *
+007D4190      +4E0  00000000 00000000 00000000 00000000 *................*
+007D41A0      +4F0  00000000 00000002 00000003 837D41A8 *............c'.y*
+007D41B0      +500  020000B0 E2C3E340 7D41A802 00000000 *....SCT '.y.....*
+007D41C0      +510  00000004 00001100 00000000 00000000 *................*
+007D41D0      +520  00006700 00000000 7D4B6800 00000000 *........'.......*
+007D41E0      +530  00000000 40404040 40404040 E2E3C5D7 *....        STEP*
+007D41F0      +540  F0F1F040 00000000 01000020 7D432800 *010 ........'...*
+007D4200      +550  00000000 00000000 00000000 00000000 *................*
+007D4210      +560  04000000 0004700B 00000000 00000000 *................*
+007D4220      +570  00000000 C9C5C2C7 C5D5C5D9 00000000 *....IEBGENER....*
+007D4230      +580  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4240-007D4250 (X'20' bytes) same as above
+007D4260      +5B0  00000000 80000400 00000004 037D4268 *.............'..*
+007D4270      +5C0  020000B0 E2C3E340 00000000 00000000 *....SCT ........*
+007D4280      +5D0  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4290-007D4310 (X'90' bytes) same as above
+007D4320      +670  00000000 00000000 00000005 837D4328 *............c'..*
+007D4330      +680  0C0000B0 E2C3E3E7 7D43280C 00000000 *....SCTX'.......*
+007D4340      +690  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4350-007D4390 (X'50' bytes) same as above
+007D43A0      +6F0  00000000 00002EE0 00000000 00000000 *.......\........*
+007D43B0      +700  00000000 00000000 00000000 00000000 *................*
+007D43C0      +710  00000000 00000000 00000000 00000000 *................*
+007D43D0      +720  00000000 00000000 00000001 00000000 *................*
+007D43E0      +730  00000000 00000000 00000006 837D43E8 *............c'.Y*
+007D43F0      +740  1B0000B0 D1D4D940 D1D9E2F0 F1F34040 *....JMR JRS013  *
+007D4400      +750  001AD221 0126329F E2F0E6F1 40404040 *..K.....S0W1    *
+007D4410      +760  40404040 01E402C1 00000000 00000000 *    .U.A........*
+007D4420      +770  001AD22F 0126329F 00000000 0000E402 *..K...........U.*
+007D4430      +780  00000000 00200000 00013360 00000000 *...........-....*
+007D4440      +790  0001339D C1404040 40404040 D1F0F0F0 *....A       J000*
+007D4450      +7A0  F0F9F0F1 E2E5E2C3 D1C5E2F2 C5F3C1F2 *0901SVSCJES2E3A2*
+007D4460      +7B0  F7C5F9C6 4B4B4B4B 4B4B4B7A 40404040 *7E9F.......:    *
+007D4470      +7C0  40404040 40404040 40404040 40404040 *                *
+007D4480      +7D0  40404040 40404040 40404040 2E2B8CC0 *            ...{*
+007D4490      +7E0  CA4C234F 00000000 00000000 00000000 *.<.|............*
+007D44A0      +7F0  00000000 00000000 00000009 037D44A8 *.............'.y*
+007D44B0      +800  010000B0 C1C3E340 00000000 00000000 *....ACT ........*
+007D44C0      +810  00000000 00000000 00000000 00000000 *................*
+         Lines 007D44D0-007D4550 (X'90' bytes) same as above
+007D4560      +8B0  00000000 00000000 0000000A 837D4568 *............c'..*
+007D4570      +8C0  010000B0 C1C3E340 7D456801 00000000 *....ACT '.......*
+007D4580      +8D0  D1C5E260 D9C5C1C4 C5D940E2 F0F1F340 *JES-READER S013 *
+007D4590      +8E0  40404040 00000001 04C1C3C3 E3000000 *    .....ACCT...*
+007D45A0      +8F0  00000000 00000000 00000000 00000000 *................*
+         Lines 007D45B0-007D4610 (X'70' bytes) same as above
+007D4620      +970  00000000 00000000 0000000C 037D4628 *.............'..*
+007D4630      +980  280000B0 C1D4D7E7 00000000 00000000 *....AMPX........*
+007D4640      +990  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4650-007D46D0 (X'90' bytes) same as above
+007D46E0      +A30  00000000 00000000 00000012 037D46E8 *.............'.Y*
+007D46F0      +A40  000000B0 00000000 00000000 00000000 *................*
+007D4700      +A50  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4710-007D4790 (X'90' bytes) same as above
+007D47A0      +AF0  00000000 00000000 00000013 037D47A8 *.............'.y*
+007D47B0      +B00  000000B0 00000000 00000000 00000000 *................*
+007D47C0      +B10  00000000 00000000 00000000 00000000 *................*
+         Lines 007D47D0-007D4850 (X'90' bytes) same as above
+007D4860      +BB0  00000000 00000000 00000014 037D4868 *.............'..*
+007D4870      +BC0  000000B0 00000000 00000000 00000000 *................*
+007D4880      +BD0  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4890-007D4910 (X'90' bytes) same as above
+007D4920      +C70  00000000 00000000 00000016 037D4928 *.............'..*
+007D4930      +C80  000000B0 00000000 00000000 00000000 *................*
+007D4940      +C90  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4950-007D49D0 (X'90' bytes) same as above
+007D49E0      +D30  00000000 00000000 00000019 037D49E8 *.............'.Y*
+007D49F0      +D40  010000B0 C1C3E340 00000000 00000000 *....ACT ........*
+007D4A00      +D50  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4A10-007D4A90 (X'90' bytes) same as above
+007D4AA0      +DF0  00000000 00000000 0000001A 037D4AA8 *.............'¢y*
+007D4AB0      +E00  0C0000B0 E2C3E3E7 00000000 00000000 *....SCTX........*
+007D4AC0      +E10  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4AD0-007D4B50 (X'90' bytes) same as above
+007D4B60      +EB0  00000000 00000000 00000027 837D4B68 *............c'..*
+007D4B70      +EC0  010000B0 C1C3E340 7D4B6801 00000000 *....ACT '.......*
+007D4B80      +ED0  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4B90-007D4C10 (X'90' bytes) same as above
+007D4C20      +F70  00000000 00000000 007D4CE8 00000000 *.........'<Y....*
+007D4C30      +F80  00000000 00000000 00000000 00000000 *................*
+         Lines 007D4C40-007D4CA0 (X'70' bytes) same as above
+
+         Event 1 CSECT IEBGENER GPR 11 (Address 007F0001)
+         Event 2 CSECT IEBGENR3 GPR 11 (Address 007F0001)
+         Address range 007F0001-007F1000 not in minidump
+
+         Event 1 CSECT IEBGENER GPR 5 (Address 007FB040)
+007FB040            007FB790 00000000 00000000 007DBFD0 *."...........'.}*
+007FB050       +10  84913000 40000000 7F3E2D18 80000000 *dj.. ...".......*
+007FB060       +20  0400FFFF 00000000 00000000 00000000 *................*
+007FB070       +30  00000001 FF82CE60 007DBF40 7FF6B9B0 *.....b.-.'. "6..*
+007FB080       +40  007DBD40 007D31AC 007D3188 007DBF40 *.'] .'...'.h.'. *
+007FB090       +50  007D3188 007D3CB0 9B17BC3C 04DBBBC0 *.'.h.'.........{*
+007FB0A0       +60  007D83C0 007D83C0 84DBAEC6 807FB790 *.'c{.'c{d..F."..*
+007FB0B0       +70  00000000 007D39C8 00000000 007FB040 *.....'.H.....". *
+007FB0C0       +80  00000000 007FED90 007D39C8 00000000 *....."...'.H....*
+007FB0D0       +90  007FEF4C 00000000 7FF16E2C 7F5BAB38 *.".<...."1>."$..*
+007FB0E0       +A0  007FF560 807D3CB0 00000000 00000000 *."5-.'..........*
+007FB0F0       +B0  00000000 007FB5F4 007FAF60 00000000 *.....".4.".-....*
+007FB100       +C0  00000000 00000000 00000000 00000000 *................*
+007FB110       +D0  007FB198 00000000 7FFFDC10 007FED90 *.".q...."...."..*
+007FB120       +E0  00000000 00000000 00000000 00000002 *................*
+007FB130       +F0  00004001 00000000 7FFFE850 00000000 *.. .....".Y&....*
+007FB140      +100  E3C3C240 00000000 00000000 7F64FE50 *TCB ........"..&*
+007FB150      +110  0000FFFF 00048000 00000000 00000000 *................*
+007FB160      +120  7FF6EA60 00000000 7FF16E3C 7F5BA508 *"6.-...."1>."$v.*
+007FB170      +130  00000038 00000004 7F5DB878 0000017A *........").....:*
+007FB180      +140  64329C20 00000000 00000003 00000000 *................*
+007FB190      +150  00000000 007FA820 00000000 00000000 *....."y.........*
+007FB1A0      +160  00000000 002E1169 00000000 00000000 *................*
+007FB1B0      +170  00000000 00000000 007FB1C8 007FB4A0 *.........".H."..*
+007FB1C0      +180  00010001 7F642418 00000000 007FB1D8 *...."........".Q*
+007FB1D0      +190  00010001 00000000 00000000 00000000 *................*
+007FB1E0      +1A0  C9C4C9C3 E2E5F0F9 9B209E10 007C4820 *IDICSV09.....@..*
+007FB1F0      +1B0  000110FC 31224000 00000000 00000000 *...... .........*
+007FB200      +1C0  00000000 7F485320 807FB20C 00000000 *...."...."......*
+007FB210      +1D0  007FB350 007FB220 00010001 D4F7F0F2 *.".&."......M702*
+007FB220      +1E0  007FB250 00000000 C9C4C9C3 E2E5F1F4 *.".&....IDICSV14*
+007FB230      +1F0  9B227000 007C4898 000110FC 31224000 *.....@.q...... .*
+007FB240      +200  00000000 00000000 00000000 7F4853C0 *............"..{*
+007FB250      +210  00000000 00000000 C9C4C9C3 E2E5F0F9 *........IDICSV09*
+007FB260      +220  9B209E10 007C4880 000110FC 31224000 *.....@........ .*
+007FB270      +230  00000000 00000000 00000000 7F485320 *............"...*
+007FB280      +240  007C5170 00CC7D50 00010001 00000000 *.@....'&........*
+007FB290      +250  807FB294 00000000 00000000 007FB2A8 *.".m.........".y*
+007FB2A0      +260  00010001 D5C3C8D9 00000000 00000000 *....NCHR........*
+007FB2B0      +270  C9C4C9C3 E2E5F0F9 9B209E10 007C48B0 *IDICSV09.....@..*
+007FB2C0      +280  000110FC 31224000 00000000 00000000 *...... .........*
+007FB2D0      +290  00000000 7F485320 807FB2DC 00000000 *...."...."......*
+007FB2E0      +2A0  007C5D70 007FB2F0 00010001 00000000 *.@)..".0........*
+007FB2F0      +2B0  007FB320 00000000 C9C4C9C3 E2E5F1F4 *."......IDICSV14*
+007FB300      +2C0  9B227000 007C4958 000110FC 31224000 *.....@........ .*
+007FB310      +2D0  00000000 00000000 00000000 7F4853C0 *............"..{*
+007FB320      +2E0  00000000 00000000 C9C4C9C3 E2E5F0F9 *........IDICSV09*
+007FB330      +2F0  9B209E10 007C4940 000110FC 31224000 *.....@. ...... .*
+007FB340      +300  00000000 00000000 00000000 7F485320 *............"...*
+007FB350      +310  00000000 007FB250 00010001 00000000 *.....".&........*
+007FB360      +320  807FB364 00000000 007FB378 007C5D00 *."......."...@).*
+007FB370      +330  00010001 007D5038 00000000 007C5D30 *.....'&......@).*
+007FB380      +340  00010001 00000000 007FB398 00CC7D50 *.........".q..'&*
+007FB390      +350  00010001 FFF72880 007FB298 007FB3A8 *.....7...".q.".y*
+007FB3A0      +360  00010001 00000000 007FB2A8 00000000 *.........".y....*
+007FB3B0      +370  C9C4C9C3 E2E5F1F4 9B227000 007C48C8 *IDICSV14.....@.H*
+007FB3C0      +380  000110FC 31224000 00000000 00000000 *...... .........*
+007FB3D0      +390  00000000 7F4853C0 007FB458 00CC7D50 *...."..{."....'&*
+007FB3E0      +3A0  00010001 00000000 007FB418 00000000 *........."......*
+007FB3F0      +3B0  C9C4C9C3 E2E5F1F4 9B227000 007C4868 *IDICSV14.....@..*
+007FB400      +3C0  000110FC 31224000 00000000 00000000 *...... .........*
+007FB410      +3D0  00000000 7F4853C0 00000000 00000000 *...."..{........*
+007FB420      +3E0  C9C4C9C3 E2E5F0F9 9B209E10 007C4850 *IDICSV09.....@.&*
+007FB430      +3F0  000110FC 31224000 00000000 00000000 *...... .........*
+007FB440      +400  00000000 7F485320 00000000 007C51B0 *...."........@..*
+007FB450      +410  00010001 00000000 007FB468 007FB3E8 *........."...".Y*
+007FB460      +420  00010001 007D5038 00000000 007FB418 *.....'&......"..*
+007FB470      +430  00010001 00000000 807FB290 007D5038 *........."...'&.*
+007FB480      +440  007D51B8 007CCFC8 00000000 00000000 *.'...@.H........*
+007FB490      +450  007FB1B8 00CC7D50 00010001 00000000 *."....'&........*
+007FB4A0      +460  007FB1D8 00000000 C9C4C9C3 E2E5F1F4 *.".Q....IDICSV14*
+007FB4B0      +470  9B227000 007C4838 000110FC 31224000 *.....@........ .*
+007FB4C0      +480  00000000 00000000 00000000 7F4853C0 *............"..{*
+007FB4D0      +490  007C5098 00000000 C9C4C9C3 E2E5F1F4 *.@&q....IDICSV14*
+007FB4E0      +4A0  9B227000 007C47D8 000110FC 31224000 *.....@.Q...... .*
+007FB4F0      +4B0  00000000 00000000 00000000 7F4853C0 *............"..{*
+007FB500      +4C0  007FFF48 007FF018 00010001 00000000 *."..."0.........*
+007FB510      +4D0  007FB000 007FB520 00010001 00000000 *."..."..........*
+007FB520      +4E0  007FB550 00000000 C9C4C9C3 E2E5F1F4 *.".&....IDICSV14*
+007FB530      +4F0  9B227000 007C46E8 000110FC 31224000 *.....@.Y...... .*
+007FB540      +500  00000000 00000000 00000000 7F4853C0 *............"..{*
+007FB550      +510  00000000 00000000 C9C4C9C3 E2E5F0F9 *........IDICSV09*
+007FB560      +520  9B209E10 007C46D0 000110FC 31224000 *.....@.}...... .*
+007FB570      +530  00000000 00000000 00000000 7F485320 *............"...*
+007FB580      +540  007FB5C0 00000000 C9C4C9C3 E2E5F1F4 *.".{....IDICSV14*
+007FB590      +550  9B227000 007D2958 000110FC 31224000 *.....'........ .*
+007FB5A0      +560  00000000 00000000 00000000 7F4988C8 *............".hH*
+007FB5B0      +570  00000000 007FB5C0 00010001 00000000 *.....".{........*
+007FB5C0      +580  00000000 00000000 C9C4C9C3 E2E5F0F9 *........IDICSV09*
+007FB5D0      +590  9B209E10 007D2940 000110FC 31224000 *.....'. ...... .*
+007FB5E0      +5A0  00000000 00000000 00000000 7F498828 *............".h.*
+007FB5F0      +5B0  007FB640 00CC7D50 00010001 00000000 *.". ..'&........*
+007FB600      +5C0  007D37C8 00CC7D50 00010001 FFF72880 *.'.H..'&.....7..*
+007FB610      +5D0  007D30D0 00000000 C9C4C9C3 E2E5F1F4 *.'.}....IDICSV14*
+007FB620      +5E0  9B227000 007D28F8 000110FC 31224000 *.....'.8...... .*
+007FB630      +5F0  00000000 00000000 00000000 7EEF08C8 *............=..H*
+007FB640      +600  007D2000 007FB650 00010001 D4F7F0F2 *.'...".&....M702*
+007FB650      +610  007FB680 00000000 C9C4C9C3 E2E5F1F4 *."......IDICSV14*
+007FB660      +620  9B227000 007D2928 000110FC 31224000 *.....'........ .*
+007FB670      +630  00000000 00000000 00000000 7F4988C8 *............".hH*
+007FB680      +640  00000000 00000000 C9C4C9C3 E2E5F0F9 *........IDICSV09*
+007FB690      +650  9B209E10 007D2910 000110FC 31224000 *.....'........ .*
+007FB6A0      +660  00000000 00000000 00000000 7F498828 *............".h.*
+007FB6B0      +670  00000000 00000000 00000000 00000000 *................*
+007FB6C0      +680  00000000 007FED90 00000000 7F5AE010 *....."......"!\.*
+007FB6D0      +690  00000000 00000000 01000000 00000000 *................*
+007FB6E0      +6A0  00000000 00000000 007ECE38 00000000 *.........=......*
+007FB6F0      +6B0  00000000 1B16FA00 007E4028 00000000 *.........= .....*
+007FB700      +6C0  002F0000 00000000 00000000 00000000 *................*
+007FB710      +6D0  00000000 42000000 00000000 007E5FB0 *.............=^.*
+007FB720      +6E0  00000000 00000000 00000000 00000000 *................*
+007FB730      +6F0  007FEBFC 007E3FB0 00000000 007E41A8 *."...=.......=.y*
+007FB740      +700  007DBFB0 00000000 00000000 000100EC *.'..............*
+007FB750      +710  007D31DC 00000000 007EAF30 C9C5C6C9 *.'.......=..IEFI*
+007FB760      +720  C9C34040 00000000 00FA31E8 00000000 *IC  .......Y....*
+007FB770      +730  7FFFDC10 00000080 00000000 00000000 *"...............*
+007FB780      +740  00000000 00000000 42800003 00020001 *................*
+007FB790      +750  00000000 00000000 00110083 00CCDB70 *...........c....*
+007FB7A0      +760  070C1000 84DBB746 00000000 017FB040 *....d........". *
+007FB7B0      +770  00000064 00006FF8 00000040 007ECD64 *......?8... .=..*
+007FB7C0      +780  007ECD40 007FED90 007DBFC8 00F96280 *.=. ."...'.H.9..*
+007FB7D0      +790  007FEF28 007FB360 01E19C00 007F0001 *."...".-....."..*
+007FB7E0      +7A0  04DBB570 00007F68 007FEF74 007FEF58 *......".."..."..*
+007FB7F0      +7B0  C9C5C6C9 C9C34040 08080000 00000000 *IEFIIC  ........*
+007FB800      +7C0  C080C9C5 C5D9C7D5 00000000 00000000 *{.IEERGN........*
+007FB810      +7D0  00000000 00000000 00000000 00000000 *................*
+         Lines 007FB820-007FC030 (X'820' bytes) same as above
+
+         Event 1 CSECT IEBGENER GPR 7 (Address 00F96280)
+00F96280            C1E2C3C2 00FC3000 00FBCE00 00000000 *ASCB............*
+00F96290       +10  00000000 00000000 00000000 00000000 *................*
+00F962A0       +20  0003373E 002F0100 000100F4 00000000 *...........4....*
+00F962B0       +30  7FF16DF8 00200000 1B16FA00 00000000 *"1_8............*
+00F962C0       +40  00000000 18474C48 E3A27EA1 A3A33B16 *......<.Ts=~tt..*
+00F962D0       +50  00000073 807FFF98 E3A1B966 00000000 *.....".qT~......*
+00F962E0       +60  007FF068 FFFF0000 00000000 007FD000 *."0.........."}.*
+00F962F0       +70  D3960000 00000000 00000000 007FD6A0 *Lo..........."O.*
+00F96300       +80  00000000 00000000 00000000 40000000 *............ ...*
+00F96310       +90  03C4E400 02013798 00000380 000009D4 *.DU....q.......M*
+00F96320       +A0  00000000 00000000 00000000 00FA4D48 *..............(.*
+00F96330       +B0  00FA3200 00000000 00000000 00000000 *................*
+00F96340       +C0  00000007 000141DD 00000000 0059F7F4 *..............74*
+00F96350       +D0  00000000 00000000 00000001 00000000 *................*
+00F96360       +E0  007FE458 F4FFFFF4 00000000 00000000 *."U.4..4........*
+00F96370       +F0  00000347 00000000 027B0BC0 7FF76000 *.........#.{"7-.*
+00F96380      +100  7FF77D70 00000000 00000000 007FE468 *"7'.........."U.*
+00F96390      +110  00000000 00000000 03C53AC8 007D39C8 *.........E.H.'.H*
+00F963A0      +120  00000000 02611320 00000000 00B4B7F0 *...../.........0*
+00F963B0      +130  E3A27E9F C2AF8949 00000000 00000000 *Ts=.B.i.........*
+00F963C0      +140  0000126D 000001F3 00000000 03C57390 *..._...3.....E..*
+00F963D0      +150  03C53000 00000000 00000000 00000000 *.E..............*
+00F963E0      +160  00000000 0000126D 0000005C 03C4D1E0 *......._...*.DJ\*
+00F963F0      +170  00000000 00000000 03C4D000 00000337 *.........D}.....*
+00F96400      +180  C1E2C3C2 00F98B00 00FA2B00 00000000 *ASCB.9..........*
+00F96410      +190  00000000 00000000 00000000 00000000 *................*
+00F96420      +1A0  00000002 002E0100 000100FF 00000000 *................*
+00F96430      +1B0  7FF16DF8 C0300000 1B16F700 00000000 *"1_8{.....7.....*
+00F96440      +1C0  0000004E 61B597FF E3A27EA1 A3A33B16 *...+/.p.Ts=~tt..*
+00F96450      +1D0  000141DE 807FFF98 E3964263 00000000 *.....".qTo......*
+00F96460      +1E0  007FF068 FFFF0100 00000000 007FD000 *."0.........."}.*
+00F96470      +1F0  E9190000 00000000 00000000 007FD6A0 *Z............"O.*
+00F96480      +200  00000000 00000000 00000000 40000000 *............ ...*
+00F96490      +210  02050400 02013518 00000300 019729D2 *.............p.K*
+00F964A0      +220  00000000 00000000 00000000 00000000 *................*
+00F964B0      +230  00FA3194 00000000 00000000 00000000 *...m............*
+00F964C0      +240  00000007 000141DD 0000002E 6E22D218 *............>.K.*
+00F964D0      +250  00000000 00000000 00000000 00000000 *................*
+00F964E0      +260  007FE458 FFFFFFFF 00000000 00000000 *."U.............*
+00F964F0      +270  01039700 00000000 027B0B80 7FF76000 *..p......#.."7-.*
+00F96500      +280  7FF77D70 00000000 00000000 007FE468 *"7'.........."U.*
+00F96510      +290  00000000 00000000 0201EFC8 007FB280 *...........H."..*
+00F96520      +2A0  00000000 03CA6238 00000000 00F0471A *.............0..*
+00F96530      +2B0  E3964263 65D1F05D 00000000 00000000 *To...J0)........*
+00F96540      +2C0  0000000A 000001F4 00000000 0201E490 *.......4......U.*
+00F96550      +2D0  0201E500 00000000 00000000 00000000 *..V.............*
+00F96560      +2E0  00000000 0000000A 00000003 02010CE0 *...............\*
+00F96570      +2F0  00000000 00000000 02010B00 00000030 *................*
+00F96580      +300  00000000 00000000 00000000 00000000 *................*
+00F96590      +310  00000018 00000001 800293D0 19FF3C30 *..........l}....*
+00F965A0      +320  00000000 00000000 00F91EB0 00000000 *.........9......*
+00F965B0      +330  C2C2C7E9 C1C6E2D4 19FF5ED1 00F96590 *BBGZAFSM..;J.9..*
+00F965C0      +340  00001000 B1230600 00000000 00000000 *................*
+00F965D0      +350  00000000 03C5E088 00000000 00000000 *.....E\h........*
+00F965E0      +360  00000000 00000000 00000000 00000000 *................*
+00F965F0      +370  00000000 00000000 00000000 00000000 *................*
+00F96600      +380  00104000 80FF9AA0 070C1000 80000000 *.. .............*
+00F96610      +390  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96620-00F96640 (X'30' bytes) same as above
+00F96650      +3D0  00000000 00000000 00000000 04080010 *................*
+00F96660      +3E0  00000000 00030000 00000000 00000000 *................*
+00F96670      +3F0  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96680      +400  00000000 00F96658 00000000 00000000 *.....9..........*
+00F96690      +410  00000000 00000000 00000000 04080010 *................*
+00F966A0      +420  00000000 00030000 1B167B2A E000C000 *..........#.\.{.*
+00F966B0      +430  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F966C0      +440  00000000 00F96698 00000000 00000000 *.....9.q........*
+00F966D0      +450  00000000 00000000 00000000 04080010 *................*
+00F966E0      +460  00000000 00030000 1B16810A E000C000 *..........a.\.{.*
+00F966F0      +470  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96700      +480  00000000 00F966D8 00000000 00000000 *.....9.Q........*
+00F96710      +490  00000000 00000000 00F54B50 00000000 *.........5.&....*
+00F96720      +4A0  C3D4D7E2 E3E2C7C9 855312B0 00F96748 *CMPSTSGIe....9..*
+00F96730      +4B0  00005000 B1220400 002C0B40 05332000 *..&........ ....*
+00F96740      +4C0  00000000 0200D260 00000010 00000001 *......K-........*
+00F96750      +4D0  802C0B40 05332000 00000000 00000000 *... ............*
+00F96760      +4E0  00000000 04080010 00000000 00030000 *................*
+00F96770      +4F0  00000000 00000000 C9D5E3C5 D9D5C1D3 *........INTERNAL*
+00F96780      +500  00000000 00000000 00000000 00F96760 *.............9.-*
+00F96790      +510  00000000 00000000 00000000 00000000 *................*
+00F967A0      +520  00F96718 00000000 C9C7C4D6 D7E2E3F1 *.9......IGDOPST1*
+00F967B0      +530  8551DB78 00F967D0 00025000 B1220400 *e....9.}..&.....*
+00F967C0      +540  002C0B40 05332000 00000000 020090C0 *... ...........{*
+00F967D0      +550  00000010 00000001 802C0B40 05332000 *........... ....*
+00F967E0      +560  00000000 00000000 00000000 04080010 *................*
+00F967F0      +570  00000000 00030000 00000000 00000000 *................*
+00F96800      +580  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96810      +590  00000000 00F967E8 00000000 00000000 *.....9.Y........*
+00F96820      +5A0  00000000 00000000 00000000 04080010 *................*
+00F96830      +5B0  00000000 00030000 00000000 00000000 *................*
+00F96840      +5C0  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96850      +5D0  00000000 00F96828 00000000 00000000 *.....9..........*
+00F96860      +5E0  00000000 00000000 00F967A0 00000000 *.........9......*
+00F96870      +5F0  C9C7C4C9 C3D4E3F0 8550CF08 00F96898 *IGDICMT0e&...9.q*
+00F96880      +600  00015000 B1220400 002C0B40 05332000 *..&........ ....*
+00F96890      +610  00000000 02009010 00000010 00000001 *................*
+00F968A0      +620  802C0B40 05332000 00000000 00000000 *... ............*
+00F968B0      +630  00000000 04080010 00000000 00030000 *................*
+00F968C0      +640  1B167D00 E0000000 C9D5E3C5 D9D5C1D3 *..'.\...INTERNAL*
+00F968D0      +650  00000000 00000000 00000000 00F968B0 *.............9..*
+00F968E0      +660  00000000 00000000 00000000 00000000 *................*
+00F968F0      +670  00F96868 00000000 C9C7C4C8 C3C9F0F1 *.9......IGDHCI01*
+00F96900      +680  855CDFD0 00F96920 00035000 B1220400 *e*.}.9....&.....*
+00F96910      +690  002C0B40 05332000 00000000 02018190 *... ..........a.*
+00F96920      +6A0  00000010 00000001 802C0B40 05332000 *........... ....*
+00F96930      +6B0  00000000 00000000 00F96658 08090018 *.........9......*
+00F96940      +6C0  00000000 04080010 00000000 00030000 *................*
+00F96950      +6D0  00000000 00000000 00000000 00000000 *................*
+00F96960      +6E0  00000000 00000000 00000000 00000000 *................*
+00F96970      +6F0  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F96980      +700  070C1000 80000000 00000000 00000000 *................*
+00F96990      +710  00000000 00000000 00000000 00000000 *................*
+         Lines 00F969A0-00F969E0 (X'50' bytes) same as above
+00F969F0      +770  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F96A00      +780  070C1000 80000000 00000000 00000000 *................*
+00F96A10      +790  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96A20-00F96A60 (X'50' bytes) same as above
+00F96A70      +7F0  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F96A80      +800  070C1000 80000000 00000000 00000000 *................*
+00F96A90      +810  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96AA0-00F96AC0 (X'30' bytes) same as above
+00F96AD0      +850  00F98190 00000000 F0F3C4C1 F3C1C3F0 *.9a.....03DA3AC0*
+00F96AE0      +860  83DA3AC0 00F96B00 01155000 B1220400 *c..{.9,...&.....*
+00F96AF0      +870  00057660 03D8A000 00000000 03CA7F50 *...-.Q........"&*
+00F96B00      +880  00000010 00000001 80057660 03D8A000 *...........-.Q..*
+00F96B10      +890  00000000 00000000 00000000 04080010 *................*
+00F96B20      +8A0  00000000 00030000 00000000 00000000 *................*
+00F96B30      +8B0  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96B40      +8C0  00000000 00F96B18 00000000 00000000 *.....9,.........*
+00F96B50      +8D0  00000000 00000000 00FA2CA8 00000000 *...........y....*
+00F96B60      +8E0  C9C7C4C4 C3C6D9F1 8557CE78 00F96B88 *IGDDCFR1e....9,h*
+00F96B70      +8F0  00015000 B1220400 002C0B40 05332000 *..&........ ....*
+00F96B80      +900  00000000 02050350 00000010 00000001 *.......&........*
+00F96B90      +910  802C0B40 05332000 00000000 00000000 *... ............*
+00F96BA0      +920  00000000 04080010 00000000 00000000 *................*
+00F96BB0      +930  00000000 00000000 00000000 00000000 *................*
+00F96BC0      +940  00000000 00000000 00000000 00000000 *................*
+00F96BD0      +950  00104000 80FF9AA0 070C1000 80000000 *.. .............*
+00F96BE0      +960  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96BF0-00F96C40 (X'60' bytes) same as above
+00F96C50      +9D0  00104000 80FF9AA0 070C1000 80000000 *.. .............*
+00F96C60      +9E0  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96C70-00F96C90 (X'30' bytes) same as above
+00F96CA0      +A20  00000000 00000000 00000000 04080010 *................*
+00F96CB0      +A30  00000000 00030000 00000000 00000000 *................*
+00F96CC0      +A40  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96CD0      +A50  00000000 00F96CA8 00000000 00000000 *.....9%y........*
+00F96CE0      +A60  00000000 00000000 00000000 04080010 *................*
+00F96CF0      +A70  00000000 00030000 1B16868C E000C000 *..........f.\.{.*
+00F96D00      +A80  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96D10      +A90  00000000 00F96CE8 00000000 00000000 *.....9%Y........*
+00F96D20      +AA0  00000000 00000000 00000000 04080010 *................*
+00F96D30      +AB0  00000000 00030000 00000000 00000000 *................*
+00F96D40      +AC0  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96D50      +AD0  00000000 00F96D28 00000000 00000000 *.....9_.........*
+00F96D60      +AE0  00000000 00000000 00FCA0C0 08090018 *...........{....*
+00F96D70      +AF0  00000000 04080010 00000000 00030000 *................*
+00F96D80      +B00  1B168748 E000C000 C9D5E3C5 D9D5C1D3 *..g.\.{.INTERNAL*
+00F96D90      +B10  00000000 00000000 00000000 00F96D70 *.............9_.*
+00F96DA0      +B20  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96DB0-00F96DC0 (X'20' bytes) same as above
+00F96DD0      +B50  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F96DE0      +B60  070C1000 80000000 00000000 00000000 *................*
+00F96DF0      +B70  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96E00-00F96E40 (X'50' bytes) same as above
+00F96E50      +BD0  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F96E60      +BE0  070C1000 80000000 00000000 00000000 *................*
+00F96E70      +BF0  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96E80-00F96EA0 (X'30' bytes) same as above
+00F96EB0      +C30  00000000 04080010 00000000 00000000 *................*
+00F96EC0      +C40  00000000 00000000 00000000 00000000 *................*
+00F96ED0      +C50  00000000 00000000 00000000 00000000 *................*
+00F96EE0      +C60  00104000 80FF9AA0 070C1000 80000000 *.. .............*
+00F96EF0      +C70  00000000 00000000 00000000 00000000 *................*
+         Lines 00F96F00-00F96F20 (X'30' bytes) same as above
+00F96F30      +CB0  00000000 00000000 00000000 04080010 *................*
+00F96F40      +CC0  00000000 00030000 00000000 00000000 *................*
+00F96F50      +CD0  C9D5E3C5 D9D5C1D3 00000000 00000000 *INTERNAL........*
+00F96F60      +CE0  00000000 00F96F38 00000000 00000000 *.....9?.........*
+00F96F70      +CF0  00000000 00000000 00F96B58 00000000 *.........9,.....*
+00F96F80      +D00  C9C7C4C4 C3C6E2D9 85580BB0 00F96FA8 *IGDDCFSRe....9?y*
+00F96F90      +D10  00015000 B1220400 002C0B40 05332000 *..&........ ....*
+00F96FA0      +D20  00000000 02050100 00000010 00000001 *................*
+00F96FB0      +D30  802C0B40 05332000 00000000 00000000 *... ............*
+00F96FC0      +D40  00000000 04080010 00000000 00030000 *................*
+00F96FD0      +D50  00000000 00000000 C9D5E3C5 D9D5C1D3 *........INTERNAL*
+00F96FE0      +D60  00000000 00000000 00000000 00F96FC0 *.............9?{*
+00F96FF0      +D70  00000000 00000000 00000000 00000000 *................*
+00F97000      +D80  C1E2C3C2 00F98680 00F98500 00000000 *ASCB.9f..9e.....*
+00F97010      +D90  00000000 00000000 00000000 00000000 *................*
+00F97020      +DA0  00000002 00230100 000100C1 00000000 *...........A....*
+00F97030      +DB0  7FF16DF8 6010EFFC 1B170000 00000000 *"1_8-...........*
+00F97040      +DC0  00000001 E23F3C05 E3A27EA1 A3A33B16 *....S...Ts=~tt..*
+00F97050      +DD0  000141DE 807FFF98 E3964261 00000000 *.....".qTo./....*
+00F97060      +DE0  007FF068 FFFF0100 00000000 007FD000 *."0.........."}.*
+00F97070      +DF0  A2A20000 00000000 00000000 007FD6A0 *ss..........."O.*
+00F97080      +E00  00000000 00000000 00000000 40000000 *............ ...*
+00F97090      +E10  0200F400 02011998 00000380 00053440 *..4....q....... *
+00F970A0      +E20  00000000 00000000 00000000 00000000 *................*
+00F970B0      +E30  00FA32D8 00000000 00000000 00000000 *...Q............*
+00F970C0      +E40  00000007 000141DD 00000001 5346F6B2 *..............6.*
+00F970D0      +E50  00000000 00000000 00000000 00000000 *................*
+00F970E0      +E60  007FE458 C1FFFFC0 00000000 00000000 *."U.A..{........*
+00F970F0      +E70  0002A4D0 00000000 027B08C0 7FF76000 *..u}.....#.{"7-.*
+00F97100      +E80  7FF77D70 00010001 00010000 007FE468 *"7'.........."U.*
+00F97110      +E90  00000000 00000000 02010AC8 007F9188 *...........H."jh*
+00F97120      +EA0  C0000000 03C9E028 00000000 0168A3A7 *{....I\.......tx*
+00F97130      +EB0  E3964261 86829514 00000000 00000000 *To./fbn.........*
+00F97140      +EC0  00001AA3 000001F4 00000000 02054020 *...t...4...... .*
+00F97150      +ED0  02010000 00000000 00000000 00000000 *................*
+00F97160      +EE0  00000000 00001AA3 00000001 03CA5CE0 *.......t......*\*
+00F97170      +EF0  00000000 00000000 03CA5B00 00002F25 *..........$.....*
+00F97180      +F00  00F968F0 00000000 C9C7C4C8 C3E7C9E3 *.9.0....IGDHCXIT*
+00F97190      +F10  855CE490 00F968F0 00005000 B5020400 *e*U..9.0..&.....*
+00F971A0      +F20  002C0B40 05332000 00000000 020180E0 *... ...........\*
+00F971B0      +F30  00000000 04080010 00000000 00030000 *................*
+00F971C0      +F40  00000000 00000000 C9D5E3C5 D9D5C1D3 *........INTERNAL*
+00F971D0      +F50  00000000 00000000 00000000 00F971B0 *.............9..*
+00F971E0      +F60  00000000 00000000 00000000 00000000 *................*
+00F971F0      +F70  00F971B0 08090018 00000000 00030008 *.9..............*
+00F97200      +F80  00000000 00000000 00000000 00000000 *................*
+00F97210      +F90  00000000 00000000 00000000 00000000 *................*
+00F97220      +FA0  00000000 00000000 00104000 80FF9AA0 *.......... .....*
+00F97230      +FB0  070C1000 80000000 00000000 00000000 *................*
+00F97240      +FC0  00000000 00000000 00000000 00000000 *................*
+         Lines 00F97250-00F97270 (X'30' bytes) same as above
+
+         Event 1 CSECT IEBGENER GPR 10 (Address 01E19C00)
+         Event 2 CSECT IEBGENR3 GPR 10 (Address 01E19C00)
+01E19C00            E2E5E3E7 014FF674 0299B000 81480228 *SVTX.|6..r..a...*
+01E19C10       +10  81480790 814FCE18 814FDD76 814FDDCC *a...a|..a|..a|..*
+01E19C20       +20  814FDDDA 810C7200 81480990 814FF5AA *a|..a...a...a|5.*
+01E19C30       +30  0388FD80 003C2147 84C6A8CC 00C80000 *.h......dFy..H..*
+01E19C40       +40  00000000 00000000 817307D8 01777BB0 *........a..Q..#.*
+01E19C50       +50  025952A0 000002B2 02594618 000005E2 *...............S*
+01E19C60       +60  02595000 0000000A 01FF0004 00000000 *..&.............*
+01E19C70       +70  00000400 0272C300 002F0C0A 03718330 *......C.......c.*
+01E19C80       +80  00000018 002D0019 00000009 02225000 *..............&.*
+01E19C90       +90  00000001 002D0019 00000000 00F94FA8 *.............9|y*
+01E19CA0       +A0  0260DB00 02973060 017565F6 8175B4F0 *.-...p.-...6a..0*
+01E19CB0       +B0  80000100 00000001 00000000 00000000 *................*
+01E19CC0       +C0  00000000 00000000 00000000 00000000 *................*
+01E19CD0       +D0  01000003 00025C00 02594000 00000000 *......*... .....*
+01E19CE0       +E0  00A50023 07430006 00000000 00000000 *.v..............*
+01E19CF0       +F0  00000000 02728A80 000000A5 00000012 *...........v....*
+01E19D00      +100  0000775C 00000023 000000A5 029A8B58 *...*.......v....*
+01E19D10      +110  00000001 00000000 00000000 00000000 *................*
+01E19D20      +120  0299A800 00000004 0299A000 00000000 *.ry......r......*
+01E19D30      +130  00000000 00000000 00000000 00000000 *................*
+01E19D40      +140  00000000 00000000 00000000 00000000 *................*
+01E19D50      +150  01481CC0 017566F8 017567E8 00000000 *...{...8...Y....*
+01E19D60      +160  F3F9F3F1 01E3EA60 00000000 02728AC0 *3931.T.-.......{*
+01E19D70      +170  00000000 00000000 00000000 00000000 *................*
+         Lines 01E19D80-01E19DD0 (X'60' bytes) same as above
+01E19DE0      +1E0  00000000 00000000 00000000 81751B12 *............a...*
+01E19DF0      +1F0  81751AE8 0275B008 01A31138 00000000 *a..Y.....t......*
+01E19E00      +200  0178A729 03CB1C50 0000005B 007D0055 *..x....&...$.'..*
+01E19E10      +210  00000000 00000000 01060200 10000000 *................*
+01E19E20      +220  00000000 00000000 00000000 00000000 *................*
+01E19E30      +230  00000000 00000000 00000000 00000000 *................*
+01E19E40      +240  00000000 00000000 807EEC80 00000000 *.........=......*
+01E19E50      +250  01000000 00000000 00000000 00020000 *................*
+01E19E60      +260  00000000 00000000 00000000 00000000 *................*
+01E19E70      +270  01482D08 00000000 00000000 00000000 *................*
+01E19E80      +280  00000000 00000000 00000000 00000000 *................*
+         Lines 01E19E90-01E19EA0 (X'20' bytes) same as above
+01E19EB0      +2B0  00000000 02728BC0 00000000 00000000 *.......{........*
+01E19EC0      +2C0  00000000 00000000 00000000 00000000 *................*
+         Lines 01E19ED0-01E19EF0 (X'30' bytes) same as above
+01E19F00      +300  000E7D0C 03CDD038 00000008 002D0019 *..'...}.........*
+01E19F10      +310  00000000 00000000 00000000 00000000 *................*
+         Lines 01E19F20-01E19FF0 (X'E0' bytes) same as above
+01E1A000      +400  02C356D8 03CEC798 0000001A 002D0019 *.C.Q..Gq........*
+01E1A010      +410  00000000 00000000 00000000 00000000 *................*
+         Lines 01E1A020-01E1A1F0 (X'1E0' bytes) same as above
+01E1A200      +600  C9C5C1E5 E2E5E3E7 F0F561F0 F261F2F2 *IEAVSVTX05/02/22*
+01E1A210      +610  C8C2C2F7 F7C5F040 D6D7E9C1 000E0000 *HBB77E0 OPZA....*
+01E1A220      +620  00000000 00000000 00000000 00000000 *................*
+         Lines 01E1A230-01E1A280 (X'60' bytes) same as above
+01E1A290      +690  00000000 80440000 00000000 00000000 *................*
+01E1A2A0      +6A0  00000000 00000000 00000000 00000000 *................*
+         Lines 01E1A2B0-01E1A310 (X'70' bytes) same as above
+01E1A320      +720  00000000 00000000 00000000 0E000000 *................*
+01E1A330      +730  00000000 00000000 00000000 00000000 *................*
+         Lines 01E1A340-01E1ABF0 (X'8C0' bytes) same as above
+
+         Event 1 CSECT IEBGENER GPR 2 (Address 4000E166)
+         Address range 4000E166-4000E489 invalid
+         Event 1 CSECT IEBGENER GPR 14 (Address 4000E48A)
+         Event 2 CSECT IEBGENR3 GPR 14 (Address 4000E48A)
+         Address range 4000E48A-4000F489 invalid
+
+
+<H1> A B E N D   J O B   I N F O R M A T I O N
+
+
+Abend Job Information:
+
+  Abend Date. . . . . . . . : 2026/11/25
+  Abend Time. . . . . . . . : 04:52:57
+  System Name . . . . . . . : S0W1
+  Job Type. . . . . . . . . : Batch
+  Job ID. . . . . . . . . . : JOB00901
+  Job Name. . . . . . . . . : JRS013
+  Job Step Name . . . . . . : STEP010
+  ASID. . . . . . . . . . . : 2F
+  Abend TCB Address . . . . : 007D39C8
+  Job Execution Class . . . : A
+  Region Size . . . . . . . : 1M
+  EXEC Program Name . . . . : IEBGENER
+  User ID . . . . . . . . . : Z99999
+  Accounting Information. . : ACCT
+
+Event-Related Application Programs:
+
+  The following list of event-related application programs is sorted by module
+  link-edit date/time and program compilation date/time in reverse chronological
+  order.
+
+  Module   Link-Edit           Program  Compilation         Module
+  Name     Date       Time     Name     Date       Time     SSI
+  -------- ---------- -------- -------- ---------- -------- --------
+  IEBGENER 2023/04/12 13:38:13 IEBGENER 2023/03/20 n/a      n/a
+           2023/04/12 13:38:13 IEBGENR3 2023/03/20 n/a      n/a
+
+Point Of Failure LINKEDIT Map:
+
+  Address  Offset   Length   Type   Date       Time     RMODE AMODE Language Name
+  -------- -------- -------- ------ ---------- -------- ----- ----- -------- --------
+  000087D0        0     A830 MODULE 2023/04/12 13:38:13       24             IEBGENER
+  000087D0        0      DB5 CSECT  2023/03/20          24    24    ASM      IEBCCS02
+  000087D0        0        0 EP                                              IEBCCS02
+  00009588      DB8      324 CSECT  2023/03/20          24    24    ASM      IEBCONCV
+  000098B0     10E0      2B8 CSECT  2023/03/20          24    24    ASM      IEBCONGV
+  00009B68     1398      152 CSECT  2023/03/20          24    24    ASM      IEBCONH2
+  00009CC0     14F0       76 CSECT  2023/03/20          24    24    ASM      IEBCONP2
+  00009D38     1568      1CC CSECT  2023/03/20          24    24    ASM      IEBCONVC
+  00009F08     1738      184 CSECT  2023/03/20          24    24    ASM      IEBCONVG
+  0000A090     18C0       7A CSECT  2023/03/20          24    24    ASM      IEBCONZ2
+  0000A110     1940      222 CSECT  2023/03/20          24    24    ASM      IEBDBCSV
+  0000A338     1B68      44E CSECT  2023/03/20          24    24    ASM      IEBEDIT2
+  0000A788     1FB8     1A21 CSECT  2023/03/20          24    24    ASM      IEBGEN03
+  0000C1B0     39E0     1FAB CSECT  2023/03/20          24    24    ASM      IEBGENR3
+  0000E160     5990      CD0 CSECT  2023/03/20          24    24    ASM      IEBGENER
+  0000EE30     6660     17A1 CSECT  2023/03/20          24    24    ASM      IEBGENS3
+  000105D8     7E08     11E1 CSECT  2023/03/20          24    24    ASM      IEBGMESG
+  000117C0     8FF0     157A CSECT  2023/03/20          24    24    ASM      IEBGSCAN
+  00012D40     A570       98 CSECT  2023/03/20          24    24    ASM      IEBLENP2
+  00012DD8     A608       D2 CSECT  2023/03/20          24    24    ASM      IEBMOVE2
+  00012EB0     A6E0      14C CSECT  2023/03/20          24    24    ASM      IEBOVERL
+
+Execution Environment:
+
+  Operating System. . . . . : z/OS V3R1M0
+  Data Facility Product . . : DFSMS z/OS V3R1M0
+  Job Entry Subsystem . . . : JES2
+  Language Environment. . . : n/a
+  CPU Model . . . . . . . . : 3931 (z16)
+
+
+<H1> O P T I O N S
+
+
+Options in Effect:
+
+  Detail(Medium)
+  NoErrorHandler
+  Language(ENU)
+  NoLocale
+  MaxMiniDumpPages(4096) - not exceeded
+  NoDup(CICSfast(5),NoIncludeExecCicsDump) - not a duplicate
+  NoDup(ImageFast(5)) - not a duplicate
+  NoDup(Normal(24),NoJobname) - not a duplicate
+  NoPermitLangx
+  PreferredFormattingWidth(80)
+  NoPrintInactiveCOBOL
+  RetainDump(Auto)
+  Source
+  SpinIDIREPRT
+  StoragePrintLimit(256K) - not exceeded
+  SystemWidePreferred(StorageAreas(Hex))
+
+  Data Sets:
+
+    The following Fault Analyzer data set or path names were either
+    preallocated, specified via DataSets options, or provided as defaults.
+
+    DDname   Data Set or Path Name
+    -------- --------------------------------------------
+    IDIDOC   ISM402.SIDIDOC1
+    IDIHIST  NULLFILE
+    IDIMAPS  ISM402.SIDIMAPS
+    IDIVSENU ISM402.IDIVSENU
+
+
+Fault Analyzer was invoked via the MVS IEAVTABX exit (IDIXDCAP). Its execution
+time was 3.11 seconds. It used 0.09 CPU seconds and 0.87 megabytes of allocated
+storage.
+
+End of Fault Analyzer report (2026/11/25 04:53:01).

@@ -1,0 +1,16 @@
+        1 //JRSETUP  JOB (ACCT),'JES-READER SETUP',CLASS=A,MSGCLASS=H,            JOB00884
+          //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
+          //*--------------------------------------------------------------------
+          //* PREREQUIS, a soumettre une seule fois avant les jobs COBOL
+          //* (s0c7, s0c4, s322, igz-open) : la procedure IGYWCLG de Z Xplore
+          //* range le module dans &SYSUID..LOAD.
+          //* Bibliotheque PDSE (DSNTYPE=LIBRARY), RECFM=U : obligatoire pour
+          //* les program objects produits par le binder.
+          //*--------------------------------------------------------------------
+          IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER SETUP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
+        2 //ALLOC    EXEC PGM=IEFBR14
+        3 //LOAD     DD DSN=&SYSUID..LOAD,DISP=(NEW,CATLG),
+          //             DSNTYPE=LIBRARY,RECFM=U,LRECL=0,BLKSIZE=32760,
+          //             SPACE=(TRK,(50,5)),UNIT=SYSDA
+          IEFC653I SUBSTITUTION JCL - DSN=Z99999.LOAD,DISP=(NEW,CATLG),DSNTYPE=LIBRARY,RECFM=U,LRECL=0,BLKSIZE=32760,
+          SPACE=(TRK,(50,5)),UNIT=SYSDA

@@ -24,23 +24,31 @@ Les fichiers de ce dossier ne subissent aucune conversion de fin de ligne (voir 
 
 ## Sysouts récupérées
 
-| Dossier | Cas | Intérêt |
-| --- | --- | --- |
-| `sysout/JOB00823` | Job de validation Z Xplore, RC=0 | Job batch complet, une DD applicative (`SYSTSPRT`) |
-| `sysout/TSU00812` | Session TSO ouverte par z/OSMF | Préfixe `TSU`, procédure `IZUFPROC`, **session active** : pas de fin de job |
+| Dossier | Cas | JCL | Résultat | Intérêt |
+| --- | --- | --- | --- | --- |
+| `sysout/JOB00823` | Validation Z Xplore | (fourni par Z Xplore) | RC=0 | DD applicative `SYSTSPRT` |
+| `sysout/TSU00812` | Session TSO (z/OSMF) | | session active | Préfixe `TSU`, pas de fin de job |
+| `sysout/JOB00868` | IDCAMS RC=8 | `jcl/idcams-rc8.jcl` | RC 4, RC 8, STEP020 `IEF202I` | `$HASP395 ENDED - RC=0008` |
+| `sysout/JOB00884` | Allocation de LOAD | `jcl/setup-load.jcl` | RC=0 | Job minimal IEFBR14 |
+| `sysout/JOB00885` | IGZ | `jcl/igz-open.jcl` | `IGZ0035S`, U4038 | Steps de procédure, DD `SYSOUT` du step GO |
+| `sysout/JOB00889` | JCL ERROR | `jcl/jcl-error.jcl` | `IEFA107I`, `IEF453I` | `FLUSH` dans le tableau des steps |
+| `sysout/JOB00890` | NOT CATLGD | `jcl/not-catlgd.jcl` | `IGD17101I` (SMS), JCL ERROR | Message dont la suite est en col. 2 |
+| `sysout/JOB00893` | S0C4 | `jcl/s0c4.jcl` | S0C4 au step GO | |
+| `sysout/JOB00896` | S0C7 | `jcl/s0c7.jcl` | S0C7 au step GO | |
+| `sysout/JOB00901` | S013 | `jcl/s013.jcl` | `IEC141I 013-18` | Rapport Fault Analyzer (`IDIREPRT`) |
+| `sysout/JOB00903` | S322 | `jcl/s322.jcl` | S322 au step GO | |
+| `sysout/JOB00905` | S806 | `jcl/s806.jcl` | `CSV003I`, S806-04 | Rapport Fault Analyzer (`IDIREPRT`) |
 
-## Cas à soumettre
+Sur Z Xplore, S0C7 et S0C4 sortent en abend système, sans conversion LE en U4038.
 
-| Cas | JCL | Attendu | Sysout |
-| --- | --- | --- | --- |
-| S0C7 | `jcl/s0c7.jcl` | Abend S0C7 (ou CEE3207S / U4038 selon les options LE) au step GO | à récupérer |
-| S0C4 | `jcl/s0c4.jcl` | Abend S0C4 (ou CEE3204S / U4038) au step GO | à récupérer |
-| S806 | `jcl/s806.jcl` | `CSV003I`, abend S806-04 | à récupérer |
-| S322 | `jcl/s322.jcl` | Boucle infinie, abend S322 au step GO (`TIME=(0,1)`) | à récupérer |
-| S013 | `jcl/s013.jcl` | `IEC141I 013-18`, membre absent | à récupérer |
-| NOT CATLGD | `jcl/not-catlgd.jcl` | `IGD17101I` (SMS) ou `IEF287I … NOT CATLGD 2` (non SMS) au STEP020 | à récupérer |
-| IGZ | `jcl/igz-open.jcl` | `IGZ0035S` (OPEN sans DD), puis U4038 | à récupérer |
-| JCL ERROR | `jcl/jcl-error.jcl` | `IEF212I ... DATA SET NOT FOUND`, job non exécuté | à récupérer |
-| IDCAMS RC=8 | `jcl/idcams-rc8.jcl` | RC 4 (LISTCAT), RC 8 (DELETE), step suivant non exécuté | à récupérer |
+## Cas restants
+
+| Cas | Idée |
+| --- | --- |
+| JCL ERROR dans une procédure | Spool `JOB00869` (premier `igz-open`, `<userid>.LOAD` absent) |
+| IDCAMS RC=12 | Commande IDCAMS invalide |
+| Job long | Plusieurs pages, sauts de page ASA au milieu d'une DD |
+
+Avant les jobs COBOL (s0c7, s0c4, s322, igz-open), soumettre une fois `jcl/setup-load.jcl` : la procédure `IGYWCLG` de Z Xplore range le module dans `<userid>.LOAD` et le job part en JCL ERROR si la bibliothèque n'existe pas.
 
 Sur Z Xplore, remplacer `CLASS=A` par la classe autorisée (`CLASS=7` observée sur `JOB00823`) et vérifier le nom de la procédure de compilation COBOL (`IGYWCLG` par défaut). Pour chaque job, télécharger la spool avec l'action de téléchargement de Zowe Explorer (clic droit sur le job), puis la déposer telle quelle dans `sysout/`.
