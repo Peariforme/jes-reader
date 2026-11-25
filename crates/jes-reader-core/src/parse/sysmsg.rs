@@ -27,7 +27,7 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
         } else if let Some((statement, id)) = numbered_message(line) {
             messages.start(i, line, id, Some(statement));
         } else {
-            messages.extend(i);
+            messages.extend(i, line);
         }
     }
     dd.messages = messages.finish();

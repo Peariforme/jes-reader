@@ -22,7 +22,7 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
         if let Some(id) = message_id_at(line, start) {
             messages.start(i, line, id, None);
         } else if body.starts_with(' ') && !body.trim().is_empty() {
-            messages.extend(i);
+            messages.extend(i, body);
         } else {
             messages.close();
         }

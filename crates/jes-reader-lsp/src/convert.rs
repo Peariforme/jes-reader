@@ -10,8 +10,8 @@ use jes_reader_core::{
     Dd, DdKind, Finding, FindingSeverity, Statement, StatementOrigin, Step, StepStatus,
 };
 use lsp_types::{
-    Diagnostic, DiagnosticSeverity, DocumentSymbol, FoldingRange, NumberOrString, Position,
-    Range as LspRange, SymbolKind,
+    Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, DocumentSymbol, FoldingRange,
+    Location, NumberOrString, Position, Range as LspRange, SymbolKind, Uri,
 };
 
 /// Text of a document split into lines, the way the parser does it.
@@ -22,7 +22,7 @@ impl<'a> Lines<'a> {
         Self(text.lines().collect())
     }
 
-    fn line(&self, n: usize) -> &str {
+    pub fn line(&self, n: usize) -> &str {
         self.0.get(n).copied().unwrap_or("")
     }
 
@@ -81,12 +81,23 @@ fn to_u32(n: usize) -> u32 {
     u32::try_from(n).unwrap_or(u32::MAX)
 }
 
-pub fn diagnostic(finding: &Finding, lines: &Lines<'_>) -> Diagnostic {
+/// Diagnostic of a finding in the document `uri`; related lines (cause of an
+/// abend, step a message made fail) become related information.
+pub fn diagnostic(finding: &Finding, lines: &Lines<'_>, uri: &Uri) -> Diagnostic {
     let range = match &finding.columns {
         Some(columns) => lines.span(finding.line, columns.clone()),
         None => lines.content(finding.line),
     };
+    let related: Vec<DiagnosticRelatedInformation> = finding
+        .related
+        .iter()
+        .map(|r| DiagnosticRelatedInformation {
+            location: Location::new(uri.clone(), lines.content(r.line)),
+            message: r.message.clone(),
+        })
+        .collect();
     Diagnostic {
+        related_information: (!related.is_empty()).then_some(related),
         range,
         severity: Some(match finding.severity {
             FindingSeverity::Error => DiagnosticSeverity::ERROR,

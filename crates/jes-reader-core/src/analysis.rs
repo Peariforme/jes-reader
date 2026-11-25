@@ -3,11 +3,12 @@
 //!
 //! Severity cannot be read from the message suffix alone: `IEF453I`
 //! (JCL ERROR) and `IEFA107I` (data set not found) end in `I`. Rules
-//! therefore look at the steps first, then at a list of known messages,
-//! and only then at the suffix (`E`, `S`, `W`).
+//! therefore look at the steps first, then at the catalog
+//! (`catalog.toml`), and only then at the suffix (`E`, `S`, `C`, `W`).
 
 use std::ops::Range;
 
+use crate::catalog::{CatalogSeverity, catalog, leading_abend};
 use crate::model::{Dd, Message, StepStatus};
 
 /// Severity of a finding.
@@ -34,6 +35,18 @@ pub struct Finding {
     pub line: usize,
     /// Columns concerned; `None` for the whole line.
     pub columns: Option<Range<usize>>,
+    /// Other lines of the same DD that explain this finding: the messages
+    /// that caused a step's abend, or the step a message made fail.
+    pub related: Vec<Related>,
+}
+
+/// Line related to a finding.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Related {
+    /// Line in the same DD.
+    pub line: usize,
+    /// Why it is related.
+    pub message: String,
 }
 
 /// Rule settings.
@@ -49,30 +62,11 @@ impl Default for Options {
     }
 }
 
-/// Messages that are errors whatever their suffix.
-const ERROR_MESSAGES: &[&str] = &[
-    "IEF453I",   // JOB FAILED - JCL ERROR
-    "IEFA107I",  // DATA SET … NOT FOUND (allocation)
-    "IEF212I",   // DATA SET NOT FOUND
-    "IGD17101I", // DUPLICATE NAME EXISTS IN CATALOG
-    "CSV003I",   // REQUESTED MODULE … NOT FOUND
-    "IEC141I",   // 013-xx: OPEN failed
-];
-
-/// Messages that are warnings whatever their suffix.
-const WARNING_MESSAGES: &[&str] = &[
-    "IEF287I", // NOT CATLGD
-];
-
-/// Numbered conversion messages that are purely informational.
-const INFO_STATEMENT_MESSAGES: &[&str] = &[
-    "IEFC001I", // PROCEDURE … WAS EXPANDED
-    "IEFC002I", // INCLUDE GROUP … WAS EXPANDED
-];
-
 /// Findings of a DD, most severe first, then by line.
 pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
     let mut findings = Vec::new();
+    // (finding index, lines of its step) for steps that failed or did not run.
+    let mut step_findings = Vec::new();
 
     for step in &dd.steps {
         let name = step.display_name();
@@ -80,10 +74,10 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
             StepStatus::Abended { code, reason } => (
                 FindingSeverity::Error,
                 code.clone(),
-                match reason {
-                    Some(reason) => format!("Step {name}: abend {code}, reason {reason}"),
-                    None => format!("Step {name}: abend {code}"),
-                },
+                format!(
+                    "Step {name}: abend {}",
+                    describe_abend(code, reason.as_deref())
+                ),
             ),
             StepStatus::Completed { return_code } if *return_code > options.max_return_code => (
                 FindingSeverity::Warning,
@@ -97,12 +91,16 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
             ),
             StepStatus::Completed { .. } | StepStatus::Unknown => continue,
         };
+        if severity != FindingSeverity::Warning {
+            step_findings.push((findings.len(), step.lines.clone()));
+        }
         findings.push(Finding {
             severity,
             code,
             message,
             line: step.status_line,
             columns: None,
+            related: Vec::new(),
         });
     }
 
@@ -111,38 +109,107 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
             findings.push(Finding {
                 severity,
                 code: m.id.clone(),
-                message: m.text.clone(),
+                message: describe_message(m),
                 line: m.lines.start,
                 columns: Some(m.id_columns.clone()),
+                related: Vec::new(),
             });
         }
     }
 
+    relate_causes(&mut findings, &step_findings);
     findings.sort_by_key(|f| (f.severity, f.line));
     findings
 }
 
+/// Links each failed or skipped step to the error messages inside it, both
+/// ways: the step points to its causes, each cause to the step. Only
+/// messages the catalog knows count as causes: an unknown error message in
+/// the same step (Fault Analyzer failing to write its history file) is not
+/// why the step failed.
+fn relate_causes(findings: &mut [Finding], step_findings: &[(usize, Range<usize>)]) {
+    for (step_index, lines) in step_findings {
+        let causes: Vec<usize> = findings
+            .iter()
+            .enumerate()
+            .filter(|(i, f)| {
+                i != step_index
+                    && f.severity == FindingSeverity::Error
+                    && f.columns.is_some()
+                    && lines.contains(&f.line)
+                    && catalog().message(&f.code).is_some()
+            })
+            .map(|(i, _)| i)
+            .collect();
+        for &cause in &causes {
+            let (step_line, step_message) = {
+                let step = &findings[*step_index];
+                (step.line, step.message.clone())
+            };
+            let related = Related {
+                line: findings[cause].line,
+                message: format!("Cause: {}", findings[cause].message),
+            };
+            findings[*step_index].related.push(related);
+            findings[cause].related.push(Related {
+                line: step_line,
+                message: step_message,
+            });
+        }
+    }
+}
+
+/// `S013 (OPEN error), reason 18: member not found in the partitioned data set`.
+fn describe_abend(code: &str, reason: Option<&str>) -> String {
+    let entry = catalog().abend(code);
+    let mut out = match entry {
+        Some(entry) => format!("{code} ({})", entry.title),
+        None => code.to_owned(),
+    };
+    if let Some(reason) = reason {
+        match entry.and_then(|e| e.reason(reason)) {
+            Some(meaning) => out.push_str(&format!(", reason {reason}: {meaning}")),
+            None => out.push_str(&format!(", reason {reason}")),
+        }
+    }
+    out
+}
+
+/// Catalog title, then the meaning of a leading abend reason, then the IBM
+/// text: `OPEN failed (S013-18: member not found …): 013-18,IGG0191B,…`.
+fn describe_message(m: &Message) -> String {
+    let Some(entry) = catalog().message(&m.id) else {
+        return m.text.clone();
+    };
+    let reason = leading_abend(&m.text).and_then(|(code, reason)| {
+        let meaning = catalog().abend(&code)?.reason(reason)?;
+        Some(format!(" ({code}-{reason}: {meaning})"))
+    });
+    format!("{}{}: {}", entry.title, reason.unwrap_or_default(), m.text)
+}
+
 fn message_severity(m: &Message, dd: &Dd) -> Option<FindingSeverity> {
     let id = m.id.as_str();
-    if ERROR_MESSAGES.contains(&id) {
-        return Some(FindingSeverity::Error);
-    }
-    if WARNING_MESSAGES.contains(&id) {
-        return Some(FindingSeverity::Warning);
-    }
     // `IEF450I` (abend, JESMSGLG) duplicates the step table row; it only
     // counts when the installation does not print that table.
     if id == "IEF450I" {
         return dd.steps.is_empty().then_some(FindingSeverity::Error);
     }
+    if let Some(severity) = catalog().message(id).and_then(|e| e.severity) {
+        return match severity {
+            CatalogSeverity::Error => Some(FindingSeverity::Error),
+            CatalogSeverity::Warning => Some(FindingSeverity::Warning),
+            CatalogSeverity::Info => None,
+        };
+    }
     // JCL converter message (`IEF…`, `IEFC…`) attached to a statement: the
     // JCL was corrected or completed. Other numbered messages (`IGD01007I`
     // from ACS routines) follow the general rule.
-    if m.statement.is_some() && id.starts_with("IEF") && !INFO_STATEMENT_MESSAGES.contains(&id) {
+    if m.statement.is_some() && id.starts_with("IEF") {
         return Some(FindingSeverity::Warning);
     }
     match id.as_bytes().last() {
-        Some(b'E' | b'S') if !id.starts_with('$') => Some(FindingSeverity::Error),
+        Some(b'E' | b'S' | b'C') if !id.starts_with('$') => Some(FindingSeverity::Error),
         Some(b'W') => Some(FindingSeverity::Warning),
         _ => None,
     }

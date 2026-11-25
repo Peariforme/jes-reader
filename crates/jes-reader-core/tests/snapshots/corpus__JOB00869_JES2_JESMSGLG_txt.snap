@@ -20,5 +20,5 @@ messages:
   L14 col.21-28 $HASP395 JRIGZ    ENDED
 
 findings:
-  L12 error [IEF453I] JRIGZ - JOB FAILED - JCL ERROR
+  L12 error [IEF453I] JCL error: JRIGZ - JOB FAILED - JCL ERROR
   L11 info [FLUSH] Step COBRUN.LKED did not run

@@ -81,13 +81,13 @@
     },
     "known-messages": {
       "comment": "Error messages whose suffix says nothing (I): same list as the rule engine.",
-      "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEF472I|IEF450I)\\b",
+      "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEC130I|IEC030I|IEC031I|IEC032I|IEF472I|IEF450I)\\b",
       "name": "token.error-token.message-id.jes-sysout"
     },
     "message-ids": {
       "comment": "Message IDs colored by their suffix.",
       "patterns": [
-        { "match": "\\b[A-Z]{3,5}\\d{3,5}[ES]\\b", "name": "token.error-token.message-id.jes-sysout" },
+        { "match": "\\b[A-Z]{3,5}\\d{3,5}[ESC]\\b", "name": "token.error-token.message-id.jes-sysout" },
         { "match": "\\b[A-Z]{3,5}\\d{3,5}W\\b", "name": "token.warn-token.message-id.jes-sysout" },
         { "match": "\\b[A-Z]{3,5}\\d{3,5}[IADT]\\b", "name": "token.info-token.message-id.jes-sysout" },
         { "match": "\\$HASP\\d{3,4}\\b", "name": "token.info-token.message-id.jes-sysout" }

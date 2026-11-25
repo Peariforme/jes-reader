@@ -18,5 +18,5 @@ messages:
   L12 col.21-28 $HASP395 JRJCLERR ENDED
 
 findings:
-  L10 error [IEF453I] JRJCLERR - JOB FAILED - JCL ERROR
+  L10 error [IEF453I] JCL error: JRJCLERR - JOB FAILED - JCL ERROR
   L9 info [FLUSH] Step STEP010 did not run

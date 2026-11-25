@@ -21,5 +21,5 @@ messages:
   L18 col.21-28 $HASP395 JRS806   ENDED - ABEND=S806
 
 findings:
-  L7 error [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND
-  L16 error [S806] Step STEP010: abend S806
+  L7 error [CSV003I] Module not found: REQUESTED MODULE JRNOPGM  NOT FOUND
+  L16 error [S806] Step STEP010: abend S806 (Module not found)

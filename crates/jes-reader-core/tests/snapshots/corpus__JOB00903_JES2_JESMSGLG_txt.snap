@@ -22,4 +22,4 @@ messages:
   L16 col.21-28 $HASP395 JRS322   ENDED - ABEND=S322
 
 findings:
-  L14 error [S322] Step COBRUN.GO: abend S322
+  L14 error [S322] Step COBRUN.GO: abend S322 (CPU time exceeded)

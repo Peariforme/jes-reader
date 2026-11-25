@@ -159,17 +159,21 @@ fn definition_with_open_jcl() {
     let location = client.definition(&msglg, 12, 25).unwrap();
     assert_eq!((location.uri, location.range.start.line), (jcl, 73));
 
-    // Hover on the abend line: the step outcome and its EXEC statement.
-    let hover = client.request(
-        HoverRequest::METHOD,
-        HoverParams {
-            text_document_position_params: TextDocumentPositionParams::new(
-                TextDocumentIdentifier::new(sysmsg.clone()),
-                Position::new(130, 5),
-            ),
-            work_done_progress_params: Default::default(),
-        },
-    );
+    // Hover on the step names of the abend line: the step outcome and its
+    // EXEC statement.
+    let hover_at = |client: &mut Client, line, character| {
+        client.request(
+            HoverRequest::METHOD,
+            HoverParams {
+                text_document_position_params: TextDocumentPositionParams::new(
+                    TextDocumentIdentifier::new(sysmsg.clone()),
+                    Position::new(line, character),
+                ),
+                work_done_progress_params: Default::default(),
+            },
+        )
+    };
+    let hover = hover_at(&mut client, 130, 17);
     let text = hover["contents"]["value"].as_str().unwrap();
     assert!(
         text.starts_with("**Step COBRUN.GO** · abend S0C7"),
@@ -177,21 +181,33 @@ fn definition_with_open_jcl() {
     );
     assert!(text.contains("EXEC statement 46:"), "{text}");
     assert!(text.contains("XXGO "), "{text}");
-    // No hover on a line that is not a link target.
+
+    // On the message ID: its catalog entry and a link to IBM Docs.
+    let hover = hover_at(&mut client, 130, 5);
+    let text = hover["contents"]["value"].as_str().unwrap();
+    assert!(text.starts_with("**IEF472I** · Step abended"), "{text}");
     assert!(
-        client
-            .request(
-                HoverRequest::METHOD,
-                HoverParams {
-                    text_document_position_params: TextDocumentPositionParams::new(
-                        TextDocumentIdentifier::new(sysmsg.clone()),
-                        Position::new(0, 3),
-                    ),
-                    work_done_progress_params: Default::default(),
-                },
-            )
-            .is_null()
+        text.contains("https://www.ibm.com/docs/en/zos/3.2.0?topic=messages-ief472i")
+            && text.contains("https://www.ibm.com/docs/en/search/IEF472I"),
+        "{text}"
     );
+
+    // On the abend code: the abend entry.
+    let line = corpus("JOB00896/JES2/JESYSMSG.txt")
+        .lines()
+        .nth(130)
+        .unwrap()
+        .to_owned();
+    let column = u32::try_from(line.find("SYSTEM=0C7").unwrap() + 8).unwrap();
+    let hover = hover_at(&mut client, 130, column);
+    let text = hover["contents"]["value"].as_str().unwrap();
+    assert!(
+        text.starts_with("**Abend S0C7** · Data exception"),
+        "{text}"
+    );
+
+    // Nothing on the column header line.
+    assert!(hover_at(&mut client, 0, 3).is_null());
 
     client.stop(handle);
 }

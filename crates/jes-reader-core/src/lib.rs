@@ -14,6 +14,7 @@
 //! ```
 
 pub mod analysis;
+pub mod catalog;
 pub mod model;
 pub mod msgid;
 pub mod parse;

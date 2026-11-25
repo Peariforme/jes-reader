@@ -68,7 +68,7 @@ pub struct Message {
     pub lines: Range<usize>,
     /// Columns of the ID in the first line.
     pub id_columns: Range<usize>,
-    /// Text of the first line after the ID, trimmed.
+    /// Text after the ID, continuation lines joined with a space.
     pub text: String,
     /// JCL statement number (`STMT NO.` column of JESYSMSG).
     pub statement: Option<u32>,

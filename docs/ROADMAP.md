@@ -83,7 +83,7 @@ Goal: the tool is used on everyday jobs, without downloading anything.
 - [x] Links: statement numbers in JESYSMSG to the matching line of JESJCL (Go to Definition)
 - [x] Navigation: from a step in JESYSMSG or in the JESMSGLG step table to its EXEC in JESJCL, procedure steps included (`COBRUN.GO` → the expanded `GO` EXEC)
 - [ ] Cross-DD links for Zowe documents: the extension opens just the JESJCL DD in the background through Zowe's file system (`….JES2.JESJCL.3`), without downloading the whole spool. Implemented; to be checked against a live Zowe connection. Downloaded jobs: the server reads `JESJCL.txt` next to the file.
-- [ ] Hovers: our own TOML catalog of the ~50 most common messages and abends, with a link to IBM Docs for all the others
+- [x] Hovers: our own TOML catalog (`crates/jes-reader-core/catalog.toml`, 51 messages and 20 abends to start) with a link to IBM Docs for all the others. The same catalog makes diagnostics readable (title, reason code meaning), decides the severity of messages whose suffix is misleading, and links each failed step to the messages that caused it
 - [ ] Clickable data set names opening in Zowe Explorer, if a public command allows it
 
 **Exit**: a job opened from Zowe Explorer is analysed without any download.
