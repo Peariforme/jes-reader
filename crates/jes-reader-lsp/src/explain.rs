@@ -1,7 +1,7 @@
 //! Hovers from the catalog: message IDs and abend codes, wherever they
 //! appear (`IEF472I … SYSTEM=0C7`, `*S0C7` in the step table, `ABEND806-04`).
 
-use jes_reader_core::catalog::{catalog, docs_url, leading_abend};
+use jes_reader_core::catalog::{ZOS_RELEASE, catalog, docs_url, leading_abend, message_page_url};
 use jes_reader_core::{Dd, Message};
 
 /// Message whose ID is under byte column `column` of line `line`.
@@ -12,10 +12,20 @@ pub fn message_at(dd: &Dd, line: usize, column: usize) -> Option<&Message> {
 }
 
 /// Markdown hover for a message: our summary, the meaning of a leading
-/// abend reason (`013-18` in IEC141I), and a link to IBM Docs.
+/// abend reason (`013-18` in IEC141I), and links to IBM Docs: the message
+/// page of the z/OS documentation when the prefix is documented there, and
+/// a search as a fallback in case that page has another name.
 pub fn message_hover(message: &Message) -> String {
     let id = &message.id;
-    let link = format!("[{id} in IBM Docs]({})", docs_url(id));
+    let search = docs_url(id);
+    let link = match message_page_url(id) {
+        Some(page) => {
+            format!(
+                "[{id} in the z/OS {ZOS_RELEASE} documentation]({page}) · [search IBM Docs]({search})"
+            )
+        }
+        None => format!("[{id} in IBM Docs]({search})"),
+    };
     let Some(entry) = catalog().message(id) else {
         return format!("**{id}**\n\nNot in the JES Reader catalog yet.\n\n{link}");
     };

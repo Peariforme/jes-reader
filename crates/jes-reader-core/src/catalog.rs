@@ -98,6 +98,32 @@ pub fn catalog() -> &'static Catalog {
     })
 }
 
+/// z/OS release whose documentation message pages link to.
+pub const ZOS_RELEASE: &str = "3.2";
+
+/// Message prefixes documented in the z/OS library, where each message has
+/// a page named `messages-<id>`. Other products (Enterprise COBOL `IGZ`,
+/// Db2 `DSN`, Fault Analyzer `IDI`) are documented elsewhere: they only get
+/// the search link.
+const ZOS_PREFIXES: &[&str] = &[
+    "$HASP", "IEF", "IEC", "IGD", "IEA", "CSV", "IDC", "ICH", "IRR", "CEE",
+];
+
+/// Page of a message in the z/OS documentation
+/// (`https://www.ibm.com/docs/en/zos/3.2.0?topic=messages-iec141i`), for
+/// the prefixes documented there.
+pub fn message_page_url(id: &str) -> Option<String> {
+    ZOS_PREFIXES
+        .iter()
+        .any(|prefix| id.starts_with(prefix))
+        .then(|| {
+            format!(
+                "https://www.ibm.com/docs/en/zos/{ZOS_RELEASE}.0?topic=messages-{}",
+                id.trim_start_matches('$').to_ascii_lowercase()
+            )
+        })
+}
+
 /// IBM Docs search page for a message ID or abend code.
 pub fn docs_url(term: &str) -> String {
     let term: String = term
@@ -193,6 +219,20 @@ mod tests {
                 "{id} missing from the grammar's known-messages"
             );
         }
+    }
+
+    #[test]
+    fn message_pages() {
+        assert_eq!(
+            message_page_url("IEC141I").as_deref(),
+            Some("https://www.ibm.com/docs/en/zos/3.2.0?topic=messages-iec141i")
+        );
+        assert_eq!(
+            message_page_url("$HASP395").as_deref(),
+            Some("https://www.ibm.com/docs/en/zos/3.2.0?topic=messages-hasp395")
+        );
+        assert_eq!(message_page_url("IGZ0035S"), None);
+        assert_eq!(message_page_url("DSNT408I"), None);
     }
 
     #[test]

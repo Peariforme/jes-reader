@@ -187,7 +187,8 @@ fn definition_with_open_jcl() {
     let text = hover["contents"]["value"].as_str().unwrap();
     assert!(text.starts_with("**IEF472I** · Step abended"), "{text}");
     assert!(
-        text.contains("https://www.ibm.com/docs/en/search/IEF472I"),
+        text.contains("https://www.ibm.com/docs/en/zos/3.2.0?topic=messages-ief472i")
+            && text.contains("https://www.ibm.com/docs/en/search/IEF472I"),
         "{text}"
     );
 
