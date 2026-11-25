@@ -7,7 +7,7 @@ DD SYSOUT (Other), ASA: yes, 4 lines
 job: ? JOB00885
 
 messages:
-  L1-4 col.2-9 IGZ0035S There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'.
+  L1-4 col.2-9 IGZ0035S There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'. Neither FILE STATUS nor an ERROR declarative were specified. The status code was 35. From compile unit ABENDIGZ at entry point ABENDIGZ at compile unit offset +0000018A at entry offset +0000018A at address 1B20018A.
 
 findings:
-  L1 error [IGZ0035S] There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'.
+  L1 error [IGZ0035S] There was an unsuccessful OPEN or CLOSE of file INFILE in program ABENDIGZ at relative location X'18A'. Neither FILE STATUS nor an ERROR declarative were specified. The status code was 35. From compile unit ABENDIGZ at entry point ABENDIGZ at compile unit offset +0000018A at entry offset +0000018A at address 1B20018A.

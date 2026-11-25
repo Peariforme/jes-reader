@@ -35,7 +35,7 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
             continue;
         }
         match line.as_bytes().get(BODY) {
-            Some(b' ') => messages.extend(i),
+            Some(b' ') => messages.extend(i, &line[BODY..]),
             Some(b'-') => {
                 messages.close();
                 let row = &line[BODY + 1..];

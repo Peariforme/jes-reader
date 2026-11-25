@@ -104,11 +104,18 @@ impl Messages {
     }
 
     /// Attaches line `line_no` to the open message, if there is one.
-    fn extend(&mut self, line_no: usize) {
+    /// `content` is the line without its prefix (ASA character, JESMSGLG
+    /// timestamp); it is appended to the message text.
+    fn extend(&mut self, line_no: usize, content: &str) {
         if self.open
             && let Some(last) = self.messages.last_mut()
         {
             last.lines.end = line_no + 1;
+            let content = content.trim();
+            if !content.is_empty() {
+                last.text.push(' ');
+                last.text.push_str(content);
+            }
         }
     }
 

@@ -7,7 +7,7 @@ DD SYSOUT (Other), ASA: yes, 3 lines
 job: ? JOB00896
 
 messages:
-  L1-3 col.2-9 CEE3207S The system detected a data exception (System Completion Code=0C7).
+  L1-3 col.2-9 CEE3207S The system detected a data exception (System Completion Code=0C7). From compile unit ABEND0C7 at entry point ABEND0C7 at compile unit offset +0000016E at entry offset +0000016E at address 1B20016E.
 
 findings:
-  L1 error [CEE3207S] The system detected a data exception (System Completion Code=0C7).
+  L1 error [CEE3207S] The system detected a data exception (System Completion Code=0C7). From compile unit ABEND0C7 at entry point ABEND0C7 at compile unit offset +0000016E at entry offset +0000016E at address 1B20016E.
