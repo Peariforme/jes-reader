@@ -1,0 +1,17 @@
+[package]
+name = "jes-reader-core"
+description = "Parsing et analyse de sysouts JES2 z/OS"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+insta = "1.49.0"
