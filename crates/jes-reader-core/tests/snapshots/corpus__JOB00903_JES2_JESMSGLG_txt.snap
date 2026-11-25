@@ -2,17 +2,17 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00903/JES2/JESMSGLG.txt
-DD JESMSGLG (JesMsgLg), ASA : oui, 23 lignes
-job : JRS322 JOB00903
-fin du job : Abend("S322")
+file: JOB00903/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 23 lines
+job: JRS322 JOB00903
+end of job: Abend("S322")
 
-steps :
-  L10-10 COBRUN.COBOL : Completed { return_code: 0 } (L10)
-  L11-11 COBRUN.LKED : Completed { return_code: 0 } (L11)
-  L14-14 COBRUN.GO : Abended { code: "S322", reason: None } (L14)
+steps:
+  L10-10 COBRUN.COBOL: Completed { return_code: 0 } (L10)
+  L11-11 COBRUN.LKED: Completed { return_code: 0 } (L11)
+  L14-14 COBRUN.GO: Abended { code: "S322", reason: None } (L14)
 
-messages :
+messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
   L5 col.21-27 IEF677I WARNING MESSAGE(S) FOR JOB JRS322   ISSUED
   L6 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:52:57 ON WEDNESDAY, NOVEMBER 25, 2026
@@ -21,5 +21,5 @@ messages :
   L13 col.21-27 IEF450I JRS322 GO COBRUN - ABEND=S322 U0000 REASON=00000000
   L16 col.21-28 $HASP395 JRS322   ENDED - ABEND=S322
 
-constats :
-  L14 erreur [S322] Step COBRUN.GO : abend S322
+findings:
+  L14 error [S322] Step COBRUN.GO: abend S322

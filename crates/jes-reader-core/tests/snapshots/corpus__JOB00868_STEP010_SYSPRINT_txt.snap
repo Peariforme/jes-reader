@@ -2,11 +2,11 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00868/STEP010/SYSPRINT.txt
-DD SYSPRINT (Other), ASA : oui, 9 lignes
-job : ? JOB00868
+file: JOB00868/STEP010/SYSPRINT.txt
+DD SYSPRINT (Other), ASA: yes, 9 lines
+job: ? JOB00868
 
-messages :
+messages:
   L4 col.2-9 IDC3012I ENTRY JESREAD.INEXIST.DELETE NOT FOUND
   L5 col.2-9 IDC3009I ** VSAM CATALOG RETURN CODE IS 8 - REASON CODE IS IGG0CLEG-42
   L6 col.2-9 IDC0551I ** ENTRY JESREAD.INEXIST.DELETE NOT DELETED

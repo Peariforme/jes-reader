@@ -2,6 +2,6 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00823/VALIDATE/SYSTSPRT.txt
-DD SYSTSPRT (Other), ASA : oui, 8 lignes
-job : ? JOB00823
+file: JOB00823/VALIDATE/SYSTSPRT.txt
+DD SYSTSPRT (Other), ASA: yes, 8 lines
+job: ? JOB00823

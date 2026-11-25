@@ -1,11 +1,11 @@
 //JRSETUP  JOB (ACCT),'JES-READER SETUP',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* PREREQUIS, a soumettre une seule fois avant les jobs COBOL
-//* (s0c7, s0c4, s322, igz-open) : la procedure IGYWCLG de Z Xplore
-//* range le module dans &SYSUID..LOAD.
-//* Bibliotheque PDSE (DSNTYPE=LIBRARY), RECFM=U : obligatoire pour
-//* les program objects produits par le binder.
+//* PREREQUISITE, submit once before the COBOL jobs
+//* (s0c7, s0c4, s322, igz-open): the Z Xplore IGYWCLG procedure
+//* stores the load module in &SYSUID..LOAD.
+//* PDSE library (DSNTYPE=LIBRARY), RECFM=U: required for the
+//* program objects the binder produces.
 //*--------------------------------------------------------------------
 //ALLOC    EXEC PGM=IEFBR14
 //LOAD     DD DSN=&SYSUID..LOAD,DISP=(NEW,CATLG),

@@ -2,14 +2,14 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00884/JES2/JESYSMSG.txt
-DD JESYSMSG (JesYsMsg), ASA : oui, 19 lignes
-job : JRSETUP JOB00884
+file: JOB00884/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 19 lines
+job: JRSETUP JOB00884
 
-steps :
-  L4-16 ALLOC : Completed { return_code: 0 } (L9)
+steps:
+  L4-16 ALLOC: Completed { return_code: 0 } (L9)
 
-messages :
+messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:43:06 ON WEDNESDAY, NOVEMBER 25, 2026
   L2-3 col.2-9 IEFA111I JRSETUP IS USING THE FOLLOWING JOB RELATED SETTINGS:
   L4 col.2-8 IEF236I ALLOC. FOR JRSETUP ALLOC

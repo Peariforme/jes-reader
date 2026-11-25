@@ -1,4 +1,4 @@
-//! JESJCL : JCL développé, instructions numérotées.
+//! JESJCL: expanded JCL, numbered statements.
 //!
 //! ```text
 //!         1 //JRS0C7   JOB (ACCT),'JES-READER S0C7',CLASS=A,          JOB00896
@@ -8,16 +8,16 @@
 //!           X/SYSIN    DD  DSNAME=&SYSUID..CBL(&SRC),DISP=SHR
 //! ```
 //!
-//! Numéro cadré en col. 2-9, instruction à partir de la col. 11 (offset 10),
-//! précédée de `//`, `XX`, `++`, `X/` ou `+/`. Les lignes sans numéro
-//! prolongent l'instruction précédente ; `IEFC653I` est un message.
+//! Number right-aligned in columns 2-9, statement from column 11 (offset
+//! 10), prefixed with `//`, `XX`, `++`, `X/` or `+/`. Lines without a number
+//! continue the previous statement; `IEFC653I` is a message.
 
 use super::Messages;
 use crate::model::{Dd, Statement, StatementOrigin};
 use crate::msgid::message_id_at;
 use crate::source::is_job_id;
 
-/// Offset du début de l'instruction (préfixe `//` compris).
+/// Offset where the statement starts (`//` prefix included).
 const BODY: usize = 10;
 
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
@@ -71,7 +71,7 @@ fn numbered_statement(line: &str, line_no: usize) -> Option<Statement> {
     })
 }
 
-/// La carte JOB donne le nom du job et, en fin de ligne, l'identifiant JES.
+/// The JOB card gives the job name and, at the end of the line, the JES job ID.
 fn read_job_card(line: &str, statement: &Statement, dd: &mut Dd) {
     if dd.job_name.is_none() {
         dd.job_name.clone_from(&statement.name);
@@ -90,7 +90,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn instructions() {
+    fn statements() {
         let s = numbered_statement("        4 XXCOBOL   EXEC PGM=IGYCRCTL,REGION=0M", 0).unwrap();
         assert_eq!(s.number, 4);
         assert_eq!(s.origin, StatementOrigin::Procedure);

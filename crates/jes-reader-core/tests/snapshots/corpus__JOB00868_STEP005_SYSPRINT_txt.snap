@@ -2,11 +2,11 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00868/STEP005/SYSPRINT.txt
-DD SYSPRINT (Other), ASA : oui, 26 lignes
-job : ? JOB00868
+file: JOB00868/STEP005/SYSPRINT.txt
+DD SYSPRINT (Other), ASA: yes, 26 lines
+job: ? JOB00868
 
-messages :
+messages:
   L4 col.2-9 IDC3012I ENTRY JESREAD.INEXIST.LISTCAT NOT FOUND
   L5 col.2-9 IDC3009I ** VSAM CATALOG RETURN CODE IS 8 - REASON CODE IS IGG0CLEG-42
   L6 col.2-9 IDC1566I ** JESREAD.INEXIST.LISTCAT NOT LISTED

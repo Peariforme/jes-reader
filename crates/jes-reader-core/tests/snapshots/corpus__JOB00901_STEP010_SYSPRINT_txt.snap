@@ -2,9 +2,9 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00901/STEP010/SYSPRINT.txt
-DD SYSPRINT (Other), ASA : oui, 2 lignes
-job : ? JOB00901
+file: JOB00901/STEP010/SYSPRINT.txt
+DD SYSPRINT (Other), ASA: yes, 2 lines
+job: ? JOB00901
 
-messages :
+messages:
   L2 col.2-8 IEB352I WARNING: ONE OR MORE OF THE OUTPUT DCB PARMS COPIED FROM INPUT

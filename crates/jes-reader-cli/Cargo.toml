@@ -1,6 +1,6 @@
 [package]
 name = "jes-reader-cli"
-description = "CLI d'analyse de sysouts JES2 z/OS"
+description = "Command-line checker for z/OS JES2 sysouts"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

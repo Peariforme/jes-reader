@@ -2,12 +2,12 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00893/GO/COBRUN/SYSOUT.txt
-DD SYSOUT (Other), ASA : oui, 3 lignes
-job : ? JOB00893
+file: JOB00893/GO/COBRUN/SYSOUT.txt
+DD SYSOUT (Other), ASA: yes, 3 lines
+job: ? JOB00893
 
-messages :
+messages:
   L1-3 col.2-9 CEE3204S The system detected a protection exception (System Completion Code=0C4).
 
-constats :
-  L1 erreur [CEE3204S] The system detected a protection exception (System Completion Code=0C4).
+findings:
+  L1 error [CEE3204S] The system detected a protection exception (System Completion Code=0C4).

@@ -1,19 +1,19 @@
-//! JESMSGLG : messages horodatés, tableau des steps, fin du job.
+//! JESMSGLG: timestamped messages, step table, end of job.
 //!
 //! ```text
 //!  04.12.28 JOB00823  IRR010I  USERID Z99999   IS ASSIGNED TO THIS JOB.
 //!  04.51.14 JOB00896  -COBRUN   GO       *S0C7    282     44 …
 //! ```
 //!
-//! Heure en col. 2-9, identifiant JES en col. 11-18, message ou ligne du
-//! tableau des steps à partir de la col. 21 (offset 20).
+//! Time in columns 2-9, JES job ID in columns 11-18, message or step table
+//! row from column 21 (offset 20).
 
 use super::{Messages, value_after};
 use crate::model::{Dd, JobEnd, Step, StepStatus};
 use crate::msgid::message_id_at;
 use crate::source::is_job_id;
 
-/// Offset du début du message dans une ligne horodatée.
+/// Offset where the message starts in a timestamped line.
 const BODY: usize = 20;
 
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
@@ -22,7 +22,7 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
 
     for (i, line) in lines.iter().enumerate() {
         let Some(job_id) = timed_job_id(line) else {
-            // Bannière, statistiques JES2 : hors messages.
+            // Banner, JES2 statistics: not messages.
             messages.close();
             continue;
         };
@@ -55,7 +55,7 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     read_job(dd);
 }
 
-/// Identifiant JES d'une ligne horodatée (` hh.mm.ss JOBnnnnn  …`).
+/// JES job ID of a timestamped line (` hh.mm.ss JOBnnnnn  …`).
 fn timed_job_id(line: &str) -> Option<&str> {
     let b = line.as_bytes();
     let time = b.get(1..9)?;
@@ -73,8 +73,8 @@ fn timed_job_id(line: &str) -> Option<&str> {
     is_job_id(job_id).then_some(job_id)
 }
 
-/// Ligne du tableau des steps :
-/// `-STEPNAME PROCSTEP    RC` en col. 22-29, 31-38 et 39-44 (offsets 21, 30, 38).
+/// Step table row:
+/// `-STEPNAME PROCSTEP    RC` in columns 22-29, 31-38 and 39-44 (offsets 21, 30, 38).
 fn step_row(line: &str, line_no: usize) -> Option<Step> {
     let name = line.get(21..29)?.trim();
     if name.is_empty() {
@@ -82,8 +82,8 @@ fn step_row(line: &str, line_no: usize) -> Option<Step> {
     }
     let proc_step = line.get(30..38).map(str::trim).filter(|s| !s.is_empty());
     let rc = line.get(38..44)?.trim();
-    // Abend système précédé d'un astérisque (`*S0C7`), abend utilisateur
-    // sans (`U4038`).
+    // System abend with a leading asterisk (`*S0C7`), user abend without
+    // (`U4038`).
     let abend = rc.strip_prefix('*').unwrap_or(rc);
     let status = if rc == "FLUSH" {
         StepStatus::NotRun
@@ -106,7 +106,7 @@ fn step_row(line: &str, line_no: usize) -> Option<Step> {
     })
 }
 
-/// Nom du job et fin du job, d'après `$HASP373`, `$HASP395` et `IEF453I`.
+/// Job name and end of job, from `$HASP373`, `$HASP395` and `IEF453I`.
 fn read_job(dd: &mut Dd) {
     let mut jcl_error = false;
     let mut hasp395 = None;
@@ -144,7 +144,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ligne_horodatee() {
+    fn timestamped_line() {
         assert_eq!(
             timed_job_id(" 04.12.28 JOB00823  IRR010I  USERID"),
             Some("JOB00823")
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn tableau_des_steps() {
+    fn step_table() {
         let row = |s: &str| step_row(s, 0).map(|step| (step.display_name(), step.status));
         assert_eq!(
             row(" 04.51.14 JOB00896  -COBRUN   GO       *S0C7    282     44"),

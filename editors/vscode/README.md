@@ -1,36 +1,56 @@
-# Extension VS Code
+# JES Reader
 
-Client mince (TypeScript + `vscode-languageclient`) qui lance le serveur `jes-reader-lsp`.
+Read z/OS JES2 sysouts the way you read code: failures in the **Problems** panel, job steps in the **Outline**, messages colored by severity.
 
-Identifiant : `peariforme.jes-reader`.
+JES Reader works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) and on sysouts you have downloaded. Everything runs locally: nothing is installed or started on z/OS.
 
-## Ce que fait l'extension
+## Features
 
-- **Language id `jes-sysout`** : extensions `.sysout` et `.joblog`, DD téléchargées par Zowe Explorer (`JOBnnnnn/…/*.txt`), documents ouverts par Zowe (`<job>.<jobid>.<step>.<DD>.<n>`), et détection par la première ligne (bannière JES2, `STMT NO. MESSAGE`, carte JOB numérotée).
-- **Coexistence avec IBM Z Open Editor** : le client s'abonne aussi à ses language ids `spool`, `jesmsglg` et `jesjcl`. Z Open Editor garde sa coloration, JES Reader ajoute diagnostics, Outline et repliage.
-- **Grammaire TextMate** : identifiants de message colorés selon leur suffixe, avec les messages d'erreur connus qui finissent par `I` (`IEF453I`, `IEF472I`…) en rouge, abends, codes retour au-delà de 4, noms de datasets, instructions JCL.
-- **Commandes** : « JES Reader : Ouvrir comme sysout » force le langage du document actif ; « JES Reader : Redémarrer le serveur ».
-- **Réglages** : `jesReader.maxReturnCode` (4 par défaut), `jesReader.serverPath` (binaire du serveur, sinon celui de `server/`).
+- **Problems panel**: abends (`S0C7`, `S806`, `U4038`…), JCL errors, data sets not found and module-not-found messages are errors; steps that ended above the return-code threshold are warnings; steps that did not run are information. Severity does not rely on the message suffix alone — `IEF453I` (JCL ERROR) and `IEF472I` (abend) both end in `I`.
+- **Outline**: in `JESMSGLG` and `JESYSMSG`, every step with its outcome (`RC 0`, `abend S0C7`, `not run`), procedure steps included (`COBRUN.GO`); in `JESJCL`, a `JOB → EXEC → procedure EXEC → DD` tree.
+- **Folding** of steps, JCL statements and multi-line messages.
+- **Syntax highlighting** of message IDs, abend codes, return codes above 4, data set names and JCL statements.
+- **One DD at a time**: Zowe Explorer opens each DD as its own document; JES Reader analyses each one on its own, so you never need to download the whole spool.
 
-## Développement
+## Which files are recognized
 
-```sh
-cd editors/vscode
-npm ci
-npm run build:server   # cargo build --release, copie dans server/
-npm run compile
-```
+- Documents opened from Zowe Explorer (`<job>.<jobid>.<step>.<DD>.<n>`)
+- Jobs downloaded with Zowe Explorer (`JOBnnnnn/…/<DD>.txt`, also `TSU` and `STC`)
+- `.sysout` and `.joblog` files
+- Any file whose first line is a JES2 header (`J E S 2  J O B  L O G`, `STMT NO. MESSAGE`, or a numbered `JOB` card)
 
-Puis ouvrir `editors/vscode` dans VS Code et lancer « Extension JES Reader » (F5) : une seconde fenêtre s'ouvre sur `corpus/sysout`.
+For anything else, run **JES Reader: Open as Sysout** from the Command Palette.
 
-## Packaging et publication
+### With IBM Z Open Editor
 
-`npm run package -- <cible>` produit `dist/jes-reader-<cible>-<version>.vsix` avec le serveur compilé pour cette plateforme. Cibles : `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`. Sans argument : la machine courante. Fermer d'abord les fenêtres de développement (F5), qui verrouillent `server/`.
+IBM Z Open Editor already highlights some spool files (`spool`, `jesmsglg` and `jesjcl` languages). JES Reader attaches to those languages too: Z Open Editor keeps its highlighting, and JES Reader adds diagnostics, the Outline and folding.
 
-Le workflow `Package` construit les VSIX et les binaires CLI de cinq plateformes à chaque PR et push sur `main` (artefacts de l'exécution). Pour publier une version :
+## Settings
 
-1. Aligner la version dans `editors/vscode/package.json` et `Cargo.toml` (le workflow refuse un tag qui ne correspond pas).
-2. Pousser un tag `vX.Y.Z`.
-3. Le workflow crée la release GitHub (VSIX et CLI attachés), puis publie sur le VS Code Marketplace si le secret `VSCE_PAT` existe, et sur Open VSX si le secret `OVSX_PAT` existe.
+| Setting | Default | Description |
+| --- | --- | --- |
+| `jesReader.maxReturnCode` | `4` | A step whose return code is above this value is reported as a warning. |
+| `jesReader.serverPath` | `""` | Path to a `jes-reader-lsp` binary. Empty: use the one bundled with the extension. |
 
-Les deux jetons se créent une fois : `VSCE_PAT` est un Personal Access Token Azure DevOps (portée *Marketplace > Manage*) lié à l'éditeur `peariforme` ; `OVSX_PAT` est un jeton open-vsx.org, après création de l'espace de noms `peariforme` (`npx ovsx create-namespace peariforme`).
+## Commands
+
+- **JES Reader: Open as Sysout** — treat the active document as a sysout.
+- **JES Reader: Restart Server**
+
+## Supported platforms
+
+Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a native binary bundled in the platform-specific package; no runtime needs to be installed.
+
+## Known limitations
+
+- JES2 only; JES3 sysouts are not recognized.
+- A whole spool saved as a single file is not split into DDs yet.
+- Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`). Configurable house rules are planned.
+
+## Feedback
+
+Issues and suggestions: [github.com/Peariforme/jes-reader](https://github.com/Peariforme/jes-reader/issues). Please never attach a real customer sysout — describe the message pattern instead.
+
+## License
+
+MIT or Apache-2.0, at your option.

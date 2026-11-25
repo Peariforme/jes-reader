@@ -15,7 +15,7 @@
   ],
   "repository": {
     "banner": {
-      "comment": "Bannière JES2 en tête de JESMSGLG, statistiques et en-tête de JESYSMSG.",
+      "comment": "JES2 banner at the top of JESMSGLG, statistics, and the JESYSMSG header.",
       "patterns": [
         { "match": "^1\\s+J E S 2  J O B  L O G.*$", "name": "markup.heading.banner.jes-sysout" },
         { "match": "^0-{6} JES2 JOB STATISTICS -{6}$", "name": "markup.heading.statistics.jes-sysout" },
@@ -23,7 +23,7 @@
       ]
     },
     "timestamp": {
-      "comment": "Préfixe des lignes de JESMSGLG : heure et identifiant JES.",
+      "comment": "JESMSGLG line prefix: time and JES job ID.",
       "match": "^ (\\d\\d\\.\\d\\d\\.\\d\\d) ((?:JOB|TSU|STC)\\d{5})(?= )",
       "captures": {
         "1": { "name": "comment.line.time.jes-sysout" },
@@ -31,7 +31,7 @@
       }
     },
     "jcl": {
-      "comment": "Instructions de JESJCL : numéro, commentaires, nom et opération.",
+      "comment": "JESJCL statements: number, comments, name and operation.",
       "patterns": [
         {
           "match": "^ {1,8}(\\d+)(?= (?://|XX|\\+\\+|X/|\\+/))",
@@ -49,12 +49,12 @@
       ]
     },
     "known-messages": {
-      "comment": "Messages d'erreur dont le suffixe ne dit rien (I) : même liste que le moteur de règles.",
+      "comment": "Error messages whose suffix says nothing (I): same list as the rule engine.",
       "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEF472I|IEF450I)\\b",
       "name": "token.error-token.message-id.jes-sysout"
     },
     "message-ids": {
-      "comment": "Identifiants de message colorés par leur suffixe.",
+      "comment": "Message IDs colored by their suffix.",
       "patterns": [
         { "match": "\\b[A-Z]{3,5}\\d{3,5}[ES]\\b", "name": "token.error-token.message-id.jes-sysout" },
         { "match": "\\b[A-Z]{3,5}\\d{3,5}W\\b", "name": "token.warn-token.message-id.jes-sysout" },
@@ -63,7 +63,7 @@
       ]
     },
     "abends": {
-      "comment": "Codes d'abend : ABEND=S0C7, *S0C7 (tableau des steps), SYSTEM=0C7, USER=4038, U4038.",
+      "comment": "Abend codes: ABEND=S0C7, *S0C7 (step table), SYSTEM=0C7, USER=4038, U4038.",
       "patterns": [
         { "match": "\\bABEND=(?!S000\\b)[SU][0-9A-F]{3,4}\\b", "name": "token.error-token.abend.jes-sysout" },
         { "match": "(?<=\\*)[SU][0-9A-F]{3,4}\\b", "name": "token.error-token.abend.jes-sysout" },
@@ -74,7 +74,7 @@
       ]
     },
     "return-codes": {
-      "comment": "Codes retour : jusqu'à 4 normal, au-delà avertissement (seuil par défaut du serveur).",
+      "comment": "Return codes: up to 4 normal, above that a warning (the server's default threshold).",
       "patterns": [
         { "match": "\\b(?:COND CODE |RC=)000[0-4]\\b", "name": "constant.numeric.return-code.jes-sysout" },
         { "match": "\\b(?:COND CODE |RC=)\\d{4}\\b", "name": "token.warn-token.return-code.jes-sysout" }
@@ -93,7 +93,7 @@
       ]
     },
     "dataset-names": {
-      "comment": "Noms de datasets qualifiés, membre éventuel : SYS1.MACLIB(IHAPSA).",
+      "comment": "Qualified data set names, with an optional member: SYS1.MACLIB(IHAPSA).",
       "match": "\\b[A-Z#$@][A-Z0-9#$@-]{0,7}(?:\\.[A-Z#$@][A-Z0-9#$@-]{0,7})+(?:\\([A-Z0-9#$@+-]{1,8}\\))?",
       "name": "string.unquoted.dataset.jes-sysout"
     }

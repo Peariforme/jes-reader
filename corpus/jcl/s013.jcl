@@ -1,9 +1,9 @@
 //JRS013   JOB (ACCT),'JES-READER S013',CLASS=A,MSGCLASS=H,
 //             MSGLEVEL=(1,1),NOTIFY=&SYSUID
 //*--------------------------------------------------------------------
-//* CAS S013 : membre absent d'un PDS existant. L'allocation passe,
-//* l'OPEN echoue.
-//* Attendu : IEC141I 013-18, abend S013 au step STEP010.
+//* CASE S013: member missing from an existing PDS. Allocation works,
+//* OPEN fails.
+//* Expected: IEC141I 013-18, abend S013 in step STEP010.
 //*--------------------------------------------------------------------
 //STEP010  EXEC PGM=IEBGENER
 //SYSPRINT DD SYSOUT=*

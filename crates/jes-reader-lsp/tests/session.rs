@@ -1,5 +1,5 @@
-//! Session LSP complète sur une sysout du corpus : ouverture, diagnostics,
-//! Outline, repliage, fermeture.
+//! Full LSP session on a corpus sysout: open, diagnostics, Outline,
+//! folding, close.
 
 use lsp_server::{Connection, Message, Notification, Request, RequestId};
 use lsp_types::notification::{
@@ -49,8 +49,8 @@ impl Client {
         match self.connection.receiver.recv().unwrap() {
             Message::Response(resp) if resp.id == id => resp
                 .response_result
-                .unwrap_or_else(|e| panic!("{method} : erreur {e:?}")),
-            other => panic!("réponse attendue à {method}, reçu {other:?}"),
+                .unwrap_or_else(|e| panic!("{method}: error {e:?}")),
+            other => panic!("expected a response to {method}, got {other:?}"),
         }
     }
 
@@ -59,7 +59,7 @@ impl Client {
             Message::Notification(n) if n.method == PublishDiagnostics::METHOD => {
                 serde_json::from_value(n.params).unwrap()
             }
-            other => panic!("diagnostics attendus, reçu {other:?}"),
+            other => panic!("expected diagnostics, got {other:?}"),
         }
     }
 }
@@ -74,7 +74,7 @@ fn corpus(path: &str) -> String {
 #[test]
 fn abend_s0c7() {
     let (mut client, handle) = Client::start();
-    // Forme d'un document ouvert par Zowe Explorer, sans téléchargement.
+    // Name of a document opened by Zowe Explorer, without downloading.
     let uri: Uri = "zowe-jobs:/zosmf/JOB00896/JRS0C7.JOB00896.JES2.JESYSMSG.4"
         .parse()
         .unwrap();
@@ -90,7 +90,7 @@ fn abend_s0c7() {
         },
     );
 
-    // Diagnostics : l'abend du step GO est la seule erreur.
+    // Diagnostics: the abend of step GO is the only error.
     let published = client.diagnostics();
     assert_eq!(published.uri, uri);
     let errors: Vec<_> = published
@@ -103,7 +103,7 @@ fn abend_s0c7() {
     assert_eq!(errors[0].range.start.line, 130);
     assert!(errors[0].message.contains("COBRUN.GO"));
 
-    // Outline : les trois steps de la procédure, avec leur issue.
+    // Outline: the three procedure steps, with their outcome.
     let symbols = client.request(
         DocumentSymbolRequest::METHOD,
         DocumentSymbolParams {
@@ -113,7 +113,7 @@ fn abend_s0c7() {
         },
     );
     let DocumentSymbolResponse::Nested(symbols) = serde_json::from_value(symbols).unwrap() else {
-        panic!("symboles imbriqués attendus");
+        panic!("expected nested symbols");
     };
     let steps: Vec<_> = symbols
         .iter()
@@ -131,7 +131,7 @@ fn abend_s0c7() {
         assert!(s.range.start <= s.selection_range.start && s.selection_range.end <= s.range.end);
     }
 
-    // Repliage : au moins un bloc par step.
+    // Folding: at least one range per step.
     let folds = client.request(
         FoldingRangeRequest::METHOD,
         FoldingRangeParams {
@@ -145,7 +145,7 @@ fn abend_s0c7() {
         assert!(folds.iter().any(|f| f.start_line == start), "{start}");
     }
 
-    // Fermeture : les diagnostics sont effacés.
+    // Close: diagnostics are cleared.
     client.notify(
         DidCloseTextDocument::METHOD,
         DidCloseTextDocumentParams {
@@ -185,9 +185,9 @@ fn outline_jesjcl() {
         },
     );
     let DocumentSymbolResponse::Nested(symbols) = serde_json::from_value(symbols).unwrap() else {
-        panic!("symboles imbriqués attendus");
+        panic!("expected nested symbols");
     };
-    // JOB → EXEC du job → EXEC de la procédure.
+    // JOB → job EXEC → procedure EXEC.
     assert_eq!(symbols.len(), 1);
     assert_eq!(symbols[0].name, "JRS0C7");
     let exec = &symbols[0].children.as_ref().unwrap()[0];

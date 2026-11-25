@@ -2,11 +2,11 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : TSU00812/JES2/JESJCL.txt
-DD JESJCL (JesJcl), ASA : oui, 57 lignes
-job : Z99999 TSU00812
+file: TSU00812/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA: yes, 57 lines
+job: Z99999 TSU00812
 
-instructions :
+statements:
     1 L1-2 Job Z99999 JOB
     2 L3-3 Job IZUFPROC EXEC
     3 L4-4 Procedure IZUFPROC PROC
@@ -41,6 +41,6 @@ instructions :
    32 L56-56 Procedure ? ?
    33 L57-57 Procedure XX EXPORT
 
-messages :
+messages:
   L8 col.11-18 IEFC653I SUBSTITUTION JCL - XX='/usr/lpp/zosmf'
   L52 col.11-18 IEFC653I SUBSTITUTION JCL - PATH='/usr/lpp/zosmf/defaults/izurf.tsoservlet.mapping.json'

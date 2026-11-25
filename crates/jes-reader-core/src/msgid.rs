@@ -1,18 +1,18 @@
-//! Reconnaissance des identifiants de message IBM.
+//! Recognition of IBM message IDs.
 //!
-//! Forme générale : 3 à 5 lettres de composant, 3 à 5 chiffres, une lettre
-//! de type (`IEF142I`, `IEFA107I`, `IGD17101I`, `IGZ0035S`), ou
-//! `$HASP` suivi de 3 ou 4 chiffres. Le parser ne cherche un identifiant
-//! qu'aux positions où la DD en attend un, ce qui limite les faux positifs
-//! (`STEP010`, `IGG0191B` et `IEFBR14` sont rejetés).
+//! General form: 3 to 5 component letters, 3 to 5 digits, one type letter
+//! (`IEF142I`, `IEFA107I`, `IGD17101I`, `IGZ0035S`), or `$HASP`
+//! followed by 3 or 4 digits. The parser only looks for an ID where the DD
+//! expects one, which limits false positives (`STEP010`, `IGG0191B` and
+//! `IEFBR14` are rejected).
 
 use std::ops::Range;
 
-/// Lettres finales acceptées : information, avertissement, erreur, erreur
-/// grave, action, décision, arrêt.
+/// Accepted type letters: information, warning, error, severe error, action,
+/// decision, terminating.
 const TYPE_LETTERS: &[u8] = b"IWESADT";
 
-/// Vrai si `token` a la forme d'un identifiant de message.
+/// True if `token` has the shape of a message ID.
 pub fn is_message_id(token: &str) -> bool {
     let b = token.as_bytes();
     if let Some(digits) = b.strip_prefix(b"$HASP") {
@@ -29,8 +29,8 @@ pub fn is_message_id(token: &str) -> bool {
         && TYPE_LETTERS.contains(&b[b.len() - 1])
 }
 
-/// Colonnes d'un identifiant de message qui commence exactement en `start`
-/// et se termine par une espace ou la fin de ligne.
+/// Columns of a message ID that starts exactly at `start` and ends with a
+/// space or the end of the line.
 pub fn message_id_at(line: &str, start: usize) -> Option<Range<usize>> {
     let rest = line.get(start..)?;
     let len = rest.find(' ').unwrap_or(rest.len());
@@ -42,7 +42,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn identifiants_valides() {
+    fn valid_ids() {
         for id in [
             "IEF142I",
             "IEFA107I",
@@ -64,7 +64,7 @@ mod tests {
     }
 
     #[test]
-    fn identifiants_rejetes() {
+    fn rejected_ids() {
         for token in [
             "STEP010",
             "IGG0191B",
@@ -83,12 +83,12 @@ mod tests {
     }
 
     #[test]
-    fn position() {
+    fn id_position() {
         let line = " IEF142I JRS0C7 COBOL COBRUN - STEP WAS EXECUTED";
         assert_eq!(message_id_at(line, 1), Some(1..8));
         assert_eq!(message_id_at(line, 0), None);
         assert_eq!(message_id_at(line, 9), None);
         assert_eq!(message_id_at(" IGZ0035S", 1), Some(1..9));
-        assert_eq!(message_id_at("court", 40), None);
+        assert_eq!(message_id_at("short", 40), None);
     }
 }

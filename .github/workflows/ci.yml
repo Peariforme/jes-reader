@@ -14,28 +14,28 @@ env:
 
 jobs:
   corpus:
-    name: Corpus anonymisé
+    name: Anonymized corpus
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Filet de sécurité si le filtre `anonymize` n'était pas activé
-      # localement : aucun userid Z Xplore (hors Z99999) dans le dépôt,
-      # contenu ou noms de fichiers. Couvre aussi les snapshots de tests et
-      # la documentation, que le filtre ne traite pas.
-      - name: Aucun userid réel
+      # Safety net in case the `anonymize` filter was not enabled locally: no
+      # Z Xplore user ID (other than Z99999) anywhere in the repository,
+      # content or file names. Also covers test snapshots and documentation,
+      # which the filter does not process.
+      - name: No real user ID
         run: |
           pattern='(?<![A-Za-z0-9])Z(?!99999)[0-9]{5}(?![0-9])'
           status=0
           if git ls-files | grep -P "$pattern"; then
-            echo "::error::Userid réel dans un nom de fichier"; status=1
+            echo "::error::Real user ID in a file name"; status=1
           fi
           if git grep -nP "$pattern"; then
-            echo "::error::Userid réel dans le dépôt : activer le filtre anonymize (voir README)"; status=1
+            echo "::error::Real user ID in the repository: enable the anonymize filter (see README)"; status=1
           fi
           exit $status
 
   fmt:
-    name: Formatage
+    name: Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
       - run: cargo fmt --all -- --check
 
   check:
-    name: Clippy et tests (${{ matrix.os }})
+    name: Clippy and tests (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:

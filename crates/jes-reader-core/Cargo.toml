@@ -1,6 +1,6 @@
 [package]
 name = "jes-reader-core"
-description = "Parsing et analyse de sysouts JES2 z/OS"
+description = "Parsing and analysis of z/OS JES2 sysouts"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

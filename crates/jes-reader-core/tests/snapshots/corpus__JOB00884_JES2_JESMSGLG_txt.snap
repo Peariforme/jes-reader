@@ -2,15 +2,15 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00884/JES2/JESMSGLG.txt
-DD JESMSGLG (JesMsgLg), ASA : oui, 18 lignes
-job : JRSETUP JOB00884
-fin du job : ReturnCode(0)
+file: JOB00884/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 18 lines
+job: JRSETUP JOB00884
+end of job: ReturnCode(0)
 
-steps :
-  L9-9 ALLOC : Completed { return_code: 0 } (L9)
+steps:
+  L9-9 ALLOC: Completed { return_code: 0 } (L9)
 
-messages :
+messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
   L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:43:06 ON WEDNESDAY, NOVEMBER 25, 2026
   L6 col.21-28 $HASP373 JRSETUP  STARTED - INIT 1    - CLASS A        - SYS S0W1

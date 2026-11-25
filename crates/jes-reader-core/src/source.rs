@@ -1,41 +1,40 @@
-//! Identification d'une DD : par son chemin ou son nom, à défaut par son
-//! contenu.
+//! Identifies a DD from its path or name, falling back on its content.
 //!
-//! Formes de chemin reconnues (voir `docs/FORMAT.md`) :
+//! Recognized path forms (see `docs/FORMAT.md`):
 //!
-//! - téléchargement Zowe Explorer : `…/<jobid>/JES2/<DD>.txt`,
+//! - Zowe Explorer download: `…/<jobid>/JES2/<DD>.txt`,
 //!   `…/<jobid>/<step>/<DD>.txt`, `…/<jobid>/<procstep>/<step>/<DD>.txt`,
-//!   avec parfois un suffixe `(1)` avant l'extension ;
-//! - document ouvert par Zowe sans téléchargement :
+//!   sometimes with a `(1)` suffix before the extension;
+//! - document opened by Zowe without downloading:
 //!   `<jobname>.<jobid>.<step>.<DD>.<n>`.
 
 use crate::model::DdKind;
 
-/// Ce que le chemin d'un document apprend sur la DD qu'il contient.
+/// What a document's path tells about the DD it contains.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DdSource {
-    /// Identifiant JES (`JOB00823`).
+    /// JES job ID (`JOB00823`).
     pub job_id: Option<String>,
-    /// Nom du job (forme `<jobname>.<jobid>…` uniquement).
+    /// Job name (`<jobname>.<jobid>…` form only).
     pub job_name: Option<String>,
-    /// Nom de la DD.
+    /// DD name.
     pub dd_name: Option<String>,
 }
 
 impl DdSource {
-    /// Analyse un chemin ou une URI. Ne renvoie jamais d'erreur : ce qui
-    /// n'est pas reconnu reste à `None`.
+    /// Reads a path or URI. Never fails: whatever is not recognized stays
+    /// `None`.
     pub fn from_path(path: &str) -> Self {
         let components: Vec<&str> = path.split(['/', '\\']).filter(|c| !c.is_empty()).collect();
         let Some(file_name) = components.last() else {
             return Self::default();
         };
 
-        // Forme Zowe sans téléchargement : JRIDC12.JOB00922.JES2.JESMSGLG.2
+        // Zowe document, not downloaded: JRIDC12.JOB00922.JES2.JESMSGLG.2
         let segments: Vec<&str> = file_name.split('.').collect();
         if let Some(pos) = segments.iter().position(|s| is_job_id(s)) {
             let rest = &segments[pos + 1..];
-            // <step>… <DD> <n> : la DD est l'avant-dernier segment.
+            // <step>… <DD> <n>: the DD is the second-to-last segment.
             if rest.len() >= 3 && rest.last().is_some_and(|n| is_number(n)) {
                 return Self {
                     job_id: Some(segments[pos].to_owned()),
@@ -45,7 +44,7 @@ impl DdSource {
             }
         }
 
-        // Forme téléchargement : …/JOB00823/JES2/JESMSGLG.txt
+        // Downloaded job: …/JOB00823/JES2/JESMSGLG.txt
         let job_id = components[..components.len() - 1]
             .iter()
             .rev()
@@ -65,7 +64,7 @@ impl DdSource {
 }
 
 impl DdKind {
-    /// Nature d'une DD d'après son nom.
+    /// Kind of a DD from its name.
     pub fn from_dd_name(name: &str) -> Self {
         match name {
             "JESMSGLG" => Self::JesMsgLg,
@@ -75,7 +74,7 @@ impl DdKind {
         }
     }
 
-    /// Reconnaît une DD système JES2 à sa première ligne non vide.
+    /// Recognizes a JES2 system DD from its first non-empty line.
     pub fn sniff(text: &str) -> Option<Self> {
         let first = text.lines().find(|l| !l.trim().is_empty())?;
         if first.contains("J E S 2  J O B  L O G") {
@@ -84,7 +83,7 @@ impl DdKind {
         if first.trim_start().starts_with("STMT NO. MESSAGE") {
             return Some(Self::JesYsMsg);
         }
-        // `        1 //NOM      JOB …` : numéro en col. 9, `//` en col. 11.
+        // `        1 //NAME     JOB …`: number in column 9, `//` in column 11.
         let number = first.get(1..9).map(str::trim);
         if number == Some("1") && first.get(10..12) == Some("//") && first.contains(" JOB ") {
             return Some(Self::JesJcl);
@@ -93,7 +92,7 @@ impl DdKind {
     }
 }
 
-/// Nom de la DD standard d'une DD système JES2.
+/// Standard DD name of a JES2 system DD.
 pub(crate) fn jes_dd_name(kind: DdKind) -> Option<&'static str> {
     match kind {
         DdKind::JesMsgLg => Some("JESMSGLG"),
@@ -103,7 +102,7 @@ pub(crate) fn jes_dd_name(kind: DdKind) -> Option<&'static str> {
     }
 }
 
-/// `JOB00823`, `TSU00812`, `STC01234`, ou forme à 7 chiffres `J0123456`.
+/// `JOB00823`, `TSU00812`, `STC01234`, or the 7-digit form `J0123456`.
 pub fn is_job_id(s: &str) -> bool {
     let b = s.as_bytes();
     if b.len() != 8 {
@@ -119,7 +118,7 @@ fn is_number(s: &str) -> bool {
     !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit())
 }
 
-/// Retire le suffixe `(1)` que Zowe ajoute parfois au nom de fichier.
+/// Removes the `(1)` suffix Zowe sometimes adds to file names.
 fn strip_copy_suffix(stem: &str) -> &str {
     if let Some(open) = stem.rfind('(')
         && stem.ends_with(')')
@@ -130,7 +129,8 @@ fn strip_copy_suffix(stem: &str) -> &str {
     stem
 }
 
-/// Nom de DD valide : 1 à 8 caractères, lettre ou national en tête.
+/// Valid DD name: 1 to 8 characters, starting with a letter or national
+/// character.
 fn is_dd_name(s: &str) -> bool {
     let b = s.as_bytes();
     (1..=8).contains(&b.len())
@@ -145,7 +145,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn telechargement_zowe() {
+    fn zowe_download() {
         let src = DdSource::from_path(r"C:\corpus\sysout\JOB00823\JES2\JESMSGLG.txt");
         assert_eq!(src.job_id.as_deref(), Some("JOB00823"));
         assert_eq!(src.dd_name.as_deref(), Some("JESMSGLG"));
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn document_zowe() {
+    fn zowe_document() {
         let src = DdSource::from_path("/zosmf/JOB00922/JRIDC12.JOB00922.JES2.JESMSGLG.2");
         assert_eq!(src.job_id.as_deref(), Some("JOB00922"));
         assert_eq!(src.job_name.as_deref(), Some("JRIDC12"));
@@ -168,13 +168,13 @@ mod tests {
     }
 
     #[test]
-    fn chemin_inconnu() {
-        let src = DdSource::from_path("rapport final.txt");
+    fn unknown_path() {
+        let src = DdSource::from_path("final report.txt");
         assert_eq!(src, DdSource::default());
     }
 
     #[test]
-    fn identifiants_jes() {
+    fn jes_job_ids() {
         for id in ["JOB00823", "TSU00812", "STC01234", "J0123456"] {
             assert!(is_job_id(id), "{id}");
         }
@@ -184,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn detection_par_contenu() {
+    fn content_detection() {
         let msglg = "1                   J E S 2  J O B  L O G  --  S Y S T E M  S0W1\r\n";
         assert_eq!(DdKind::sniff(msglg), Some(DdKind::JesMsgLg));
         assert_eq!(

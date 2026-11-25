@@ -1,148 +1,126 @@
-# Roadmap — Serveur de langage Sysout z/OS
+# Roadmap
 
-Nov 25, 2026 · @Richard
+## Vision and scope
 
-## Vision et périmètre
+A language server that turns a z/OS sysout into a navigable document: failures in the Problems panel, steps in the Outline, messages colored by severity. It runs entirely on the workstation; nothing is installed or opened on z/OS.
 
-Un serveur de langage qui transforme une sysout z/OS en document navigable : erreurs dans le panneau Problems, steps dans l'Outline, messages colorés par sévérité. Il tourne entièrement sur le poste, sans rien installer ni ouvrir côté z/OS.
+**Audience**: mainframe developers and operators on locked-down workstations, where VS Code is allowed but SSH and USS are not.
 
-**Pour qui** : développeurs et exploitants mainframe sur poste verrouillé, où VS Code est autorisé mais SSH et USS ne le sont pas.
+**In scope (v1)**
 
-**Dans le périmètre (v1)**
+- JES2 sysouts downloaded as files, or opened directly from Zowe Explorer
+- System DDs (JESMSGLG, JESJCL, JESYSMSG) and application DDs (SYSPRINT, SYSOUT, CEEDUMP read as text)
+- Common IBM messages (IEF, IEC, IGD, $HASP, CEE, IGZ, DSN, DFS) and user-defined house rules
 
-- Sysouts JES2 téléchargées en fichier, ou ouvertes directement depuis Zowe Explorer
-- DD système (JESMSGLG, JESJCL, JESYSMSG) et applicatives (SYSPRINT, SYSOUT, CEEDUMP lu comme texte)
-- Messages IBM courants (IEF, IEC, IGD, $HASP, CEE, IGZ, DSN, DFS) et règles maison déclarées par l'utilisateur
+**Out of scope (v1)**
 
-**Hors périmètre (v1)**
+- Any connection to the mainframe: Zowe Explorer already does that
+- JES3, to be reconsidered depending on the corpus
+- Dump interpretation
+- Reproducing IBM manuals (copyright): our own summaries and links to IBM Docs
 
-- Toute connexion au mainframe : Zowe Explorer s'en charge déjà
-- JES3, à réévaluer selon le corpus
-- Interprétation des dumps
-- Reproduction des manuels IBM (copyright) : résumés maison et liens vers IBM Docs
+Each phase ends with a verifiable exit criterion. The tool becomes useful day to day at the end of phase 1.
 
-## Vue d'ensemble
+## Technical choices
 
-&#91;embedded content: Roadmap · 5 phases, 5 critères de sortie\]
+A single Rust engine, exposed through a language server for editors and a CLI for CI.
 
-Chaque phase se termine par un critère de sortie vérifiable. L'outil devient utile au quotidien dès la fin de la phase 1.
-
-## Choix techniques
-
-Un seul moteur Rust, exposé par un serveur LSP pour les éditeurs et par une CLI pour la CI.
-
-&#91;embedded content: Architecture · 1 moteur, 2 façades, 3 usages\]
-
-| Brique | Choix | Pourquoi |
+| Component | Choice | Why |
 | --- | --- | --- |
-| Langage | Rust | Binaire unique, pas de Node à installer sur le poste, parsing rapide |
-| Protocole | LSP (tower-lsp-server ou lsp-server, à trancher) | Consommé par VS Code, Zed, Neovim et Eclipse |
-| Coloration | Grammaire TextMate + semantic tokens | TextMate marche même sans serveur ; les semantic tokens portent la sévérité |
-| Extension VS Code | TypeScript + vscode-languageclient | Client mince, binaire embarqué par plateforme |
-| CLI | clap | `sysout check job.txt`, sortie texte, JSON ou SARIF |
-| Tests | insta (snapshots) | Chaque sysout du corpus a son analyse attendue versionnée |
+| Language | Rust | Single binary, no Node runtime to install for the server, fast parsing |
+| Protocol | LSP (`lsp-server`) | Used by VS Code, Zed, Neovim and Eclipse |
+| Highlighting | TextMate grammar (+ semantic tokens later) | TextMate works without the server; semantic tokens would carry the severity |
+| VS Code extension | TypeScript + vscode-languageclient | Thin client, server binary bundled per platform |
+| CLI | clap | `jes-reader check`, text output; JSON and SARIF later |
+| Tests | insta (snapshots) | Every corpus sysout has its expected analysis under version control |
 
-**Structure du dépôt** (workspace Cargo)
+**Repository layout** (Cargo workspace)
 
-- `crates/sysout-core` : parsing, modèle Job → DD → step → message, moteur de règles
-- `crates/sysout-lsp` : serveur LSP
-- `crates/sysout-cli` : CLI
-- `editors/vscode` : extension VS Code
-- `editors/zed` : extension Zed (phase 4)
-- `corpus/` : sysouts de test et snapshots attendus
+- `crates/jes-reader-core`: parser, `Job → DD → step → message` model, rule engine
+- `crates/jes-reader-lsp`: language server
+- `crates/jes-reader-cli`: CLI
+- `editors/vscode`: VS Code extension
+- `editors/zed`: Zed extension (phase 4)
+- `corpus/`: test sysouts and the JCL that produces them
 
-## Phase 0 — Fondations et corpus (≈ 1 semaine)
+## Phase 0 — Foundations and corpus
 
-Objectif : un dépôt qui compile et un corpus de sysouts réelles, sans aucune donnée client.
+Goal: a repository that builds, and a corpus of real sysouts with no customer data.
 
-- [x] Ouvrir l'accès IBM Z Xplore et vérifier qu'on peut compiler du COBOL et soumettre des jobs (soumission validée par `JOB00823`, compilation COBOL à confirmer avec `s0c7.jcl`)
-- [x] Écrire des jobs qui plantent volontairement : S0C7, S0C4, S806, S322, S013, JCL ERROR, dataset introuvable, NOT CATLGD, RC 4/8/12 via IDCAMS, abend utilisateur COBOL (IGZ) (RC 12 IDCAMS restant)
-- [ ] Récupérer chaque sysout via Zowe Explorer. Constat : Zowe lit et télécharge les spools DD par DD (`<jobid>/<step>/<DD>.txt`), il n'y a pas de spool complète par défaut. Le parser travaille donc DD par DD (voir `FORMAT.md`)
-- [x] Créer le workspace Cargo et la CI GitHub Actions (fmt, clippy, tests)
-- [x] Choisir la librairie LSP : `lsp-server`
-- [ ] Tenir un `FORMAT.md` (commencé à partir de `JOB00823` et `TSU00812`) : caractère ASA en colonne 1, largeur des lignes, séparateurs de DD, en-têtes de page, marqueur d'en-tête JES2
+- [x] Get IBM Z Xplore access; check that COBOL compiles and jobs can be submitted
+- [x] Write jobs that fail on purpose: S0C7, S0C4, S806, S322, S013, JCL ERROR, data set not found, NOT CATLGD, RC 4/8/12 through IDCAMS, COBOL user abend (IGZ)
+- [x] Retrieve each sysout through Zowe Explorer. Finding: Zowe reads and downloads spools one DD at a time (`<jobid>/<step>/<DD>.txt`), with no whole-spool file by default, so the parser works one DD at a time (see [FORMAT.md](FORMAT.md))
+- [x] Cargo workspace and GitHub Actions CI (fmt, clippy, tests)
+- [x] Pick the LSP library: `lsp-server`
+- [x] Keep a [FORMAT.md](FORMAT.md): ASA column, line width, DD layout, page headers, JES2 header markers
 
-**Sortie** : au moins 15 sysouts versionnées et une CI verte.
+**Exit**: at least 15 sysouts under version control and a green CI. **Status**: 13 sysouts; the last two jobs (`long.jcl`, `idcams-rc12.jcl`) are written but not submitted yet.
 
-## Phase 1 — MVP (≈ 4 semaines)
+## Phase 1 — MVP
 
-Objectif : ouvrir une sysout dans VS Code et voir tout de suite quel step a planté et pourquoi.
+Goal: open a sysout in VS Code and see at once which step failed and why.
 
-1. **Parser** (`jes-reader-core`) : **l'unité de parsing est la DD** (`parse_dd`), car Zowe Explorer ouvre les spools DD par DD ; une spool complète est d'abord découpée en DD. Type de DD tiré du nom de fichier ou de l'URI, à défaut du contenu. Le `Job` est un agrégat facultatif des DD ouvertes du même identifiant JES (`JOB`, `TSU` ou `STC`). Puis, détection des steps et de leur fin (messages IEF de début, fin et code retour), extraction des messages par ID avec sévérité tirée du dernier caractère (I, W, E, S, A). Le parser ne plante jamais : ce qu'il ne comprend pas reste du texte brut.
-2. **Détection du langage** : language id `jes-sysout` par extension (`.sysout`, `.joblog`), par nom de DD et par contenu (en-tête JES2 dans les premières lignes), plus une commande « Ouvrir comme sysout ». Le client s'abonne aussi aux language ids d'IBM Z Open Editor (`spool`, `jesmsglg`, `jesjcl`, attribués par nom de fichier) : quand cette extension est installée, elle garde sa coloration TextMate de base et nous ajoutons diagnostics, outline et semantic tokens par-dessus, sans conflit. Z Open Editor n'a pas de serveur de langage pour les spools (vérifié sur la 6.9.0). Ne rien reprendre de sa grammaire (propriété IBM).
-3. **Grammaire TextMate** : IDs de message, codes retour, codes d'abend, noms de datasets et de DD.
-4. **Serveur LSP** : outline DD → steps, repliage, diagnostics (abend et JCL ERROR en erreur, RC > 4 en avertissement, seuil configurable).
-5. **Extension VS Code** : client mince, binaire embarqué.
-6. **Tests** : un snapshot par sysout du corpus.
+1. **Parser** (`jes-reader-core`): **the unit of parsing is the DD** (`parse_dd`), because Zowe Explorer opens spools one DD at a time; a whole spool would first be split into DDs. The DD kind comes from the file name or URI, otherwise from the content. `Job` is an optional aggregate of the open DDs with the same JES job ID (`JOB`, `TSU` or `STC`). Then: steps and their outcome (IEF start, end and return code messages), and messages by ID. The parser never fails: what it does not understand stays plain text.
+2. **Language detection**: language ID `jes-sysout` by extension (`.sysout`, `.joblog`), by DD name and by content (JES2 header in the first lines), plus an "Open as Sysout" command. The client also attaches to IBM Z Open Editor's language IDs (`spool`, `jesmsglg`, `jesjcl`, assigned by file name): when that extension is installed it keeps its basic TextMate highlighting and we add diagnostics and the Outline on top. Z Open Editor has no language server for spools (checked on 6.9.0). Nothing is copied from its grammar (IBM property).
+3. **TextMate grammar**: message IDs, return codes, abend codes, data set names, JCL statements.
+4. **Language server**: Outline of steps, folding, diagnostics (abends and JCL errors as errors, RC > 4 as warnings, configurable threshold).
+5. **VS Code extension**: thin client, bundled binary.
+6. **Tests**: one snapshot per corpus sysout.
 
-**Sortie** : sur tout le corpus, le step fautif apparaît en tête du panneau Problems et l'outline est juste.
+**Exit**: on the whole corpus, the failing step is at the top of the Problems panel and the Outline is right.
 
-**État (25/11/2026)** : terminée. Les six points sont implémentés et le critère de sortie est vérifié à la main dans VS Code (Outline, Problems, détection du langage). Les semantic tokens (sévérité portée par le serveur) ne sont pas faits : la grammaire TextMate colore déjà les messages d'erreur connus. Constats :
+**Status**: done. All six items are implemented, and the exit criterion was checked by hand in VS Code (Outline, Problems, language detection). Semantic tokens are not done: the TextMate grammar already colors the known error messages. Findings:
 
-- La gravité ne se lit pas sur le suffixe : `IEF453I`, `IEF472I`, `IEFA107I` finissent par `I`. Le moteur de règles (`analysis.rs`) et la grammaire partagent une liste de messages connus, à garder synchronisées.
-- La sévérité vient des steps (abend, RC, non exécuté), puis de cette liste, puis du suffixe `E`/`S`/`W`.
-- `IDI0078E` (Fault Analyzer sans accès à son historique) sort en erreur alors qu'il ne concerne pas le job : cas typique pour les règles maison de la phase 3.
+- Severity cannot be read from the suffix: `IEF453I`, `IEF472I`, `IEFA107I` end in `I`. The rule engine (`analysis.rs`) and the grammar share a list of known messages that must be kept in sync.
+- Severity comes from the steps (abend, RC, not run), then from that list, then from the `E`/`S`/`W` suffix.
+- `IDI0078E` (Fault Analyzer cannot write its history file) is reported as an error although it is not about the job: a typical case for the house rules of phase 3.
 
-## Phase 2 — Zowe Explorer et hovers (≈ 3 semaines)
+## Phase 2 — Zowe Explorer and hovers
 
-Objectif : l'outil s'utilise sur les jobs du quotidien, sans télécharger de fichier.
+Goal: the tool is used on everyday jobs, without downloading anything.
 
-- [x] Identifier le schéma d'URI des spools ouvertes par Zowe Explorer (`zowe-jobs:`) et y abonner l'extension. Vérifié le 25/11/2026 : un job ouvert directement depuis Zowe Explorer est analysé (diagnostics, Outline). Reste à faire : pour les liens entre DD, l'extension lit à la demande la seule DD manquante via le système de fichiers de Zowe, sans télécharger toute la spool
-- [ ] Hovers : catalogue maison en TOML des \~50 messages et abends les plus fréquents, rédigé par nous, avec lien IBM Docs pour tous les autres
-- [ ] Liens : numéros d'instruction de JESYSMSG vers la ligne correspondante de JESJCL
-- [ ] Navigation : d'un step dans JESYSMSG vers son EXEC dans JESJCL
-- [ ] Noms de datasets cliquables vers Zowe Explorer, si une commande publique le permet
+- [x] Identify the URI scheme of spools opened by Zowe Explorer (`zowe-jobs:`) and attach the extension to it. Checked: a job opened directly from Zowe Explorer is analysed (diagnostics, Outline).
+- [ ] Links: statement numbers in JESYSMSG to the matching line of JESJCL
+- [ ] Navigation: from a step in JESYSMSG to its EXEC in JESJCL
+- [ ] Cross-DD links for Zowe documents: the extension reads just the missing DD through Zowe's file system, without downloading the whole spool
+- [ ] Hovers: our own TOML catalog of the ~50 most common messages and abends, with a link to IBM Docs for all the others
+- [ ] Clickable data set names opening in Zowe Explorer, if a public command allows it
 
-**Sortie** : un job ouvert depuis Zowe Explorer est analysé sans aucun téléchargement.
+**Exit**: a job opened from Zowe Explorer is analysed without any download.
 
-## Phase 3 — Résumés, règles maison, CLI (≈ 3 semaines)
+## Phase 3 — Summaries, house rules, CLI
 
-Objectif : l'outil s'adapte aux conventions de chaque client et sert aussi hors éditeur.
+Goal: the tool adapts to each site's conventions and is also useful outside the editor.
 
-- [ ] Code lens par step : nom, programme, code retour, CPU et temps écoulé quand les messages de fin de step les donnent
-- [ ] Règles maison dans un `.sysoutrc.toml` (projet ou utilisateur) : motif → sévérité, message, texte de survol. Cas typiques : messages applicatifs, RC tolérés par programme (IDCAMS RC=4 accepté, par exemple)
-- [ ] CLI : `sysout check` (code de sortie non nul en cas d'erreur), `sysout summary`, sorties texte, JSON et SARIF
+- [ ] Code lens per step: name, program, return code, CPU and elapsed time when the end-of-step messages give them
+- [ ] House rules in a `.jesreader.toml` (project or user): pattern → severity, message, hover text. Typical cases: application messages, return codes accepted per program (IDCAMS RC=4, for instance)
+- [ ] CLI: `jes-reader summary`, JSON and SARIF output for `check`
 
-**Sortie** : un fichier de règles d'une dizaine de lignes suffit à adapter l'outil à une application client.
+**Exit**: a rules file of about ten lines is enough to adapt the tool to an application.
 
-## Phase 4 — Distribution (≈ 2 semaines)
+## Phase 4 — Distribution
 
-Objectif : installable en un clic chez soi, et sans réseau sur un poste bancaire.
+Goal: one-click install at home, and offline install on a locked-down workstation.
 
-- [ ] Releases cross-compilées via GitHub Actions (Windows x64, Linux x64, macOS arm64)
-- [ ] Publication sur le VS Code Marketplace et Open VSX
-- [ ] VSIX par plateforme, installé hors-ligne et testé sur un poste Windows sans droits admin
-- [ ] Extension Zed : déclaration du langage et lancement du LSP. Zed n'utilise pas TextMate, il faut donc écrire une grammaire tree-sitter pour la coloration
-- [ ] README avec capture animée, licence, annonce sur le Slack Open Mainframe Project
+- [x] Cross-compiled releases through GitHub Actions (Windows x64, Linux x64 and arm64, macOS x64 and arm64), published on `v*` tags
+- [ ] Publication on the VS Code Marketplace and Open VSX (workflow ready, needs the `VSCE_PAT` and `OVSX_PAT` secrets)
+- [ ] Platform-specific VSIX installed offline and tested on a Windows workstation without admin rights
+- [ ] Zed extension: language declaration and LSP launch. Zed does not use TextMate, so highlighting needs a tree-sitter grammar
+- [ ] README with an animated capture, announcement on the Open Mainframe Project Slack
 
-**Sortie** : un VSIX hors-ligne fonctionne sur un poste Windows sans droits admin.
+**Exit**: an offline VSIX works on a Windows workstation without admin rights.
 
-## Risques et questions ouvertes
+## Risks and open questions
 
-Le risque principal n'est pas technique : c'est la propriété intellectuelle vis-à-vis de l'employeur, à vérifier avant toute publication.
-
-| Risque | Conséquence | Parade |
+| Risk | Consequence | Mitigation |
 | --- | --- | --- |
-| Clause de propriété intellectuelle du contrat Sopra Steria | Publication bloquée ou contestée | Relire la clause, développer uniquement sur temps et matériel perso |
-| Format variable selon l'outil d'export | Parsing fragile | Corpus multi-sources, parser tolérant qui dégrade au lieu de planter |
-| Corpus limité à Z Xplore | Messages de prod absents | Règles maison, collecte de motifs (jamais de données) auprès des utilisateurs |
-| Confidentialité des sysouts clients | Impossible de partager un cas réel | Aucune sysout client dans le dépôt, cas reproduits en synthétique |
-| Copyright de la doc IBM | Hovers pauvres | Résumés rédigés par nous, liens vers IBM Docs |
-| Changement du schéma d'URI de Zowe Explorer | Intégration cassée | Test d'intégration sur une version épinglée |
+| Format varies with the export tool | Fragile parsing | Multi-source corpus, tolerant parser that degrades instead of failing |
+| Corpus limited to Z Xplore | Production messages missing | House rules, collecting message patterns (never data) from users |
+| Confidentiality of customer sysouts | Real cases cannot be shared | No customer sysout in the repository, cases rebuilt as synthetic data |
+| IBM documentation copyright | Thin hovers | Our own summaries, links to IBM Docs |
+| Zowe Explorer URI scheme changes | Broken integration | Integration test on a pinned version |
 
-**Questions ouvertes**
+**Open questions**
 
-- ~~Nom du projet~~ : `jes-reader`
-- ~~Licence~~ : MIT ou Apache-2.0 au choix
-- JES3 dans la v1 ou plus tard
-- ~~tower-lsp-server ou lsp-server~~ : `lsp-server`
-
-## Demain : session 1
-
-Première session de 2 à 3 heures, consacrée à lancer la phase 0.
-
-- [x] S'inscrire à IBM Z Xplore (l'activation peut prendre du temps, à lancer en premier)
-- [x] Trancher le nom de code et la librairie LSP
-- [x] Initialiser le workspace Cargo (`core`, `lsp`, `cli`) et la CI
-- [x] Écrire les trois premiers jobs qui plantent : S0C7, JCL ERROR, IDCAMS RC=8
-- [ ] Récupérer leurs sysouts (`FORMAT.md` commencé)
+- JES3 in v1 or later
+- Whole-spool files: which tools produce them, and how DDs are separated

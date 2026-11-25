@@ -2,12 +2,12 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00901/STEP010/IDIREPRT.txt
-DD IDIREPRT (Other), ASA : non, 2448 lignes
-job : ? JOB00901
+file: JOB00901/STEP010/IDIREPRT.txt
+DD IDIREPRT (Other), ASA: no, 2448 lines
+job: ? JOB00901
 
-messages :
+messages:
   L221 col.1-7 IEC141I 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,
 
-constats :
-  L221 erreur [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,
+findings:
+  L221 error [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,

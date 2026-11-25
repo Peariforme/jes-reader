@@ -1,5 +1,5 @@
-//! Parsing d'une DD. Le parser ne plante jamais : ce qu'il ne reconnaît
-//! pas reste du texte brut, sans message ni step.
+//! Parsing of one DD. The parser never fails: what it does not recognize
+//! stays plain text, with no message and no step.
 
 mod jcl;
 mod msglg;
@@ -11,13 +11,13 @@ use std::ops::Range;
 use crate::model::{Dd, DdKind, Message, Severity};
 use crate::source::{DdSource, jes_dd_name};
 
-/// Analyse le contenu d'un document dont on connaît le chemin (ou l'URI).
+/// Parses a document whose path (or URI) is known.
 pub fn parse_file(path: &str, text: &str) -> Dd {
     parse_dd(&DdSource::from_path(path), text)
 }
 
-/// Analyse une DD. Le nom de DD de `source` décide de la façon de la lire ;
-/// à défaut, le contenu (en-têtes JES2).
+/// Parses a DD. The DD name in `source` decides how to read it; otherwise
+/// the content does (JES2 headers).
 pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
     let by_name = source
         .dd_name
@@ -56,8 +56,8 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
     dd
 }
 
-/// Une DD porte un caractère ASA si chaque ligne non vide commence par
-/// l'un des caractères de contrôle ` `, `0`, `-`, `+` ou `1`.
+/// A DD has ASA characters if every non-empty line starts with one of the
+/// control characters ` `, `0`, `-`, `+` or `1`.
 fn detect_asa(lines: &[&str]) -> bool {
     let mut any = false;
     for line in lines.iter().filter(|l| !l.is_empty()) {
@@ -69,7 +69,7 @@ fn detect_asa(lines: &[&str]) -> bool {
     any
 }
 
-/// Accumule les messages d'une DD et gère leurs lignes de suite.
+/// Collects the messages of a DD and handles their continuation lines.
 struct Messages {
     messages: Vec<Message>,
     open: bool,
@@ -83,7 +83,7 @@ impl Messages {
         }
     }
 
-    /// Ouvre un message dont l'identifiant occupe `id_columns` en ligne `line_no`.
+    /// Opens a message whose ID is at `id_columns` on line `line_no`.
     fn start(
         &mut self,
         line_no: usize,
@@ -103,7 +103,7 @@ impl Messages {
         self.open = true;
     }
 
-    /// Rattache la ligne `line_no` au message ouvert, s'il y en a un.
+    /// Attaches line `line_no` to the open message, if there is one.
     fn extend(&mut self, line_no: usize) {
         if self.open
             && let Some(last) = self.messages.last_mut()
@@ -112,7 +112,7 @@ impl Messages {
         }
     }
 
-    /// Ferme le message en cours : les lignes suivantes ne s'y rattachent plus.
+    /// Closes the current message: following lines no longer attach to it.
     fn close(&mut self) {
         self.open = false;
     }
@@ -122,7 +122,7 @@ impl Messages {
     }
 }
 
-/// Noms d'un step dans un message `<job> [<procstep>] <step> - …`.
+/// Step names in a `<job> [<procstep>] <step> - …` message.
 struct StepNames<'a> {
     job: &'a str,
     step: &'a str,
@@ -130,12 +130,12 @@ struct StepNames<'a> {
 }
 
 impl<'a> StepNames<'a> {
-    /// Lit les noms avant le premier ` - `, qui doit être présent.
+    /// Reads the names before the first ` - `, which must be present.
     fn parse(text: &'a str) -> Option<Self> {
         Self::from_names(text.split_once(" - ")?.0)
     }
 
-    /// Deux noms : job et step ; trois : job, step de procédure, step du job.
+    /// Two names: job and step; three: job, procedure step, job step.
     fn from_names(head: &'a str) -> Option<Self> {
         let names: Vec<&str> = head.split_whitespace().collect();
         match names[..] {
@@ -154,7 +154,7 @@ impl<'a> StepNames<'a> {
     }
 }
 
-/// Valeur qui suit `key` dans `text`, jusqu'à la prochaine espace.
+/// Value after `key` in `text`, up to the next space.
 fn value_after<'a>(text: &'a str, key: &str) -> Option<&'a str> {
     let start = text.find(key)? + key.len();
     let rest = &text[start..];
@@ -168,12 +168,12 @@ mod tests {
     #[test]
     fn asa() {
         assert!(detect_asa(&["1READY", " %CMD", "", "0FIN"]));
-        assert!(!detect_asa(&["         MACRO", "*  commentaire"]));
+        assert!(!detect_asa(&["         MACRO", "*  comment"]));
         assert!(!detect_asa(&["", ""]));
     }
 
     #[test]
-    fn noms_de_step() {
+    fn step_names() {
         let n = StepNames::parse("JRS0C7 COBOL COBRUN - STEP WAS EXECUTED").unwrap();
         assert_eq!(
             (n.job, n.proc_step, n.step),
@@ -181,11 +181,11 @@ mod tests {
         );
         let n = StepNames::parse("JRIDC8 STEP020 - STEP WAS NOT EXECUTED.").unwrap();
         assert_eq!((n.job, n.proc_step, n.step), ("JRIDC8", None, "STEP020"));
-        assert!(StepNames::parse("PAS DE TIRET").is_none());
+        assert!(StepNames::parse("NO DASH HERE").is_none());
     }
 
     #[test]
-    fn valeurs() {
+    fn values() {
         let t = "COMPLETION CODE - SYSTEM=0C7 USER=0000 REASON=00000007";
         assert_eq!(value_after(t, "SYSTEM="), Some("0C7"));
         assert_eq!(value_after(t, "REASON="), Some("00000007"));
@@ -193,7 +193,7 @@ mod tests {
     }
 
     #[test]
-    fn ne_plante_jamais() {
+    fn never_fails() {
         for text in ["", "\r\n", "1", " ", "\u{0}\u{1}", "é è à", "        1 //"] {
             for name in ["JESMSGLG", "JESJCL", "JESYSMSG", "SYSPRINT"] {
                 let source = DdSource {

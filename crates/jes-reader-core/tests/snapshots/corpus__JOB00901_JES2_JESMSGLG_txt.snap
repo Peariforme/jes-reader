@@ -2,15 +2,15 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00901/JES2/JESMSGLG.txt
-DD JESMSGLG (JesMsgLg), ASA : oui, 40 lignes
-job : JRS013 JOB00901
-fin du job : Abend("S013")
+file: JOB00901/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA: yes, 40 lines
+job: JRS013 JOB00901
+end of job: Abend("S013")
 
-steps :
-  L31-31 STEP010 : Abended { code: "S013", reason: None } (L31)
+steps:
+  L31-31 STEP010: Abended { code: "S013", reason: None } (L31)
 
-messages :
+messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
   L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:51:09 ON WEDNESDAY, NOVEMBER 25, 2026
   L6 col.21-28 $HASP373 JRS013   STARTED - INIT 1    - CLASS A        - SYS S0W1
@@ -19,6 +19,6 @@ messages :
   L28 col.21-27 IEF450I JRS013 STEP010 - ABEND=S013 U0000 REASON=00000018
   L33 col.21-28 $HASP395 JRS013   ENDED - ABEND=S013
 
-constats :
-  L7 erreur [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
-  L31 erreur [S013] Step STEP010 : abend S013
+findings:
+  L7 error [IEC141I] 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
+  L31 error [S013] Step STEP010: abend S013

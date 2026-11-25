@@ -1,37 +1,37 @@
-//! Modèle de données d'une sysout : Job → DD → step → message.
+//! Data model of a sysout: Job → DD → step → message.
 //!
-//! Positions : les numéros de ligne sont 0-indexés (bornes hautes exclues)
-//! et les colonnes sont des offsets en octets dans la ligne, caractère ASA
-//! compris. Le texte d'une sysout est en pratique de l'ASCII ; la
-//! conversion vers les colonnes UTF-16 du LSP se fait côté serveur.
+//! Positions: line numbers are 0-based (exclusive upper bounds) and
+//! columns are byte offsets in the line, ASA character included. Sysout
+//! text is ASCII in practice; the conversion to LSP UTF-16 columns
+//! happens in the server.
 
 use std::ops::Range;
 
-/// Sévérité d'un message IBM, tirée du dernier caractère de son identifiant
+/// Severity of an IBM message, from the last character of its ID
 /// (`IEF142I`, `IEC161W`, `IGD17101E`…).
 ///
-/// Attention : beaucoup de messages d'erreur JES2 et MVS finissent par `I`
-/// (`IEF453I` JCL ERROR, `IEF472I` abend). La gravité réelle d'un message
-/// est décidée par [`crate::analysis`], pas par ce seul suffixe.
+/// Careful: many JES2 and MVS error messages end in `I` (`IEF453I` JCL
+/// ERROR, `IEF472I` abend). The actual severity of a message is decided
+/// by [`crate::analysis`], not by this suffix alone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Severity {
-    /// `I` : information.
+    /// `I`: information.
     Info,
-    /// `W` : avertissement.
+    /// `W`: warning.
     Warning,
-    /// `E` : erreur.
+    /// `E`: error.
     Error,
-    /// `S` : erreur grave.
+    /// `S`: severe error.
     Severe,
-    /// `A` : action requise de l'opérateur.
+    /// `A`: operator action required.
     Action,
 }
 
 impl Severity {
-    /// Déduit la sévérité du suffixe d'un identifiant de message.
+    /// Severity from the suffix of a message ID.
     ///
-    /// Renvoie `None` si le dernier caractère n'est pas une lettre de
-    /// sévérité connue (par exemple `$HASP373`, qui n'a pas de suffixe).
+    /// Returns `None` if the last character is not a known severity letter
+    /// (for example `$HASP373`, which has no suffix).
     pub fn from_message_id(id: &str) -> Option<Self> {
         match id.chars().last()? {
             'I' => Some(Self::Info),
@@ -44,76 +44,75 @@ impl Severity {
     }
 }
 
-/// Nature d'une DD, qui détermine la façon de la lire.
+/// Kind of DD, which decides how it is read.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DdKind {
-    /// Journal du job (`JESMSGLG`) : messages horodatés, tableau des steps.
+    /// Job log (`JESMSGLG`): timestamped messages, step table.
     JesMsgLg,
-    /// JCL développé (`JESJCL`) : instructions numérotées.
+    /// Expanded JCL (`JESJCL`): numbered statements.
     JesJcl,
-    /// Messages système (`JESYSMSG`) : allocations, fins de step.
+    /// System messages (`JESYSMSG`): allocations, step ends.
     JesYsMsg,
-    /// Toute autre DD (`SYSPRINT`, `SYSOUT`, `CEEDUMP`…).
+    /// Any other DD (`SYSPRINT`, `SYSOUT`, `CEEDUMP`…).
     Other,
 }
 
-/// Message identifié dans une DD.
+/// Message recognized in a DD.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message {
-    /// Identifiant (`IEF142I`).
+    /// Message ID (`IEF142I`).
     pub id: String,
-    /// Sévérité tirée du suffixe, si l'identifiant en porte une.
+    /// Severity from the suffix, if the ID has one.
     pub severity: Option<Severity>,
-    /// Lignes occupées, lignes de suite comprises.
+    /// Lines covered, continuation lines included.
     pub lines: Range<usize>,
-    /// Colonnes de l'identifiant dans la première ligne.
+    /// Columns of the ID in the first line.
     pub id_columns: Range<usize>,
-    /// Texte de la première ligne après l'identifiant, sans les espaces
-    /// de bord.
+    /// Text of the first line after the ID, trimmed.
     pub text: String,
-    /// Numéro d'instruction JCL (colonne `STMT NO.` de JESYSMSG).
+    /// JCL statement number (`STMT NO.` column of JESYSMSG).
     pub statement: Option<u32>,
 }
 
-/// Issue d'un step.
+/// Outcome of a step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StepStatus {
-    /// Exécuté jusqu'au bout avec ce code retour.
+    /// Ran to the end with this return code.
     Completed {
-        /// Code retour (`COND CODE`).
+        /// Return code (`COND CODE`).
         return_code: u16,
     },
-    /// Fin anormale.
+    /// Abnormal end.
     Abended {
-        /// Code d'abend : `S0C7` (système) ou `U4038` (utilisateur).
+        /// Abend code: `S0C7` (system) or `U4038` (user).
         code: String,
-        /// Code raison, s'il est donné.
+        /// Reason code, if given.
         reason: Option<String>,
     },
-    /// Non exécuté (condition, JCL ERROR, step précédent en abend).
+    /// Did not run (condition codes, JCL ERROR, previous step abended).
     NotRun,
-    /// Issue inconnue : step en cours ou messages de fin absents.
+    /// Unknown outcome: step still running or end messages missing.
     Unknown,
 }
 
-/// Step d'un job.
+/// Job step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step {
-    /// Nom du step du job (`COBRUN`, `STEP010`).
+    /// Job step name (`COBRUN`, `STEP010`).
     pub name: String,
-    /// Nom du step dans la procédure appelée (`COBOL`, `GO`), le cas échéant.
+    /// Step name inside the called procedure (`COBOL`, `GO`), if any.
     pub proc_step: Option<String>,
-    /// Issue du step.
+    /// Outcome of the step.
     pub status: StepStatus,
-    /// Lignes occupées dans la DD.
+    /// Lines covered in the DD.
     pub lines: Range<usize>,
-    /// Ligne qui donne l'issue du step (`IEF142I`, `IEF472I`, ligne du
-    /// tableau de JESMSGLG…), à défaut la première ligne du step.
+    /// Line that gives the outcome (`IEF142I`, `IEF472I`, JESMSGLG step table
+    /// row…), otherwise the first line of the step.
     pub status_line: usize,
 }
 
 impl Step {
-    /// Nom affiché : `COBRUN.COBOL` pour un step de procédure, sinon `STEP010`.
+    /// Display name: `COBRUN.COBOL` for a procedure step, otherwise `STEP010`.
     pub fn display_name(&self) -> String {
         match &self.proc_step {
             Some(proc_step) => format!("{}.{}", self.name, proc_step),
@@ -122,78 +121,78 @@ impl Step {
     }
 }
 
-/// Origine d'une instruction de JESJCL, d'après ses deux premiers caractères.
+/// Origin of a JESJCL statement, from its first two characters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StatementOrigin {
-    /// `//` : écrite dans le job.
+    /// `//`: written in the job.
     Job,
-    /// `XX` ou `++` : issue d'une procédure (cataloguée ou in-stream).
+    /// `XX` or `++`: from a procedure (cataloged or in-stream).
     Procedure,
-    /// `X/` ou `+/` : instruction de procédure surchargée par le job.
+    /// `X/` or `+/`: procedure statement overridden by the job.
     Override,
 }
 
-/// Instruction JCL numérotée de JESJCL.
+/// Numbered JCL statement of JESJCL.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Statement {
-    /// Numéro d'instruction (cible des liens depuis JESYSMSG).
+    /// Statement number (target of links from JESYSMSG).
     pub number: u32,
-    /// Origine de l'instruction.
+    /// Origin of the statement.
     pub origin: StatementOrigin,
-    /// Nom (étiquette) : nom du job, du step ou de la DD.
+    /// Name field (label): job, step or DD name.
     pub name: Option<String>,
-    /// Opération : `JOB`, `EXEC`, `DD`, `PROC`, `SET`…
+    /// Operation: `JOB`, `EXEC`, `DD`, `PROC`, `SET`…
     pub operation: Option<String>,
-    /// Lignes occupées, continuations et commentaires suivants compris.
+    /// Lines covered, continuations and following comments included.
     pub lines: Range<usize>,
 }
 
-/// Fin du job, lue dans `$HASP395` et `IEF453I` (JESMSGLG).
+/// End of job, read from `$HASP395` and `IEF453I` (JESMSGLG).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum JobEnd {
-    /// Terminé avec ce code retour maximal.
+    /// Ended with this highest return code.
     ReturnCode(u16),
-    /// Terminé par un abend.
+    /// Ended with an abend.
     Abend(String),
-    /// Arrêté en JCL ERROR.
+    /// Stopped with a JCL ERROR.
     JclError,
-    /// Terminé sans précision.
+    /// Ended, no details.
     Ended,
 }
 
-/// DD de sortie (JESMSGLG, JESJCL, JESYSMSG, SYSPRINT…).
+/// Output DD (JESMSGLG, JESJCL, JESYSMSG, SYSPRINT…).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dd {
-    /// Nom de la DD, s'il est connu (nom de fichier, URI ou contenu).
+    /// DD name, if known (file name, URI or content).
     pub name: Option<String>,
-    /// Nature de la DD.
+    /// Kind of DD.
     pub kind: DdKind,
-    /// Nom du job, s'il apparaît dans la DD.
+    /// Job name, if the DD shows it.
     pub job_name: Option<String>,
-    /// Identifiant JES (`JOB00823`, `TSU00812`), tiré du chemin ou du contenu.
+    /// JES job ID (`JOB00823`, `TSU00812`), from the path or the content.
     pub job_id: Option<String>,
-    /// Vrai si la colonne 1 porte un caractère de contrôle ASA.
+    /// True if column 1 holds an ASA carriage-control character.
     pub has_asa: bool,
-    /// Nombre de lignes de la DD.
+    /// Number of lines in the DD.
     pub line_count: usize,
-    /// Messages reconnus, dans l'ordre du texte.
+    /// Recognized messages, in text order.
     pub messages: Vec<Message>,
-    /// Steps (JESYSMSG et tableau des steps de JESMSGLG).
+    /// Steps (JESYSMSG, and the JESMSGLG step table).
     pub steps: Vec<Step>,
-    /// Instructions JCL (JESJCL).
+    /// JCL statements (JESJCL).
     pub statements: Vec<Statement>,
-    /// Fin du job (JESMSGLG).
+    /// End of job (JESMSGLG).
     pub job_end: Option<JobEnd>,
 }
 
-/// Sysout complète d'un job : agrégat des DD ouvertes d'un même identifiant JES.
+/// Whole sysout of a job: aggregate of the open DDs with the same JES job ID.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Job {
-    /// Nom du job.
+    /// Job name.
     pub name: Option<String>,
-    /// Identifiant JES (`JOB01234`).
+    /// JES job ID (`JOB01234`).
     pub id: Option<String>,
-    /// DD dans l'ordre du spool.
+    /// DDs in spool order.
     pub dds: Vec<Dd>,
 }
 

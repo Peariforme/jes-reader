@@ -7,14 +7,14 @@ import {
   type ServerOptions,
 } from 'vscode-languageclient/node';
 
-/** Notre language id. */
+/** Our language ID. */
 const LANGUAGE = 'jes-sysout';
 
 /**
- * Language ids qu'IBM Z Open Editor attribue aux spools d'après leur nom
- * (`*JESYSMSG*`, `*SYSPRINT*`, `*JESMSGLG*`, `*JESJCL*`). Z Open Editor n'a
- * pas de serveur de langage pour eux : quand il est installé, il garde sa
- * coloration et nous ajoutons diagnostics, Outline et repliage.
+ * Language IDs that IBM Z Open Editor assigns to spool files by name
+ * (`*JESYSMSG*`, `*SYSPRINT*`, `*JESMSGLG*`, `*JESJCL*`). Z Open Editor has
+ * no language server for them: when it is installed it keeps its
+ * highlighting and we add diagnostics, the Outline and folding.
  */
 const ZOPEN_LANGUAGES = ['spool', 'jesmsglg', 'jesjcl'];
 
@@ -41,16 +41,16 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
   const command = serverPath(context);
   if (!command) {
     void vscode.window.showErrorMessage(
-      'JES Reader : binaire jes-reader-lsp introuvable. Renseigner « jesReader.serverPath » ' +
-        'ou lancer « npm run build:server ».',
+      'JES Reader: jes-reader-lsp binary not found. Set "jesReader.serverPath" ' +
+        'or run "npm run build:server".',
     );
     return;
   }
   const config = vscode.workspace.getConfiguration('jesReader');
   const serverOptions: ServerOptions = { command, args: [] };
   const clientOptions: LanguageClientOptions = {
-    // Sans `scheme` : fichiers locaux, documents sans titre et documents
-    // ouverts par Zowe Explorer (`zowe-jobs:`).
+    // No `scheme`: local files, untitled documents and documents opened
+    // by Zowe Explorer (`zowe-jobs:`).
     documentSelector: [LANGUAGE, ...ZOPEN_LANGUAGES].map((language) => ({ language })),
     initializationOptions: {
       maxReturnCode: config.get<number>('maxReturnCode', 4),
@@ -66,7 +66,7 @@ async function restart(context: vscode.ExtensionContext): Promise<void> {
   await start(context);
 }
 
-/** Binaire choisi par l'utilisateur, sinon binaire embarqué dans `server/`. */
+/** Binary chosen by the user, otherwise the one bundled in `server/`. */
 function serverPath(context: vscode.ExtensionContext): string | undefined {
   const configured = vscode.workspace.getConfiguration('jesReader').get<string>('serverPath');
   if (configured) {
@@ -77,7 +77,7 @@ function serverPath(context: vscode.ExtensionContext): string | undefined {
   return fs.existsSync(bundled) ? bundled : undefined;
 }
 
-/** Force le language id du document actif, quel que soit son nom. */
+/** Forces the language ID of the active document, whatever its name. */
 async function openAsSysout(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (editor) {

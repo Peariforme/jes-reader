@@ -2,11 +2,11 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00893/JES2/JESJCL.txt
-DD JESJCL (JesJcl), ASA : oui, 88 lignes
-job : JRS0C4 JOB00893
+file: JOB00893/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA: yes, 88 lines
+job: JRS0C4 JOB00893
 
-instructions :
+statements:
     1 L1-8 Job JRS0C4 JOB
     2 L9-9 Job COBRUN EXEC
     3 L10-15 Procedure IGYWCLG PROC
@@ -63,7 +63,7 @@ instructions :
    54 L87-87 Procedure SYSUDUMP DD
    55 L88-88 Procedure ? ENDIF
 
-messages :
+messages:
   L8 col.11-18 IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER S0C4',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
   L18 col.11-18 IEFC653I SUBSTITUTION JCL - DSNAME=IGY650.SIGYCOMP,DISP=SHR
   L20 col.11-18 IEFC653I SUBSTITUTION JCL - DSNAME=CEE.SCEERUN,DISP=SHR

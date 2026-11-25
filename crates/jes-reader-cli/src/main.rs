@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use jes_reader_core::{FindingSeverity, Options, analyze, parse_file};
 
-/// Analyse de sysouts JES2 z/OS.
+/// Analysis of z/OS JES2 sysouts.
 #[derive(Parser)]
 #[command(name = "jes-reader", version, about)]
 struct Cli {
@@ -15,12 +15,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Vérifie des sysouts et signale les erreurs (code de sortie 1 en cas d'erreur).
+    /// Checks sysouts and reports failures (exit code 1 if there is an error).
     Check {
-        /// Fichiers ou dossiers (une DD par fichier, comme les télécharge Zowe Explorer).
+        /// Files or directories (one DD per file, as Zowe Explorer downloads them).
         #[arg(required = true)]
         paths: Vec<PathBuf>,
-        /// Code retour au-delà duquel un step est signalé.
+        /// Return code above which a step is reported.
         #[arg(long, default_value_t = 4)]
         max_rc: u16,
     },
@@ -46,20 +46,19 @@ fn check(paths: &[PathBuf], options: &Options) -> Result<ExitCode> {
 
     let (mut errors, mut warnings) = (0, 0);
     for file in &files {
-        let bytes =
-            std::fs::read(file).with_context(|| format!("lecture de {}", file.display()))?;
-        // Une sysout peut contenir des octets mal convertis depuis l'EBCDIC : on les tolère.
+        let bytes = std::fs::read(file).with_context(|| format!("reading {}", file.display()))?;
+        // A sysout may contain bytes badly converted from EBCDIC: tolerate them.
         let text = String::from_utf8_lossy(&bytes);
         let dd = parse_file(&file.to_string_lossy(), &text);
         for finding in analyze(&dd, options) {
             let label = match finding.severity {
                 FindingSeverity::Error => {
                     errors += 1;
-                    "erreur"
+                    "error"
                 }
                 FindingSeverity::Warning => {
                     warnings += 1;
-                    "avertissement"
+                    "warning"
                 }
                 FindingSeverity::Information => "info",
             };
@@ -74,7 +73,7 @@ fn check(paths: &[PathBuf], options: &Options) -> Result<ExitCode> {
         }
     }
     println!(
-        "{} fichier(s), {errors} erreur(s), {warnings} avertissement(s)",
+        "{} file(s), {errors} error(s), {warnings} warning(s)",
         files.len()
     );
     Ok(if errors > 0 {
@@ -84,11 +83,11 @@ fn check(paths: &[PathBuf], options: &Options) -> Result<ExitCode> {
     })
 }
 
-/// Un fichier, ou tous les fichiers d'un dossier et de ses sous-dossiers.
+/// A file, or every file in a directory and its subdirectories.
 fn collect(path: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
     if path.is_dir() {
         let entries =
-            std::fs::read_dir(path).with_context(|| format!("lecture de {}", path.display()))?;
+            std::fs::read_dir(path).with_context(|| format!("reading {}", path.display()))?;
         for entry in entries {
             collect(&entry?.path(), files)?;
         }

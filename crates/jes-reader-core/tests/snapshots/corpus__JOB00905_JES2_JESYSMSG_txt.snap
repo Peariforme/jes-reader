@@ -2,14 +2,14 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00905/JES2/JESYSMSG.txt
-DD JESYSMSG (JesYsMsg), ASA : oui, 91 lignes
-job : JRS806 JOB00905
+file: JOB00905/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 91 lines
+job: JRS806 JOB00905
 
-steps :
-  L4-88 STEP010 : Abended { code: "S806", reason: Some("00000004") } (L81)
+steps:
+  L4-88 STEP010: Abended { code: "S806", reason: Some("00000004") } (L81)
 
-messages :
+messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:53:21 ON WEDNESDAY, NOVEMBER 25, 2026
   L2-3 col.2-9 IEFA111I JRS806 IS USING THE FOLLOWING JOB RELATED SETTINGS:
   L4 col.2-8 IEF236I ALLOC. FOR JRS806 STEP010
@@ -96,7 +96,7 @@ messages :
   L89 col.2-8 IEF375I JOB/JRS806  /START 2026329.0453
   L90-91 col.2-8 IEF033I JOB/JRS806  /STOP  2026329.0453
 
-constats :
-  L6 erreur [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND
-  L51 erreur [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
-  L81 erreur [S806] Step STEP010 : abend S806, raison 00000004
+findings:
+  L6 error [CSV003I] REQUESTED MODULE JRNOPGM  NOT FOUND
+  L51 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
+  L81 error [S806] Step STEP010: abend S806, reason 00000004

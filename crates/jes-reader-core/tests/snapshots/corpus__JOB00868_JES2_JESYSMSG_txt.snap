@@ -2,16 +2,16 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00868/JES2/JESYSMSG.txt
-DD JESYSMSG (JesYsMsg), ASA : oui, 38 lignes
-job : JRIDC8 JOB00868
+file: JOB00868/JES2/JESYSMSG.txt
+DD JESYSMSG (JesYsMsg), ASA: yes, 38 lines
+job: JRIDC8 JOB00868
 
-steps :
-  L4-15 STEP005 : Completed { return_code: 4 } (L7)
-  L16-27 STEP010 : Completed { return_code: 8 } (L19)
-  L28-35 STEP020 : NotRun (L28)
+steps:
+  L4-15 STEP005: Completed { return_code: 4 } (L7)
+  L16-27 STEP010: Completed { return_code: 8 } (L19)
+  L28-35 STEP020: NotRun (L28)
 
-messages :
+messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:12:29 ON WEDNESDAY, NOVEMBER 25, 2026
   L2-3 col.2-9 IEFA111I JRIDC8 IS USING THE FOLLOWING JOB RELATED SETTINGS:
   L4 col.2-8 IEF236I ALLOC. FOR JRIDC8 STEP005
@@ -37,6 +37,6 @@ messages :
   L36 col.2-8 IEF375I JOB/JRIDC8  /START 2026329.0442
   L37-38 col.2-8 IEF033I JOB/JRIDC8  /STOP  2026329.0442
 
-constats :
-  L19 avertissement [RC] Step STEP010 : code retour 8
-  L28 info [FLUSH] Step STEP020 non exécuté
+findings:
+  L19 warning [RC] Step STEP010: return code 8
+  L28 info [FLUSH] Step STEP020 did not run

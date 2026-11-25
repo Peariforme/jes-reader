@@ -2,6 +2,6 @@
 source: crates/jes-reader-core/tests/corpus.rs
 expression: "render(&relative, &dd)"
 ---
-fichier : JOB00885/COBOL/COBRUN/SYSPRINT.txt
-DD SYSPRINT (Other), ASA : oui, 121 lignes
-job : ? JOB00885
+file: JOB00885/COBOL/COBRUN/SYSPRINT.txt
+DD SYSPRINT (Other), ASA: yes, 121 lines
+job: ? JOB00885

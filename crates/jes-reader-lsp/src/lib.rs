@@ -1,9 +1,9 @@
-//! Serveur LSP pour sysouts JES2, construit sur `lsp-server` (synchrone).
+//! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
-//! Chaque document ouvert est une DD, analysée à chaque modification :
-//! diagnostics poussés au client, Outline et repliage sur demande.
+//! Each open document is a DD, analysed on every change: diagnostics are
+//! pushed to the client, Outline and folding are served on request.
 //!
-//! Options d'initialisation (`initializationOptions`) :
+//! Initialization options (`initializationOptions`):
 //!
 //! ```json
 //! { "maxReturnCode": 4 }
@@ -29,7 +29,7 @@ use lsp_types::{
 
 use convert::Lines;
 
-/// Capacités annoncées au client.
+/// Capabilities announced to the client.
 pub fn capabilities() -> ServerCapabilities {
     ServerCapabilities {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
@@ -39,7 +39,7 @@ pub fn capabilities() -> ServerCapabilities {
     }
 }
 
-/// Document ouvert : son texte et son analyse.
+/// Open document: its text and its analysis.
 struct Document {
     text: String,
     dd: Dd,
@@ -51,7 +51,7 @@ struct Server<'a> {
     documents: HashMap<String, Document>,
 }
 
-/// Fait la poignée de main `initialize`, puis traite les messages jusqu'à `shutdown`.
+/// Performs the `initialize` handshake, then handles messages until `shutdown`.
 pub fn run(connection: &Connection) -> Result<()> {
     let caps = serde_json::to_value(capabilities())?;
     let params: InitializeParams = serde_json::from_value(connection.initialize(caps)?)?;
@@ -76,7 +76,7 @@ pub fn run(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
-/// Lit `maxReturnCode` dans les options d'initialisation, sinon valeur par défaut.
+/// Reads `maxReturnCode` from the initialization options, otherwise the default.
 fn options(init: Option<&serde_json::Value>) -> Options {
     let mut options = Options::default();
     if let Some(max) = init
@@ -100,7 +100,7 @@ impl Server<'_> {
             DidChangeTextDocument::METHOD => {
                 let params: <DidChangeTextDocument as LspNotification>::Params =
                     serde_json::from_value(not.params)?;
-                // Synchronisation complète : le dernier changement porte tout le texte.
+                // Full sync: the last change carries the whole text.
                 if let Some(change) = params.content_changes.into_iter().last() {
                     self.update(params.text_document.uri, change.text)?;
                 }
@@ -116,7 +116,7 @@ impl Server<'_> {
         Ok(())
     }
 
-    /// Analyse un document et publie ses diagnostics.
+    /// Analyses a document and publishes its diagnostics.
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
         let dd = parse_file(&decode_path(uri.path().as_str()), &text);
         let lines = Lines::new(&text);
@@ -159,7 +159,7 @@ impl Server<'_> {
             method => Response::new_err(
                 req.id,
                 ErrorCode::MethodNotFound as i32,
-                format!("méthode non prise en charge : {method}"),
+                format!("unsupported method: {method}"),
             ),
         };
         self.connection.sender.send(response.into())?;
@@ -171,8 +171,8 @@ impl Server<'_> {
     }
 }
 
-/// Décode les `%XX` d'un chemin d'URI. Le nom de la DD en dépend :
-/// `SYSPRINT%281%29.txt` doit redevenir `SYSPRINT(1).txt`.
+/// Decodes the `%XX` escapes of a URI path. The DD name depends on it:
+/// `SYSPRINT%281%29.txt` must become `SYSPRINT(1).txt` again.
 fn decode_path(path: &str) -> String {
     let bytes = path.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -201,7 +201,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn chemin_decode() {
+    fn decoded_path() {
         assert_eq!(
             decode_path("/c%3A/corpus/JOB00896/LKED/COBRUN/SYSPRINT%281%29.txt"),
             "/c:/corpus/JOB00896/LKED/COBRUN/SYSPRINT(1).txt"
@@ -211,7 +211,7 @@ mod tests {
     }
 
     #[test]
-    fn options_initialisation() {
+    fn initialization_options() {
         assert_eq!(options(None).max_return_code, 4);
         let init = serde_json::json!({ "maxReturnCode": 8 });
         assert_eq!(options(Some(&init)).max_return_code, 8);

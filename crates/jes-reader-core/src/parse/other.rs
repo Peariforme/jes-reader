@@ -1,5 +1,5 @@
-//! DD applicatives (`SYSPRINT`, `SYSOUT`, `CEEDUMP`…) : seulement les
-//! messages IBM en début de ligne.
+//! Application DDs (`SYSPRINT`, `SYSOUT`, `CEEDUMP`…): only IBM messages
+//! at the start of a line.
 //!
 //! ```text
 //! 0IDC3012I ENTRY JESREAD.INEXIST.DELETE NOT FOUND
@@ -7,8 +7,8 @@
 //!           Neither FILE STATUS nor an ERROR declarative were specified.
 //! ```
 //!
-//! L'identifiant est en col. 2 derrière un caractère ASA, en col. 1 sinon.
-//! Seules les lignes indentées prolongent un message.
+//! The ID is in column 2 after an ASA character, in column 1 otherwise.
+//! Only indented lines continue a message.
 
 use super::Messages;
 use crate::model::Dd;
