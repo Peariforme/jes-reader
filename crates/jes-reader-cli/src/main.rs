@@ -3,6 +3,7 @@ use std::process::ExitCode;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use jes_reader_core::rules::{self, Rules};
 use jes_reader_core::{FindingSeverity, Options, analyze, parse_file};
 
 /// Analysis of z/OS JES2 sysouts.
@@ -20,20 +21,43 @@ enum Command {
         /// Files or directories (one DD per file, as Zowe Explorer downloads them).
         #[arg(required = true)]
         paths: Vec<PathBuf>,
-        /// Return code above which a step is reported.
-        #[arg(long, default_value_t = 4)]
-        max_rc: u16,
+        /// Return code above which a step is reported (default 4, or the
+        /// rules file's max_return_code). Overrides the rules file.
+        #[arg(long)]
+        max_rc: Option<u16>,
+        /// House rules file. Default: .jesreader.toml in the current
+        /// directory, then in the home directory.
+        #[arg(long)]
+        rules: Option<PathBuf>,
     },
 }
 
 fn main() -> Result<ExitCode> {
     match Cli::parse().command {
-        Command::Check { paths, max_rc } => check(
-            &paths,
-            &Options {
-                max_return_code: max_rc,
-            },
-        ),
+        Command::Check {
+            paths,
+            max_rc,
+            rules,
+        } => {
+            let rules_file = rules.or_else(|| rules::find(&[PathBuf::from(".")]));
+            let mut rules = match &rules_file {
+                Some(path) => Rules::load(path).map_err(anyhow::Error::msg)?,
+                None => Rules::default(),
+            };
+            if max_rc.is_some() {
+                rules.max_return_code = max_rc;
+            }
+            if let Some(path) = &rules_file {
+                eprintln!("rules: {}", path.display());
+            }
+            check(
+                &paths,
+                &Options {
+                    rules,
+                    ..Options::default()
+                },
+            )
+        }
     }
 }
 

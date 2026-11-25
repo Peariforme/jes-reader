@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import {
@@ -64,6 +65,13 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     documentSelector: [LANGUAGE, ...ZOPEN_LANGUAGES].map((language) => ({ language })),
     initializationOptions: {
       maxReturnCode: config.get<number>('maxReturnCode', 4),
+      rulesFile: config.get<string>('rulesFile', ''),
+    },
+    // The server reloads the house rules when a rules file changes: in the
+    // workspace, in the home directory (Zowe documents often have no
+    // workspace), or the file chosen in the settings.
+    synchronize: {
+      fileEvents: rulesWatchers(config.get<string>('rulesFile', '')),
     },
     middleware: {
       // The JESJCL opened in the background may have been released by VS
@@ -87,6 +95,30 @@ async function restart(context: vscode.ExtensionContext): Promise<void> {
   await client?.stop();
   client = undefined;
   await start(context);
+}
+
+/** Watchers for the house rules files the server may read. */
+function rulesWatchers(rulesFile: string): vscode.FileSystemWatcher[] {
+  const watchers = [vscode.workspace.createFileSystemWatcher('**/.jesreader.toml')];
+  const home = os.homedir();
+  if (home) {
+    watchers.push(
+      vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(vscode.Uri.file(home), '.jesreader.toml'),
+      ),
+    );
+  }
+  if (rulesFile) {
+    watchers.push(
+      vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(
+          vscode.Uri.file(path.dirname(rulesFile)),
+          path.basename(rulesFile),
+        ),
+      ),
+    );
+  }
+  return watchers;
 }
 
 /** Binary chosen by the user, otherwise the one bundled in `server/`. */

@@ -91,6 +91,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Path to a `jes-reader-lsp` binary. Empty: use the one bundled with the extension."
+        },
+        "jesReader.rulesFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "House rules file (`.jesreader.toml`). Empty: `.jesreader.toml` at the root of the workspace, then in your home directory. See the README for the format."
         }
       }
     }

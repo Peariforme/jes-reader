@@ -3,7 +3,8 @@
 
 use lsp_server::{Connection, Message, Notification, Request, RequestId};
 use lsp_types::notification::{
-    DidCloseTextDocument, DidOpenTextDocument, Notification as _, PublishDiagnostics,
+    DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument, Notification as _,
+    PublishDiagnostics,
 };
 use lsp_types::request::{
     DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as _,
@@ -24,13 +25,17 @@ struct Client {
 
 impl Client {
     fn start() -> (Self, std::thread::JoinHandle<anyhow::Result<()>>) {
+        Self::start_with(InitializeParams::default())
+    }
+
+    fn start_with(params: InitializeParams) -> (Self, std::thread::JoinHandle<anyhow::Result<()>>) {
         let (server, connection) = Connection::memory();
         let handle = std::thread::spawn(move || jes_reader_lsp::run(&server));
         let mut client = Self {
             connection,
             next_id: 0,
         };
-        client.request("initialize", InitializeParams::default());
+        client.request("initialize", params);
         client.notify("initialized", serde_json::json!({}));
         (client, handle)
     }
@@ -359,4 +364,109 @@ fn outline_jesjcl() {
     client.request("shutdown", ());
     client.notify("exit", ());
     handle.join().unwrap().unwrap();
+}
+
+#[test]
+fn house_rules_are_applied_and_reloaded() {
+    let dir = std::env::temp_dir().join(format!("jes-reader-rules-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let rules = dir.join("team.toml");
+    std::fs::write(
+        &rules,
+        "[[messages]]\nid = \"IDI*\"\nseverity = \"ignore\"\n",
+    )
+    .unwrap();
+
+    let (client, handle) = Client::start_with(InitializeParams {
+        initialization_options: Some(serde_json::json!({
+            "rulesFile": rules.to_string_lossy(),
+        })),
+        ..InitializeParams::default()
+    });
+    let uri: Uri = "zowe-jobs:/zosmf/JOB00901/JRS013.JOB00901.JES2.JESYSMSG.4"
+        .parse()
+        .unwrap();
+    client.notify(
+        DidOpenTextDocument::METHOD,
+        DidOpenTextDocumentParams {
+            text_document: TextDocumentItem::new(
+                uri.clone(),
+                "jes-sysout".into(),
+                1,
+                corpus("JOB00901/JES2/JESYSMSG.txt"),
+            ),
+        },
+    );
+    let codes = |p: PublishDiagnosticsParams| -> Vec<String> {
+        p.diagnostics
+            .into_iter()
+            .filter_map(|d| match d.code {
+                Some(NumberOrString::String(code)) => Some(code),
+                _ => None,
+            })
+            .collect()
+    };
+    let first = codes(client.diagnostics());
+    assert!(first.contains(&"S013".to_owned()), "{first:?}");
+    assert!(!first.contains(&"IDI0078E".to_owned()), "{first:?}");
+
+    // The rules file changes: the open document is analysed again.
+    std::fs::write(&rules, "max_return_code = 4\n").unwrap();
+    client.notify(
+        DidChangeWatchedFiles::METHOD,
+        serde_json::json!({ "changes": [] }),
+    );
+    let second = codes(client.diagnostics());
+    assert!(second.contains(&"IDI0078E".to_owned()), "{second:?}");
+
+    client.stop(handle);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn invalid_house_rules_are_reported() {
+    let dir = std::env::temp_dir().join(format!("jes-reader-bad-rules-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let rules = dir.join("bad.toml");
+    std::fs::write(&rules, "max_rc = 4\n").unwrap();
+
+    let (server, connection) = Connection::memory();
+    let handle = std::thread::spawn(move || jes_reader_lsp::run(&server));
+    connection
+        .sender
+        .send(
+            Request::new(
+                RequestId::from(1),
+                "initialize".into(),
+                InitializeParams {
+                    initialization_options: Some(serde_json::json!({
+                        "rulesFile": rules.to_string_lossy(),
+                    })),
+                    ..InitializeParams::default()
+                },
+            )
+            .into(),
+        )
+        .unwrap();
+    assert!(matches!(
+        connection.receiver.recv().unwrap(),
+        Message::Response(_)
+    ));
+    connection
+        .sender
+        .send(Notification::new("initialized".into(), serde_json::json!({})).into())
+        .unwrap();
+    match connection.receiver.recv().unwrap() {
+        Message::Notification(n) if n.method == "window/showMessage" => {
+            let message = n.params["message"].as_str().unwrap().to_owned();
+            assert!(message.contains("max_rc"), "{message}");
+        }
+        other => panic!("expected window/showMessage, got {other:?}"),
+    }
+    let client = Client {
+        connection,
+        next_id: 1,
+    };
+    client.stop(handle);
+    std::fs::remove_dir_all(&dir).ok();
 }
