@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Smaller, faster package: the client is bundled with esbuild into a single file, and the VSIX no longer ships `node_modules` (10 files instead of 326).
+
 ## 0.1.0
 
 First release.
