@@ -29,6 +29,7 @@ Les fichiers de ce dossier ne subissent aucune conversion de fin de ligne (voir 
 | `sysout/JOB00823` | Validation Z Xplore | (fourni par Z Xplore) | RC=0 | DD applicative `SYSTSPRT` |
 | `sysout/TSU00812` | Session TSO (z/OSMF) | | session active | Préfixe `TSU`, pas de fin de job |
 | `sysout/JOB00868` | IDCAMS RC=8 | `jcl/idcams-rc8.jcl` | RC 4, RC 8, STEP020 `IEF202I` | `$HASP395 ENDED - RC=0008` |
+| `sysout/JOB00869` | JCL ERROR dans une procédure | `jcl/igz-open.jcl` sans `<userid>.LOAD` | step COBOL RC=0, LKED `IEFA107I` sur `SYSLMOD`, `IEF453I` | JCL ERROR après un step exécuté ; avertissements de conversion numérotés (`IEF655I`, `IEF686I`) |
 | `sysout/JOB00884` | Allocation de LOAD | `jcl/setup-load.jcl` | RC=0 | Job minimal IEFBR14 |
 | `sysout/JOB00885` | IGZ | `jcl/igz-open.jcl` | `IGZ0035S`, U4038 | Steps de procédure, DD `SYSOUT` du step GO |
 | `sysout/JOB00889` | JCL ERROR | `jcl/jcl-error.jcl` | `IEFA107I`, `IEF453I` | `FLUSH` dans le tableau des steps |
@@ -43,11 +44,10 @@ Sur Z Xplore, S0C7 et S0C4 sortent en abend système, sans conversion LE en U403
 
 ## Cas restants
 
-| Cas | Idée |
+| Cas | JCL et attendu |
 | --- | --- |
-| JCL ERROR dans une procédure | Spool `JOB00869` (premier `igz-open`, `<userid>.LOAD` absent) |
-| IDCAMS RC=12 | Commande IDCAMS invalide |
-| Job long | Plusieurs pages, sauts de page ASA au milieu d'une DD |
+| IDCAMS RC=12 | `jcl/idcams-rc12.jcl` : mot-clé inconnu, `$HASP395 … RC=0012` |
+| Job long | `jcl/long.jcl` : une dizaine de steps, `IF/THEN/ELSE`, procédure in-stream appelée deux fois, SYSPRINT de plusieurs dizaines de pages, DD écrite sans ASA (IEBGENER) |
 
 Avant les jobs COBOL (s0c7, s0c4, s322, igz-open), soumettre une fois `jcl/setup-load.jcl` : la procédure `IGYWCLG` de Z Xplore range le module dans `<userid>.LOAD` et le job part en JCL ERROR si la bibliothèque n'existe pas.
 
