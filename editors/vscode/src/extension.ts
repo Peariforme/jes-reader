@@ -66,6 +66,11 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
         await openSiblingJcl(document);
         return next(document, position, token);
       },
+      // The hover shows the JCL statement a link leads to: same need.
+      provideHover: async (document, position, token, next) => {
+        await openSiblingJcl(document);
+        return next(document, position, token);
+      },
     },
   };
   client = new LanguageClient('jesReader', 'JES Reader', serverOptions, clientOptions);

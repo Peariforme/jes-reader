@@ -37,7 +37,7 @@ impl<'a> Lines<'a> {
     }
 
     /// Columns `columns` of line `n`.
-    fn span(&self, n: usize, columns: Range<usize>) -> LspRange {
+    pub fn span(&self, n: usize, columns: Range<usize>) -> LspRange {
         LspRange::new(
             self.position(n, columns.start),
             self.position(n, columns.end),

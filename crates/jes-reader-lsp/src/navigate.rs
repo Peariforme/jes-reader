@@ -6,9 +6,10 @@
 //! - On the line that gives a step's outcome (`IEF142I`, `IEF472I`, a row
 //!   of the JESMSGLG step table…): the EXEC statement of that step.
 
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 
-use jes_reader_core::{Dd, DdKind, Statement};
+use jes_reader_core::{Dd, DdKind, Statement, StepStatus};
 
 /// What the cursor points at.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,6 +43,78 @@ pub fn resolve<'a>(target: Target, from: &Dd, jcl: &'a Dd) -> Option<&'a Stateme
     match target {
         Target::Statement(number) => jcl.statement(number),
         Target::Step(index) => jcl.exec_statement(from.steps.get(index)?),
+    }
+}
+
+/// Columns of the target on its line: the statement number, or `None` for
+/// a step (the whole line is the target).
+pub fn target_columns(dd: &Dd, target: Target, line: usize) -> Option<Range<usize>> {
+    let Target::Statement(number) = target else {
+        return None;
+    };
+    let message = dd
+        .messages
+        .iter()
+        .find(|m| m.lines.start == line && m.statement == Some(number))?;
+    // `        11 IEF655I`: the number ends one space before the message ID.
+    let end = message.id_columns.start.checked_sub(1)?;
+    let start = end.checked_sub(number.to_string().len())?;
+    Some(start..end)
+}
+
+/// Longest JCL excerpt shown in a hover.
+const HOVER_LINES: usize = 12;
+
+/// Markdown hover for a target: what it is and, when JESJCL is available,
+/// the JCL statement it leads to.
+pub fn hover_text(target: Target, from: &Dd, jcl: Option<(&Dd, &str)>) -> String {
+    let mut out = match target {
+        Target::Statement(number) => format!("**JCL statement {number}**"),
+        Target::Step(index) => match from.steps.get(index) {
+            Some(step) => format!(
+                "**Step {}** · {}",
+                step.display_name(),
+                outcome(&step.status)
+            ),
+            None => String::new(),
+        },
+    };
+    let statement = jcl.and_then(|(dd, text)| Some((resolve(target, from, dd)?, text)));
+    let Some((statement, text)) = statement else {
+        out.push_str("\n\nThe JESJCL of this job is not available: open it to follow the link.");
+        return out;
+    };
+    if let Target::Step(_) = target {
+        out.push_str(&format!("\n\nEXEC statement {}:", statement.number));
+    }
+    out.push_str("\n\n```jcl\n");
+    let lines: Vec<&str> = text
+        .lines()
+        .skip(statement.lines.start)
+        .take(statement.lines.len())
+        .collect();
+    for line in lines.iter().take(HOVER_LINES) {
+        // Without the ASA column.
+        out.push_str(line.get(1..).unwrap_or("").trim_end());
+        out.push('\n');
+    }
+    if lines.len() > HOVER_LINES {
+        out.push_str("…\n");
+    }
+    out.push_str("```\n\nF12 or Ctrl+click: open it in JESJCL.");
+    out
+}
+
+fn outcome(status: &StepStatus) -> String {
+    match status {
+        StepStatus::Completed { return_code } => format!("return code {return_code}"),
+        StepStatus::Abended {
+            code,
+            reason: Some(reason),
+        } => format!("abend {code}, reason {reason}"),
+        StepStatus::Abended { code, reason: None } => format!("abend {code}"),
+        StepStatus::NotRun => "did not run".into(),
+        StepStatus::Unknown => "outcome unknown".into(),
     }
 }
 
@@ -88,6 +161,34 @@ mod tests {
         // On the step status line.
         assert_eq!(target_at(&dd, 2, 20), Some(Target::Step(0)));
         assert_eq!(target_at(&dd, 3, 1), None);
+    }
+
+    #[test]
+    fn hover_texts() {
+        let dd = parse_file("JOB00896/JES2/JESYSMSG.txt", SYSMSG);
+        let jcl_text = "        1 //JRS0C7   JOB (ACCT)\n\
+                        \x20       2 //COBRUN   EXEC IGYWCLG\n\
+                        \x20       4 XXCOBOL   EXEC PGM=IGYCRCTL,REGION=0M\n\
+                        \x20      11 //COBOL.SYSIN DD *\n";
+        let jcl = parse_file("JOB00896/JES2/JESJCL.txt", jcl_text);
+
+        assert_eq!(target_columns(&dd, Target::Statement(11), 1), Some(8..10));
+        assert_eq!(target_columns(&dd, Target::Step(0), 2), None);
+
+        let text = hover_text(Target::Statement(11), &dd, Some((&jcl, jcl_text)));
+        assert!(text.starts_with("**JCL statement 11**"), "{text}");
+        assert!(text.contains("      11 //COBOL.SYSIN DD *\n"), "{text}");
+
+        let text = hover_text(Target::Step(0), &dd, Some((&jcl, jcl_text)));
+        assert!(
+            text.starts_with("**Step COBRUN.COBOL** · return code 0"),
+            "{text}"
+        );
+        assert!(text.contains("EXEC statement 4:"), "{text}");
+        assert!(text.contains("XXCOBOL   EXEC PGM=IGYCRCTL"), "{text}");
+
+        let text = hover_text(Target::Statement(11), &dd, None);
+        assert!(text.contains("not available"), "{text}");
     }
 
     #[test]

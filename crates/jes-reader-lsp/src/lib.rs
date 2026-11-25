@@ -1,8 +1,8 @@
 //! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
 //! Each open document is a DD, analysed on every change: diagnostics are
-//! pushed to the client; Outline, folding and Go to Definition are served
-//! on request.
+//! pushed to the client; Outline, folding, Go to Definition and hovers are
+//! served on request.
 //!
 //! Initialization options (`initializationOptions`):
 //!
@@ -23,12 +23,13 @@ use lsp_types::notification::{
     Notification as LspNotification, PublishDiagnostics,
 };
 use lsp_types::request::{
-    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, Request as LspRequest,
+    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as LspRequest,
 };
 use lsp_types::{
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
-    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams,
-    Location, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
+    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, Hover,
+    HoverContents, HoverParams, HoverProviderCapability, InitializeParams, Location, MarkupContent,
+    MarkupKind, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
     TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
@@ -41,6 +42,7 @@ pub fn capabilities() -> ServerCapabilities {
         document_symbol_provider: Some(OneOf::Left(true)),
         folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
         definition_provider: Some(OneOf::Left(true)),
+        hover_provider: Some(HoverProviderCapability::Simple(true)),
         ..ServerCapabilities::default()
     }
 }
@@ -175,6 +177,11 @@ impl Server<'_> {
                 let location = self.definition(&at.text_document.uri, at.position);
                 Response::new_ok(req.id, location.map(GotoDefinitionResponse::Scalar))
             }
+            HoverRequest::METHOD => {
+                let params: HoverParams = serde_json::from_value(req.params)?;
+                let at = params.text_document_position_params;
+                Response::new_ok(req.id, self.hover(&at.text_document.uri, at.position))
+            }
             method => Response::new_err(
                 req.id,
                 ErrorCode::MethodNotFound as i32,
@@ -189,37 +196,73 @@ impl Server<'_> {
         self.documents.get(uri.as_str())
     }
 
-    /// JCL statement behind the cursor, in the JESJCL of the same job: an
-    /// open document first (the VS Code extension opens it in the background
-    /// for Zowe documents), otherwise `JESJCL.txt` next to a downloaded file.
-    fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
+    /// Document under `uri` and the link target at `position`, if any.
+    fn target(&self, uri: &Uri, position: Position) -> Option<(&Document, navigate::Target)> {
         let doc = self.document(uri)?;
         let line = usize::try_from(position.line).ok()?;
         let column = Lines::new(&doc.text).byte_column(line, position.character);
-        let target = navigate::target_at(&doc.dd, line, column)?;
+        Some((doc, navigate::target_at(&doc.dd, line, column)?))
+    }
 
+    /// JESJCL of the job `doc` belongs to: an open document first (the VS
+    /// Code extension opens it in the background for Zowe documents),
+    /// otherwise `JESJCL.txt` next to a downloaded file.
+    fn jcl_of(&self, doc: &Document) -> Option<Document> {
         if let Some(jcl) = self
             .documents
             .values()
             .find(|other| navigate::is_jcl_of(&other.dd, &doc.dd))
         {
-            let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
-            let range = Lines::new(&jcl.text).content(statement.lines.start);
-            return Some(Location::new(jcl.uri.clone(), range));
+            return Some(Document {
+                uri: jcl.uri.clone(),
+                text: jcl.text.clone(),
+                dd: jcl.dd.clone(),
+            });
         }
-
-        if !uri.as_str().starts_with("file:") {
+        if !doc.uri.as_str().starts_with("file:") {
             return None;
         }
-        let path = navigate::file_path(&decode_path(uri.path().as_str()));
+        let path = navigate::file_path(&decode_path(doc.uri.path().as_str()));
         let sibling = navigate::sibling_jcl(&path)?;
         let text = String::from_utf8_lossy(&std::fs::read(&sibling).ok()?).into_owned();
-        let jcl = parse_file(&sibling.to_string_lossy(), &text);
-        let statement = navigate::resolve(target, &doc.dd, &jcl)?;
-        let (directory, _) = uri.as_str().rsplit_once('/')?;
-        let sibling_uri: Uri = format!("{directory}/JESJCL.txt").parse().ok()?;
-        let range = Lines::new(&text).content(statement.lines.start);
-        Some(Location::new(sibling_uri, range))
+        let dd = parse_file(&sibling.to_string_lossy(), &text);
+        let (directory, _) = doc.uri.as_str().rsplit_once('/')?;
+        let uri = format!("{directory}/JESJCL.txt").parse().ok()?;
+        Some(Document { uri, text, dd })
+    }
+
+    /// JCL statement behind the cursor, in the JESJCL of the same job.
+    fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
+        let (doc, target) = self.target(uri, position)?;
+        let jcl = self.jcl_of(doc)?;
+        let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
+        let range = Lines::new(&jcl.text).content(statement.lines.start);
+        Some(Location::new(jcl.uri, range))
+    }
+
+    /// On a link target: the JCL statement it leads to, so that the reader
+    /// sees what is behind the link before following it.
+    fn hover(&self, uri: &Uri, position: Position) -> Option<Hover> {
+        let (doc, target) = self.target(uri, position)?;
+        let jcl = self.jcl_of(doc);
+        let value = navigate::hover_text(
+            target,
+            &doc.dd,
+            jcl.as_ref().map(|j| (&j.dd, j.text.as_str())),
+        );
+        let lines = Lines::new(&doc.text);
+        let line = usize::try_from(position.line).ok()?;
+        let range = match navigate::target_columns(&doc.dd, target, line) {
+            Some(columns) => lines.span(line, columns),
+            None => lines.content(line),
+        };
+        Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value,
+            }),
+            range: Some(range),
+        })
     }
 }
 

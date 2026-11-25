@@ -5,6 +5,7 @@
   "patterns": [
     { "include": "#banner" },
     { "include": "#timestamp" },
+    { "include": "#links" },
     { "include": "#jcl" },
     { "include": "#known-messages" },
     { "include": "#message-ids" },
@@ -14,6 +15,36 @@
     { "include": "#dataset-names" }
   ],
   "repository": {
+    "links": {
+      "comment": "Targets of Go to Definition, underlined so the reader sees what can be clicked: statement numbers of conversion messages, step names on step outcome lines and in the JESMSGLG step table. Must match crates/jes-reader-lsp/src/navigate.rs.",
+      "patterns": [
+        {
+          "match": "^ {1,9}(\\d+)(?= [A-Z]{3,5}\\d{3,5}[A-Z] )",
+          "captures": { "1": { "name": "markup.underline.link.statement.jes-sysout" } }
+        },
+        {
+          "match": "^ (IEF472I) (\\S+) ((?:\\S+ )?\\S+)(?= - )",
+          "captures": {
+            "1": { "name": "token.error-token.message-id.jes-sysout" },
+            "3": { "name": "markup.underline.link.step.jes-sysout" }
+          }
+        },
+        {
+          "match": "^ (IEF(?:142|202|272)I) (\\S+) ((?:\\S+ )?\\S+)(?= - )",
+          "captures": {
+            "1": { "name": "token.info-token.message-id.jes-sysout" },
+            "3": { "name": "markup.underline.link.step.jes-sysout" }
+          }
+        },
+        {
+          "match": "(?<=  -)(?!STEPNAME )([A-Z#$@][A-Z0-9#$@]{0,7})(?: +([A-Z#$@][A-Z0-9#$@]{0,7}))?(?= +(?:\\*?[SU][0-9A-F]{3,4}|FLUSH|\\d{2,4}) )",
+          "captures": {
+            "1": { "name": "markup.underline.link.step.jes-sysout" },
+            "2": { "name": "markup.underline.link.step.jes-sysout" }
+          }
+        }
+      ]
+    },
     "banner": {
       "comment": "JES2 banner at the top of JESMSGLG, statistics, and the JESYSMSG header.",
       "patterns": [

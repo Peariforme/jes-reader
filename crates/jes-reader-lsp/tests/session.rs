@@ -6,13 +6,13 @@ use lsp_types::notification::{
     DidCloseTextDocument, DidOpenTextDocument, Notification as _, PublishDiagnostics,
 };
 use lsp_types::request::{
-    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, Request as _,
+    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as _,
 };
 use lsp_types::{
     DiagnosticSeverity, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentSymbolParams, DocumentSymbolResponse, FoldingRange, FoldingRangeParams,
-    GotoDefinitionParams, GotoDefinitionResponse, InitializeParams, Location, NumberOrString,
-    Position, PublishDiagnosticsParams, TextDocumentIdentifier, TextDocumentItem,
+    GotoDefinitionParams, GotoDefinitionResponse, HoverParams, InitializeParams, Location,
+    NumberOrString, Position, PublishDiagnosticsParams, TextDocumentIdentifier, TextDocumentItem,
     TextDocumentPositionParams, Uri,
 };
 use serde_json::Value;
@@ -158,6 +158,40 @@ fn definition_with_open_jcl() {
     // Same step from the JESMSGLG step table.
     let location = client.definition(&msglg, 12, 25).unwrap();
     assert_eq!((location.uri, location.range.start.line), (jcl, 73));
+
+    // Hover on the abend line: the step outcome and its EXEC statement.
+    let hover = client.request(
+        HoverRequest::METHOD,
+        HoverParams {
+            text_document_position_params: TextDocumentPositionParams::new(
+                TextDocumentIdentifier::new(sysmsg.clone()),
+                Position::new(130, 5),
+            ),
+            work_done_progress_params: Default::default(),
+        },
+    );
+    let text = hover["contents"]["value"].as_str().unwrap();
+    assert!(
+        text.starts_with("**Step COBRUN.GO** · abend S0C7"),
+        "{text}"
+    );
+    assert!(text.contains("EXEC statement 46:"), "{text}");
+    assert!(text.contains("XXGO "), "{text}");
+    // No hover on a line that is not a link target.
+    assert!(
+        client
+            .request(
+                HoverRequest::METHOD,
+                HoverParams {
+                    text_document_position_params: TextDocumentPositionParams::new(
+                        TextDocumentIdentifier::new(sysmsg.clone()),
+                        Position::new(0, 3),
+                    ),
+                    work_done_progress_params: Default::default(),
+                },
+            )
+            .is_null()
+    );
 
     client.stop(handle);
 }
