@@ -1,8 +1,9 @@
 .vscode/**
 src/**
 scripts/**
+node_modules/**
 tsconfig.json
+eslint.config.mjs
 **/*.map
 *.vsix
 dist/**
-node_modules/.cache/**

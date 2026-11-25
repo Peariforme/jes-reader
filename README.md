@@ -51,7 +51,8 @@ Corpus snapshots (`crates/jes-reader-core/tests/snapshots`) are updated with `IN
 cd editors/vscode
 npm ci
 npm run build:server   # cargo build --release, copied into server/
-npm run compile
+npm run compile        # type check (tsc) and bundle (esbuild) into out/extension.js
+npm run lint           # ESLint
 ```
 
 Open `editors/vscode` in VS Code and run **JES Reader extension** (F5): a second window opens on `corpus/sysout`.

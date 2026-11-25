@@ -101,21 +101,26 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "typecheck": "tsc --noEmit -p ./",
+    "lint": "eslint .",
+    "compile": "npm run typecheck && node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "bundle": "node scripts/build.mjs --production",
     "build:server": "node scripts/build-server.mjs",
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run typecheck && npm run bundle",
     "package": "node scripts/package.mjs"
   },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1"
-  },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.14.0",
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "~4.1.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.15.0",
     "ovsx": "^0.10.1",
-    "typescript": "~5.6.3"
+    "typescript": "~5.6.3",
+    "typescript-eslint": "^8.74.0",
+    "vscode-languageclient": "^9.0.1"
   },
   "homepage": "https://github.com/Peariforme/jes-reader#readme",
   "bugs": {

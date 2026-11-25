@@ -62,8 +62,9 @@ writeFileSync(
     `${license('LICENSE-MIT')}\n\n${license('LICENSE-APACHE')}`,
 );
 
-// 4. Compile the client explicitly: vsce checks the entry point exists.
-execFileSync('npm', ['run', 'compile'], {
+// 4. Type-check and bundle the client (esbuild, minified): vsce checks the
+//    entry point exists, and the VSIX ships this single file.
+execFileSync('npm', ['run', 'vscode:prepublish'], {
   cwd: extension,
   stdio: 'inherit',
   shell: process.platform === 'win32',
@@ -72,7 +73,8 @@ execFileSync('npm', ['run', 'compile'], {
 // 5. Platform-specific VSIX.
 mkdirSync(join(extension, 'dist'), { recursive: true });
 const out = join('dist', `jes-reader-${target}-${version}.vsix`);
-execFileSync('npx', ['vsce', 'package', '--target', target, '--out', out], {
+// No node_modules: the client and its dependencies are in out/extension.js.
+execFileSync('npx', ['vsce', 'package', '--no-dependencies', '--target', target, '--out', out], {
   cwd: extension,
   stdio: 'inherit',
   shell: process.platform === 'win32',
