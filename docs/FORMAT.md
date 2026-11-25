@@ -20,7 +20,8 @@ Sources observées à ce jour :
 
 ## Caractère ASA (colonne 1)
 
-- **Présent dans toutes les DD, même téléchargées une par une.**
+- **Présent dans les DD JES2 et la plupart des DD applicatives, même téléchargées une par une.**
+- **Exception** : le rapport Fault Analyzer `IDIREPRT` n'en a pas (`JOB00901/STEP010/IDIREPRT.txt`). Le parser le détecte pour les DD applicatives : une DD porte l'ASA si chaque ligne non vide commence par ` `, `0`, `-`, `+` ou `1`.
 - `1` saut de page : 1re ligne de JESMSGLG (`JOB00823/JES2/JESMSGLG.txt`) et de `SYSTSPRT` (`1READY`, `JOB00823/VALIDATE/SYSTSPRT.txt`)
 - `0` double interligne : 2e ligne de JESMSGLG, et `0------ JES2 JOB STATISTICS ------`
 - `-` triple interligne : lignes des statistiques JES2 en fin de JESMSGLG
@@ -56,7 +57,7 @@ Sources observées à ce jour :
    04.12.31 JOB00823  -@VSC1    ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
   ```
 
-  Il donne le RC de chaque step sans avoir besoin de JESYSMSG. Un step non exécuté affiche `FLUSH` dans la colonne `RC`, décalé sous `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt` : `-STEP010           FLUSH`). Format exact selon l'installation (exit IEFACTRT) : _à confirmer sur d'autres systèmes_.
+  Il donne le RC de chaque step sans avoir besoin de JESYSMSG. Colonne `RC` en col. 39-44 : un abend système est précédé d'un astérisque (`*S0C7`, `JOB00896`), un abend utilisateur non (`U4038`, `JOB00885`). Un step non exécuté affiche `FLUSH` dans la colonne `RC`, décalé sous `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt` : `-STEP010           FLUSH`). Format exact selon l'installation (exit IEFACTRT) : _à confirmer sur d'autres systèmes_.
 - Fin de job, suivie du bloc `JES2 JOB STATISTICS`. Trois formes de `$HASP395` :
   - `ENDED - RC=0008` : RC max des steps (`JOB00868`)
   - `ENDED - ABEND=S0C4` ou `ABEND=U4038` (`JOB00893`, `JOB00885`)

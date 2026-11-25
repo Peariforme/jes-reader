@@ -1,0 +1,15 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00905/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA : oui, 9 lignes
+job : JRS806 JOB00905
+
+instructions :
+    1 L1-7 Job JRS806 JOB
+    2 L8-8 Job STEP010 EXEC
+    3 L9-9 Job SYSPRINT DD
+
+messages :
+  L7 col.11-18 IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER S806',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999

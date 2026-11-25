@@ -1,0 +1,24 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00869/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA : oui, 21 lignes
+job : JRIGZ JOB00869
+fin du job : JclError
+
+steps :
+  L10-10 COBRUN.COBOL : Completed { return_code: 0 } (L10)
+  L11-11 COBRUN.LKED : NotRun (L11)
+
+messages :
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-27 IEF677I WARNING MESSAGE(S) FOR JOB JRIGZ    ISSUED
+  L6 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:42:18 ON WEDNESDAY, NOVEMBER 25, 2026
+  L7 col.21-28 $HASP373 JRIGZ    STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L12 col.21-27 IEF453I JRIGZ - JOB FAILED - JCL ERROR
+  L14 col.21-28 $HASP395 JRIGZ    ENDED
+
+constats :
+  L12 erreur [IEF453I] JRIGZ - JOB FAILED - JCL ERROR
+  L11 info [FLUSH] Step COBRUN.LKED non exécuté

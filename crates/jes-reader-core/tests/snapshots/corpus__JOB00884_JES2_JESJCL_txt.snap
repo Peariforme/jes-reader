@@ -1,0 +1,16 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00884/JES2/JESJCL.txt
+DD JESJCL (JesJcl), ASA : oui, 16 lignes
+job : JRSETUP JOB00884
+
+instructions :
+    1 L1-10 Job JRSETUP JOB
+    2 L11-11 Job ALLOC EXEC
+    3 L12-16 Job LOAD DD
+
+messages :
+  L10 col.11-18 IEFC653I SUBSTITUTION JCL - (ACCT),'JES-READER SETUP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=Z99999
+  L15 col.11-18 IEFC653I SUBSTITUTION JCL - DSN=Z99999.LOAD,DISP=(NEW,CATLG),DSNTYPE=LIBRARY,RECFM=U,LRECL=0,BLKSIZE=32760,

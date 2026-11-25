@@ -1,0 +1,22 @@
+---
+source: crates/jes-reader-core/tests/corpus.rs
+expression: "render(&relative, &dd)"
+---
+fichier : JOB00889/JES2/JESMSGLG.txt
+DD JESMSGLG (JesMsgLg), ASA : oui, 19 lignes
+job : JRJCLERR JOB00889
+fin du job : JclError
+
+steps :
+  L9-9 STEP010 : NotRun (L9)
+
+messages :
+  L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
+  L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:48:57 ON WEDNESDAY, NOVEMBER 25, 2026
+  L6 col.21-28 $HASP373 JRJCLERR STARTED - INIT 1    - CLASS A        - SYS S0W1
+  L10 col.21-27 IEF453I JRJCLERR - JOB FAILED - JCL ERROR
+  L12 col.21-28 $HASP395 JRJCLERR ENDED
+
+constats :
+  L10 erreur [IEF453I] JRJCLERR - JOB FAILED - JCL ERROR
+  L9 info [FLUSH] Step STEP010 non exécuté
