@@ -85,3 +85,7 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Tests
         run: cargo test --workspace --locked
+      # The crates stay publishable on crates.io (metadata, packaged files).
+      - name: Package crates
+        if: runner.os == 'Linux'
+        run: cargo publish --workspace --dry-run --locked

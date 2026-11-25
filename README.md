@@ -13,6 +13,12 @@ It works on the spool files you open from [Zowe Explorer](https://marketplace.vi
 - **Folding** of steps, JCL statements and multi-line messages.
 - **Syntax highlighting** of message IDs, abend codes, return codes, dataset names and JCL statements.
 
+## Install
+
+- **VS Code**: the [JES Reader extension](https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader) bundles the language server. For a workstation without internet access, download the VSIX of your platform from a [GitHub release](https://github.com/Peariforme/jes-reader/releases) and run *Extensions: Install from VSIX…*; no admin rights are needed.
+- **CLI**: `cargo install jes-reader-cli` (binary `jes-reader`), or an archive from a GitHub release.
+- **Language server** for another editor: `cargo install jes-reader-lsp`.
+
 ## Repository layout
 
 | Path | Contents |
@@ -65,7 +71,9 @@ The `Package` workflow builds the VSIX and CLI archives for five platforms on ev
 
 1. Set the same version in `editors/vscode/package.json` and `Cargo.toml` — the workflow rejects a tag that does not match.
 2. Push a `vX.Y.Z` tag.
-3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes to the VS Code Marketplace when the repository variable `PUBLISH_MARKETPLACE` is `true`, and to Open VSX when the `OVSX_PAT` secret exists. The job can be re-run: an existing release gets its assets replaced.
+3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes to the VS Code Marketplace when the repository variable `PUBLISH_MARKETPLACE` is `true`, to Open VSX when the `OVSX_PAT` secret exists, and the three crates to crates.io when the variable `PUBLISH_CRATES` is `true`. The jobs can be re-run: an existing release gets its assets replaced, and a crate version already on crates.io is skipped.
+
+The version also appears in the `jes-reader-core` dependency of the root `Cargo.toml` (crates.io needs it); the workflow checks it too.
 
 **VS Code Marketplace** publishing uses [Trusted Publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension): GitHub proves the repository and workflow with an OIDC token (`vsce publish --oidc`, vsce 4), so no token is stored. Azure DevOps personal access tokens are not used: the global ones the Marketplace needed are being retired. Setup, once:
 
@@ -73,6 +81,14 @@ The `Package` workflow builds the VSIX and CLI archives for five platforms on ev
 2. If Trusted Publishing cannot create a new extension, upload the first VSIX of each platform by hand from the same page.
 3. On the publisher, under *Trusted Publishing*, add a policy for the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`.
 4. In the repository settings, add the Actions variable `PUBLISH_MARKETPLACE` = `true`.
+
+**crates.io** publishing uses [Trusted Publishing](https://crates.io/docs/trusted-publishing) as well: `rust-lang/crates-io-auth-action` exchanges GitHub's OIDC token for a short-lived publish token. Crates are published in dependency order: `jes-reader-core`, `jes-reader-lsp`, `jes-reader-cli`. Setup, once:
+
+1. A crate must exist before Trusted Publishing can be set up on it: publish the first version by hand, from the tagged commit, with an API token from [crates.io/settings/tokens](https://crates.io/settings/tokens): `cargo login`, then `cargo publish --workspace`.
+2. On each of the three crates, under *Settings → Trusted Publishing*, add the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`. Then revoke the API token.
+3. In the repository settings, add the Actions variable `PUBLISH_CRATES` = `true`.
+
+`cargo publish --workspace --dry-run` runs in CI so that the crates stay publishable.
 
 **Open VSX**: `OVSX_PAT` is an open-vsx.org token, after creating the namespace once with `npx ovsx create-namespace peariforme`.
 

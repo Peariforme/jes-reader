@@ -7,6 +7,12 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories = ["parser-implementations", "development-tools"]
+readme = "README.md"
+# Tests read the corpus at the root of the repository: not packaged.
+include = ["catalog.toml", "src/**/*.rs", "README.md"]
 
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }
