@@ -3,3 +3,6 @@ src/**
 scripts/**
 tsconfig.json
 **/*.map
+*.vsix
+dist/**
+node_modules/.cache/**
