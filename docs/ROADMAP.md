@@ -136,7 +136,7 @@ Goal: the tool reads the files that sites actually exchange, and colors what it 
 - JESYSMSG does not always start with `STMT NO. MESSAGE`: the header is only there when the JCL conversion wrote messages (`JOB00901` starts with `ICH70001I`). In a whole spool, JESYSMSG therefore starts at the first line after JESJCL that is not JCL; the continuation lines of `IEFC653I` in JESJCL start in column 11 without `//` (`JOB00884`).
 - JESYSMSG ends after `IEF033I` (end of job) and its continuation lines; a job still running has none, and JESYSMSG then runs to the end of the file.
 - Every corpus job, its DDs concatenated, is cut at the right lines (`spool::tests::every_corpus_job`).
-- First use at a client site (BMC AMI DevX): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes`, DDs concatenated with their ASA column and nothing in between, so v0.1.0 read it as one JESMSGLG; that site prints no step table, hence an empty Outline. With the whole-spool support the file is cut into DDs. Program messages in JESMSGLG (`+WLM644E`) are now read as messages, and the file name gives the job name and ID.
+- First use at a client site (BMC AMI DevX): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes`, DDs concatenated with their ASA column and nothing in between, so v0.1.0 read it as one JESMSGLG. Its step table has another layout (`-JOBNAME  STEPNAME PROCSTEP    RC …    CPU    SRB  CLOCK`, the name of a plain step under PROCSTEP), which the fixed columns of the parser missed, hence an empty Outline. The table columns now come from its header, and the whole-spool support cuts the file into DDs. Program messages in JESMSGLG (`+WLM644E`) are now read as messages, and the file name gives the job name and ID.
 
 ## Risks and open questions
 

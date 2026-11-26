@@ -390,13 +390,12 @@ mod tests {
     }
 
     /// Layout of a `.jes` file saved by BMC AMI DevX at a client site: every
-    /// DD concatenated, ASA column kept, no step table in JESMSGLG, program
-    /// messages (`+WLM644E`), a non-ASCII character in the JOB card.
+    /// DD concatenated, ASA column kept, program messages (`+WLM644E`), a
+    /// non-ASCII character in the JOB card.
     #[test]
     fn devx_jes_file() {
         let msglg: String = corpus("JOB00868/JES2/JESMSGLG.txt")
             .lines()
-            .filter(|l| l.get(18..21) != Some("  -"))
             .flat_map(|l| {
                 let extra = l.contains("$HASP373").then_some(
                     " 04.42.18 JOB00868  +WLM644E ******* PRODUCT GRACE PERIOD EXPIRED\n",
@@ -424,7 +423,7 @@ mod tests {
                 DdKind::Other
             ]
         );
-        assert!(dds[0].steps.is_empty(), "no step table");
+        assert_eq!(dds[0].steps.len(), 3, "step table of JESMSGLG");
         assert!(dds[0].messages.iter().any(|m| m.id == "WLM644E"));
         assert!(
             dds[1].statements.len() >= 8,

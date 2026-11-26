@@ -55,7 +55,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
    04.12.31 JOB00823  -@VSC1    ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
   ```
 
-  It gives each step's return code without JESYSMSG. `TCB` (CPU) and `SRB` are in minutes with two decimals, `CLOCK` (elapsed) in minutes with one decimal; values are right-aligned under their header, which the parser uses to find them. The `RC` column is columns 39-44: a system abend has a leading asterisk (`*S0C7`, `JOB00896`), a user abend does not (`U4038`, `JOB00885`). A step that did not run shows `FLUSH`, shifted under `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt`: `-STEP010           FLUSH`). The exact layout depends on the installation (IEFACTRT exit): _to be confirmed on other systems_.
+  It gives each step's return code without JESYSMSG. Its layout varies between sites (see "Whole spool" for another one): the parser reads the columns from its header. `TCB` (CPU) and `SRB` are in minutes with two decimals, `CLOCK` (elapsed) in minutes with one decimal; values are right-aligned under their header, which the parser uses to find them. The `RC` column is columns 39-44: a system abend has a leading asterisk (`*S0C7`, `JOB00896`), a user abend does not (`U4038`, `JOB00885`). A step that did not run shows `FLUSH`, shifted under `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt`: `-STEP010           FLUSH`). The exact layout depends on the installation (IEFACTRT exit): _to be confirmed on other systems_.
 - End of job, followed by the `JES2 JOB STATISTICS` block. `$HASP395` comes in three forms:
   - `ENDED - RC=0008`: highest step return code (`JOB00868`)
   - `ENDED - ABEND=S0C4` or `ABEND=U4038` (`JOB00893`, `JOB00885`)
@@ -106,7 +106,14 @@ Some tools save every DD of a job in one file, one after the other: BMC AMI DevX
 
 BMC AMI DevX, seen on a client workstation (screen captures, no file in the corpus): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes` (`…\.devx-workbench\templocaldatasetsfiles\…\<system>\<jobname>_<jobid>.jes`). The DDs are concatenated **as Zowe shows them, ASA column included**, with nothing in between: the JOB card of JESJCL comes right after the last statistics line of JESMSGLG, and JESYSMSG (`ICH70001I` first) right after the last JCL statement. Other findings there:
 
-- No step table in JESMSGLG: that site does not print it, so steps come from JESYSMSG only.
+- The JESMSGLG step table has another layout: a `JOBNAME` column first, `CPU` instead of `TCB`, a `STEPNO` column at the end, and the name of a plain step written under `PROCSTEP`:
+
+  ```
+  -JOBNAME  STEPNAME PROCSTEP    RC   EXCP    CPU    SRB  CLOCK   SERV  PG  PAGE  SWAP   VIO SWAPS STEPNO
+  -JRIDC8            STEP010     08     12    .00    .00    .00      1   0     0     0     0     0      2
+  ```
+
+  (values from the corpus). The parser therefore reads the columns from the header: names left-aligned under `STEPNAME` and `PROCSTEP`, the return code right-aligned under `RC`, times under `TCB` or `CPU` and `CLOCK`. A name under `PROCSTEP` alone is the step name.
 - Messages written by programs to the console have a `+` before their ID in JESMSGLG (`+WLM644E`, `+IDI0078E`); the ID starts one column later.
 - The accounting field of the JOB card may hold non-ASCII characters (`(ACCT£)`).
 
