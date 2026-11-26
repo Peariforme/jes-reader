@@ -10,7 +10,7 @@ JES Reader works on the spool files you open from [Zowe Explorer](https://market
 - **Outline**: in `JESMSGLG` and `JESYSMSG`, every step with its outcome (`RC 0`, `abend S0C7`, `not run`) and its program, procedure steps included (`COBRUN.GO`); in `JESJCL`, a `JOB → EXEC → procedure EXEC → DD` tree.
 - **Step summaries** (code lenses) above each step of `JESYSMSG`: name, program, return code or abend, CPU time and elapsed time, for example `STEP010 · IDCAMS · RC 8 · CPU 0.01 s · elapsed < 1 min`. The program comes from `JESJCL` (fetched in the background for Zowe documents, read next to downloaded files). Elapsed time in `JESYSMSG` is only known to the minute. Turn code lenses off with the `editor.codeLens` setting.
 - **Go to Definition** (Ctrl+click or F12) from `JESYSMSG` and `JESMSGLG` to the expanded JCL in `JESJCL`: on a statement number (`11 IEF655I …`) it opens statement 11; on a step's outcome line (`IEF142I`, `IEF472I`, a row of the step table) it opens the step's `EXEC`, inside the procedure for procedure steps. Link targets are underlined, and hovering one shows the JCL statement it leads to. For documents opened from Zowe Explorer, JES Reader fetches just the `JESJCL` DD in the background.
-- **Data set links** in documents opened from Zowe Explorer: Ctrl+click a data set name (`SYS1.MACLIB(JRNOMBR)`, `ISP.SISPEXEC`…) to open it, or the member, with Zowe Explorer, using the profile of the job.
+- **Data set links**: Ctrl+click a data set name (`SYS1.MACLIB(JRNOMBR)`, `ISP.SISPEXEC`…) to open it, or the member, with Zowe Explorer. A partitioned data set opens in Zowe Explorer's Data Sets view. Documents opened from Zowe Explorer use the profile of their job; for the others (BMC AMI DevX, downloaded files), set `jesReader.zoweProfile`.
 - **Folding** of steps, JCL statements and multi-line messages.
 - **Hovers on messages and abend codes**: a short explanation in our own words, the meaning of the reason code when known (`S013-18`: member not found), what to check, and links to IBM Docs: the message page of the z/OS 3.2 documentation for z/OS messages (`IEF`, `IEC`, `IGD`, `IEA`, `CSV`, `IDC`, `ICH`, `IRR`, `$HASP`, `CEE`), and a search for the others. Abend codes are recognized wherever they appear (`SYSTEM=0C7`, `*S0C7`, `ABEND=U4038`, `ABEND806-04`).
 - **Cause and effect**: in the Problems panel, a failed step points to the messages that explain it (for example `IEC141I` for an `S013`), and each of those messages points back to the step.
@@ -27,6 +27,10 @@ JES Reader works on the spool files you open from [Zowe Explorer](https://market
 - Any file whose first line is a JES2 header, a whole spool included when it starts with JESMSGLG (`J E S 2  J O B  L O G`, `STMT NO. MESSAGE`, or a numbered `JOB` card)
 
 For anything else, run **JES Reader: Open as Sysout** from the Command Palette.
+
+### With BMC AMI DevX
+
+The Job Explorer of BMC AMI DevX opens a job as one `.jes` file holding all its DDs. JES Reader cuts it into its DDs: one Outline entry per DD, the steps under `JESYSMSG`, and links from `JESYSMSG` to the `JESJCL` of the same file. For data set links, set `jesReader.zoweProfile` to the Zowe Explorer profile of the same system.
 
 ### With IBM Z Open Editor
 
@@ -73,6 +77,7 @@ Rules apply in file order: the first matching rule wins. A step rule needs a `na
 | `jesReader.maxReturnCode` | `4` | A step whose return code is above this value is reported as a warning. |
 | `jesReader.rulesFile` | `""` | House rules file. Empty: `.jesreader.toml` at the root of the workspace, then in your home directory. |
 | `jesReader.serverPath` | `""` | Path to a `jes-reader-lsp` binary. Empty: use the one bundled with the extension. |
+| `jesReader.zoweProfile` | `""` | Zowe Explorer profile for the data set links of documents that do not come from Zowe Explorer (BMC AMI DevX, downloaded files). Empty: links only in Zowe documents. |
 
 ## Commands
 

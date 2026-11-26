@@ -31,7 +31,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         void restart(context);
       }
     }),
-    vscode.workspace.onDidOpenTextDocument((document) => void openSiblingJcl(document)),
+    vscode.workspace.onDidOpenTextDocument((document) => {
+      void detectSysout(document);
+      void openSiblingJcl(document);
+    }),
     vscode.commands.registerCommand(OPEN_DATASET_COMMAND, openDataset),
     vscode.languages.registerDocumentLinkProvider(
       [LANGUAGE, ...ZOPEN_LANGUAGES].map((language) => ({ language })),
@@ -40,6 +43,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
   await start(context);
   for (const document of vscode.workspace.textDocuments) {
+    void detectSysout(document);
     void openSiblingJcl(document);
   }
 }
@@ -169,6 +173,35 @@ async function openSiblingJcl(document: vscode.TextDocument): Promise<void> {
   } catch {
     // Spool purged, DD not numbered as expected, Zowe not connected: links
     // are simply unavailable.
+  }
+}
+
+/**
+ * First line of a JES2 system DD, with or without the ASA column: JESMSGLG
+ * banner, JESYSMSG header, JESJCL JOB card. Same rule as `firstLine` in
+ * package.json.
+ */
+const JES2_FIRST_LINE =
+  /^(1?\s*J E S 2 {2}J O B {2}L O G|\s*STMT NO\. MESSAGE|\s{7,8}1 \/\/\S+\s+JOB\b)/;
+
+/**
+ * Plain text documents that are sysouts get our language. VS Code applies
+ * `firstLine` only when the file name gives no language, so a spool saved
+ * as `.txt` (BMC AMI DevX) would otherwise stay plain text.
+ */
+async function detectSysout(document: vscode.TextDocument): Promise<void> {
+  if (document.languageId !== 'plaintext') {
+    return;
+  }
+  for (let line = 0; line < Math.min(document.lineCount, 5); line++) {
+    const text = document.lineAt(line).text;
+    if (text.trim() === '') {
+      continue;
+    }
+    if (JES2_FIRST_LINE.test(text)) {
+      await vscode.languages.setTextDocumentLanguage(document, LANGUAGE);
+    }
+    return;
   }
 }
 

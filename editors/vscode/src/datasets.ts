@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 
 /**
- * Data set names in a sysout opened from Zowe Explorer become links that
- * open the data set (or member) through Zowe Explorer's file system:
- * `zowe-ds:/<profile>/<DSN>` or `zowe-ds:/<profile>/<PDS>/<MEMBER>`, the
- * profile being the one of the job (`zowe-jobs:/<profile>/…`).
+ * Data set names in a sysout become links that open the data set (or
+ * member) through Zowe Explorer's file system: `zowe-ds:/<profile>/<DSN>`
+ * or `zowe-ds:/<profile>/<PDS>/<MEMBER>`. The profile is the one of the job
+ * for documents opened from Zowe Explorer (`zowe-jobs:/<profile>/…`), and
+ * the `jesReader.zoweProfile` setting for the others (BMC AMI DevX,
+ * downloaded files). A PDS opens in Zowe Explorer's Data Sets view.
  */
 
 /**
@@ -56,6 +58,15 @@ export function zoweProfile(uri: vscode.Uri): string | undefined {
   return uri.path.split('/').filter(Boolean)[0];
 }
 
+/** Profile for the links of a document: its job's, otherwise the setting. */
+function linkProfile(uri: vscode.Uri): string | undefined {
+  const configured = vscode.workspace
+    .getConfiguration('jesReader')
+    .get<string>('zoweProfile', '')
+    .trim();
+  return zoweProfile(uri) ?? (configured || undefined);
+}
+
 /** `zowe-ds:` URI of a data set or member for a profile. */
 export function datasetUri(profile: string, reference: DatasetReference): vscode.Uri {
   const path = reference.member
@@ -67,25 +78,68 @@ export function datasetUri(profile: string, reference: DatasetReference): vscode
 /** Command run by the links: opens a `zowe-ds:` URI in an editor. */
 export const OPEN_DATASET_COMMAND = 'jesReader.openDataset';
 
-export async function openDataset(uri: string, name: string): Promise<void> {
+export async function openDataset(
+  uri: string,
+  name: string,
+  profile?: string,
+  dsn?: string,
+): Promise<void> {
   try {
     const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
     await vscode.window.showTextDocument(document, { preview: true });
   } catch (error) {
     const directory =
       error instanceof vscode.FileSystemError && error.code === 'FileIsADirectory';
+    if (directory && profile && dsn) {
+      await openPartitioned(vscode.Uri.parse(uri), profile, dsn);
+      return;
+    }
     void vscode.window.showWarningMessage(
-      directory
-        ? `JES Reader: ${name} is a partitioned data set. Open one of its members from Zowe Explorer.`
-        : `JES Reader: could not open ${name} through Zowe Explorer (${error instanceof Error ? error.message : String(error)}).`,
+      `JES Reader: could not open ${name} through Zowe Explorer (${error instanceof Error ? error.message : String(error)}).`,
     );
   }
 }
 
-/** Links on data set names, for documents opened from Zowe Explorer only. */
+/**
+ * A PDS cannot be opened in an editor: show it in Zowe Explorer's Data Sets
+ * view, filtered on its name (`zowe.ds.setDataSetFilter`, profile and
+ * pattern). If Zowe Explorer does not have that command, offer its members
+ * in a quick pick instead.
+ */
+async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('zowe.ds.setDataSetFilter', profile, dsn);
+    return;
+  } catch {
+    // Older or newer Zowe Explorer without this command: fall back below.
+  }
+  try {
+    const entries = await vscode.workspace.fs.readDirectory(uri);
+    const members = entries.map(([member]) => member).sort();
+    const member = await vscode.window.showQuickPick(members, {
+      title: `${dsn}: ${members.length} member(s)`,
+      placeHolder: 'Member to open',
+    });
+    if (member) {
+      const document = await vscode.workspace.openTextDocument(
+        vscode.Uri.joinPath(uri, member),
+      );
+      await vscode.window.showTextDocument(document, { preview: true });
+    }
+  } catch (error) {
+    void vscode.window.showWarningMessage(
+      `JES Reader: could not list the members of ${dsn} (${error instanceof Error ? error.message : String(error)}).`,
+    );
+  }
+}
+
+/**
+ * Links on data set names: in documents opened from Zowe Explorer, and in
+ * the others when the `jesReader.zoweProfile` setting names a profile.
+ */
 export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
   provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
-    const profile = zoweProfile(document.uri);
+    const profile = linkProfile(document.uri);
     if (!profile) {
       return [];
     }
@@ -95,7 +149,9 @@ export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
         const uri = datasetUri(profile, reference).toString();
         const name = reference.member ? `${reference.dsn}(${reference.member})` : reference.dsn;
         const target = vscode.Uri.parse(
-          `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(JSON.stringify([uri, name]))}`,
+          `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(
+            JSON.stringify([uri, name, profile, reference.dsn]),
+          )}`,
         );
         const link = new vscode.DocumentLink(
           new vscode.Range(line, reference.start, line, reference.end),

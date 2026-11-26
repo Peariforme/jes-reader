@@ -40,13 +40,14 @@
         ],
         "extensions": [
           ".sysout",
-          ".joblog"
+          ".joblog",
+          ".jes"
         ],
         "filenamePatterns": [
           "**/{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9]/**/*.txt",
           "*.{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9].*.*.[0-9]*"
         ],
-        "firstLine": "^(1\\s+J E S 2  J O B  L O G|\\s+STMT NO\\. MESSAGE|\\s{8}1 //\\S+\\s+JOB\\b)",
+        "firstLine": "^(1?\\s*J E S 2  J O B  L O G|\\s*STMT NO\\. MESSAGE|\\s{7,8}1 //\\S+\\s+JOB\\b)",
         "configuration": "./language-configuration.json"
       }
     ],
@@ -96,6 +97,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "House rules file (`.jesreader.toml`). Empty: `.jesreader.toml` at the root of the workspace, then in your home directory. See the README for the format."
+        },
+        "jesReader.zoweProfile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Zowe Explorer profile used to open the data sets named in documents that do not come from Zowe Explorer (opened from BMC AMI DevX, downloaded files). Empty: data set names are links only in documents opened from Zowe Explorer, which use the profile of their job."
         }
       }
     },

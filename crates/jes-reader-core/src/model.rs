@@ -260,9 +260,17 @@ impl Dd {
         Some(expanded.unwrap_or(&self.statements[job_exec]))
     }
 
-    /// True if `self` is the JESJCL of the job `dd` belongs to.
+    /// True if `self` is the JESJCL of the job `dd` belongs to: same JES job
+    /// ID, or, when one of them has none (a document whose name does not
+    /// give it), same job name.
     pub fn is_jcl_of(&self, dd: &Dd) -> bool {
-        self.kind == DdKind::JesJcl && self.job_id.is_some() && self.job_id == dd.job_id
+        if self.kind != DdKind::JesJcl || std::ptr::eq(self, dd) {
+            return false;
+        }
+        match (&self.job_id, &dd.job_id) {
+            (Some(a), Some(b)) => a == b,
+            _ => self.job_name.is_some() && self.job_name == dd.job_name,
+        }
     }
 
     /// Fills the program of each step from `jcl`, the JESJCL of the same
@@ -419,6 +427,20 @@ mod tests {
             step("X", None),
         ];
         sysmsg.attach_programs(&jcl);
+        // Neither job ID nor job name: not the same job.
+        assert!(!jcl.is_jcl_of(&sysmsg));
+        let mut other_run = sysmsg.clone();
+        other_run.job_id = Some("JOB00002".into());
+        let mut jcl_with_id = jcl.clone();
+        jcl_with_id.job_id = Some("JOB00001".into());
+        assert!(!jcl_with_id.is_jcl_of(&other_run));
+        // Without IDs, the job name decides.
+        other_run.job_id = None;
+        other_run.job_name = Some("JRS0C7".into());
+        jcl_with_id.job_name = Some("JRS0C7".into());
+        assert!(jcl_with_id.is_jcl_of(&other_run));
+        other_run.job_name = Some("OTHER".into());
+        assert!(!jcl_with_id.is_jcl_of(&other_run));
         let programs: Vec<_> = sysmsg.steps.iter().map(|s| s.program.as_deref()).collect();
         assert_eq!(programs, [Some("*.LKED.SYSLMOD"), Some("IDCAMS"), None]);
     }

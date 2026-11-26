@@ -16,10 +16,14 @@ messages:
   L6 col.21-28 $HASP373 JRS806   STARTED - INIT 1    - CLASS A        - SYS S0W1
   L7 col.21-27 CSV003I REQUESTED MODULE JRNOPGM  NOT FOUND
   L8 col.21-27 CSV028I ABEND806-04  JOBNAME=JRS806    STEPNAME=STEP010
+  L9 col.22-29 IDI0001I Fault Analyzer V15R1M10 (UO07033 2026/03/05) invoked by IDIXDCAP using SVTSC.PARMLIB(IDICNF00)
+  L10 col.22-29 IDI0078E Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
+  L11 col.22-29 IDI0002I The system load of module JRNOPGM failed
   L12 col.21-27 IEA848I NO DUMP WAS PRODUCED FOR THIS ABEND, DUE TO SYSTEM OR INSTALLATION REQUEST
   L13 col.21-27 IEF450I JRS806 STEP010 - ABEND=S806 U0000 REASON=00000004
   L18 col.21-28 $HASP395 JRS806   ENDED - ABEND=S806
 
 findings:
   L7 error [CSV003I] Module not found: REQUESTED MODULE JRNOPGM  NOT FOUND
+  L10 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
   L16 error [S806] Step STEP010: abend S806 (Module not found)
