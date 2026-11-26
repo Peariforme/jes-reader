@@ -25,4 +25,5 @@ serde_json = "1.0.154"
 workspace = true
 
 [dev-dependencies]
+crossbeam-channel = "0.5.17"
 serde = "1.0.229"

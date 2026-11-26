@@ -99,6 +99,12 @@ Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a 
 
 A data set link, or the `JESJCL` that JES Reader fetches in the background for a Zowe spool, goes through Zowe Explorer, which may ask for your credentials. If you cancel that prompt, Zowe Explorer may refuse every read from then on (`AuthCancelledError: User cancelled previous authentication`), even after you connect from its tree; run **Developer: Reload Window** to start again. To avoid it, connect from Zowe Explorer before following links.
 
+### Diagnosing slowness
+
+The **JES Reader** output channel (View → Output) logs the start of the language server, the analysis of each document (lines, DDs found with their lines and column offset, diagnostics, time), requests slower than 20 ms, the data set links computed for each document, and the `JESJCL` fetched in the background. Set its level to Trace (gear icon of the Output view) to see more. Set `jesReader.trace.server` to `messages` to log every exchange with the language server and its duration.
+
+All extensions share one extension host: when links or hovers come late although JES Reader's log shows short times, another extension is busy. *Developer: Show Running Extensions* and *Developer: Start Extension Host Profile* show which one.
+
 ## Feedback
 
 Issues and suggestions: [github.com/Peariforme/jes-reader](https://github.com/Peariforme/jes-reader/issues). Please never attach a real customer sysout — describe the message pattern instead.

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { documentName, log, since } from './log';
 
 /**
  * Data set names in a sysout become links that open the data set (or
@@ -85,15 +86,22 @@ export async function openDataset(
   dsn?: string,
 ): Promise<void> {
   const target = vscode.Uri.parse(uri);
+  const started = performance.now();
+  log.info(`opening ${name}: ${uri}`);
   // A PDS is a directory in Zowe Explorer's file system: ask first.
   if (profile && dsn && (await isDirectory(target))) {
+    log.info(`${name} is a partitioned data set (${since(started)})`);
     await openPartitioned(target, profile, dsn);
     return;
   }
   try {
     const document = await vscode.workspace.openTextDocument(target);
     await vscode.window.showTextDocument(document, { preview: true });
+    log.info(`${name} opened in ${since(started)}`);
   } catch (error) {
+    log.warn(
+      `${name} not opened in ${since(started)}: ${error instanceof Error ? error.message : String(error)}`,
+    );
     if (profile && dsn && isDirectoryError(error)) {
       await openPartitioned(target, profile, dsn);
       return;
@@ -158,9 +166,13 @@ export function isDirectoryError(error: unknown): boolean {
 async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): Promise<void> {
   try {
     await vscode.commands.executeCommand('zowe.ds.setDataSetFilter', profile, dsn);
+    log.info(`${dsn} shown in Zowe Explorer's Data Sets view`);
     return;
-  } catch {
+  } catch (error) {
     // Older or newer Zowe Explorer without this command: fall back below.
+    log.warn(
+      `zowe.ds.setDataSetFilter failed, listing the members instead: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
   try {
     const entries = await vscode.workspace.fs.readDirectory(uri);
@@ -209,9 +221,15 @@ export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
     }
     const cached = this.cache.get(document);
     if (cached && cached.version === document.version && cached.profile === profile) {
+      log.trace(`${documentName(document.uri)}: ${cached.links.length} data set link(s), cached`);
       return cached.links;
     }
+    const started = performance.now();
     const links = documentLinks(document, profile);
+    log.info(
+      `${documentName(document.uri)}: ${links.length} data set link(s) in ${since(started)} ` +
+        `(${document.lineCount} lines, profile ${profile})`,
+    );
     this.cache.set(document, { version: document.version, profile, links });
     return links;
   }

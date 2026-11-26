@@ -72,6 +72,7 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
         job_name: source.job_name.clone(),
         job_id: source.job_id.clone(),
         has_asa,
+        column_offset: offset,
         first_line: 0,
         line_count: lines.len(),
         messages: Vec::new(),

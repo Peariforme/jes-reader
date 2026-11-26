@@ -23,13 +23,14 @@ mod navigate;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::time::Instant;
 
 use anyhow::Result;
 use jes_reader_core::{Dd, DdKind, Options, Rules, analyze, parse_document, parse_file};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, Response};
 use lsp_types::notification::{
     DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
-    Notification as LspNotification, PublishDiagnostics, ShowMessage,
+    LogMessage, Notification as LspNotification, PublishDiagnostics, ShowMessage,
 };
 use lsp_types::request::{
     CodeLensRefresh, CodeLensRequest, DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition,
@@ -39,8 +40,8 @@ use lsp_types::{
     CodeLensOptions, CodeLensParams, Diagnostic, DocumentSymbolParams, DocumentSymbolResponse,
     FoldingRangeParams, FoldingRangeProviderCapability, GotoDefinitionParams,
     GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
-    InitializeParams, Location, MarkupContent, MarkupKind, MessageType, OneOf, Position,
-    PublishDiagnosticsParams, SemanticTokensFullOptions, SemanticTokensOptions,
+    InitializeParams, Location, LogMessageParams, MarkupContent, MarkupKind, MessageType, OneOf,
+    Position, PublishDiagnosticsParams, SemanticTokensFullOptions, SemanticTokensOptions,
     SemanticTokensParams, SemanticTokensResult, SemanticTokensServerCapabilities,
     ServerCapabilities, ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
@@ -152,6 +153,12 @@ pub fn run(connection: &Connection) -> Result<()> {
             .unwrap_or(false),
         sent_requests: 0,
     };
+    server.log(format!(
+        "jes-reader-lsp {} started (process {}), {} workspace folder(s)",
+        env!("CARGO_PKG_VERSION"),
+        std::process::id(),
+        server.workspace.len()
+    ));
     server.load_rules()?;
 
     // A request or notification that fails or panics is reported and
@@ -165,23 +172,63 @@ pub fn run(connection: &Connection) -> Result<()> {
                     return Ok(());
                 }
                 let (id, method) = (req.id.clone(), req.method.clone());
+                let started = Instant::now();
                 if let Err(error) = guarded(|| server.request(req)) {
                     eprintln!("jes-reader-lsp: {method} failed: {error}");
+                    server.log(format!("{method} failed: {error}"));
                     let response =
                         Response::new_err(id, ErrorCode::InternalError as i32, error.clone());
                     connection.sender.send(response.into())?;
+                }
+                let elapsed = started.elapsed();
+                if elapsed >= SLOW_REQUEST {
+                    server.log(format!("{method}: {}", millis(elapsed)));
                 }
             }
             Message::Notification(not) => {
                 let method = not.method.clone();
                 if let Err(error) = guarded(|| server.notification(not)) {
                     eprintln!("jes-reader-lsp: {method} failed: {error}");
+                    server.log(format!("{method} failed: {error}"));
                 }
             }
             Message::Response(_) => {}
         }
     }
     Ok(())
+}
+
+/// Requests that take at least this long are logged.
+const SLOW_REQUEST: std::time::Duration = std::time::Duration::from_millis(20);
+
+/// `12.3 ms`
+fn millis(duration: std::time::Duration) -> String {
+    format!("{:.1} ms", duration.as_secs_f64() * 1000.0)
+}
+
+/// Last segment of a URI path, decoded: the document's file name.
+fn file_name(uri: &Uri) -> String {
+    let path = decode_path(uri.path().as_str());
+    path.rsplit(['/', '\\']).next().unwrap_or(&path).to_owned()
+}
+
+/// `JESMSGLG L1-47, JESJCL L48-60 (+1 column), step output L61-7500`
+fn describe_dds(dds: &[Dd]) -> String {
+    dds.iter()
+        .map(|dd| {
+            let name = dd.name.clone().unwrap_or_else(|| match dd.kind {
+                DdKind::Other => "step output".to_owned(),
+                kind => format!("{kind:?}"),
+            });
+            let offset = match dd.column_offset {
+                0 => String::new(),
+                n => format!(" ({n:+} column)"),
+            };
+            let lines = format!("L{}-{}", dd.first_line + 1, dd.first_line + dd.line_count);
+            format!("{name} {lines}{offset}")
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 /// Runs `handle`, turning an error or a panic into a message.
@@ -263,8 +310,14 @@ impl Server<'_> {
             .clone()
             .or_else(|| jes_reader_core::rules::find(&self.workspace));
         self.options.rules = match path.as_deref().map(Rules::load) {
-            Some(Ok(rules)) => rules,
+            Some(Ok(rules)) => {
+                if let Some(path) = &path {
+                    self.log(format!("house rules: {}", path.display()));
+                }
+                rules
+            }
             Some(Err(error)) => {
+                self.log(format!("house rules ignored: {error}"));
                 let params = ShowMessageParams {
                     typ: MessageType::WARNING,
                     message: format!("JES Reader: house rules ignored. {error}"),
@@ -274,16 +327,41 @@ impl Server<'_> {
                     .send(Notification::new(ShowMessage::METHOD.to_owned(), params).into())?;
                 Rules::default()
             }
-            None => Rules::default(),
+            None => {
+                self.log("house rules: none".to_owned());
+                Rules::default()
+            }
         };
         Ok(())
+    }
+
+    /// Writes a line to the client's log (the JES Reader output channel).
+    fn log(&self, message: String) {
+        let params = LogMessageParams {
+            typ: MessageType::INFO,
+            message,
+        };
+        // A closed connection is reported by the main loop.
+        let _ = self
+            .connection
+            .sender
+            .send(Notification::new(LogMessage::METHOD.to_owned(), params).into());
     }
 
     /// Analyses a document and publishes its diagnostics. A JESJCL also
     /// gives the programs of the other DDs of its job: those are analysed
     /// again, and published again if their diagnostics changed.
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
+        let started = Instant::now();
         let (dds, diagnostics) = self.analyse(&uri, &text);
+        self.log(format!(
+            "analysed {}: {} lines, {}; {} diagnostic(s) in {}",
+            file_name(&uri),
+            text.lines().count(),
+            describe_dds(&dds),
+            diagnostics.len(),
+            millis(started.elapsed())
+        ));
         let jcl = dds
             .iter()
             .find(|dd| dd.kind == DdKind::JesJcl && dd.job_id.is_some())
@@ -312,6 +390,10 @@ impl Server<'_> {
             .collect();
         for (key, uri, text) in &job {
             let (dds, diagnostics) = self.analyse(uri, text);
+            self.log(format!(
+                "analysed {} again with the programs of the JESJCL",
+                file_name(uri)
+            ));
             let Some(doc) = self.documents.get_mut(key) else {
                 continue;
             };

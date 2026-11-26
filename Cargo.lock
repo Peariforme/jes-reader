@@ -244,6 +244,7 @@ name = "jes-reader-lsp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "crossbeam-channel",
  "jes-reader-core",
  "lsp-server",
  "lsp-types",
