@@ -7,9 +7,9 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 38 lines
 job: JRIDC8 JOB00868
 
 steps:
-  L4-15 STEP005: Completed { return_code: 4 } (L7)
-  L16-27 STEP010: Completed { return_code: 8 } (L19)
-  L28-35 STEP020: NotRun (L28)
+  L4-15 STEP005: Completed { return_code: 4 } (L7) PGM=IDCAMS CPU 0.00 s elapsed < 1 min
+  L16-27 STEP010: Completed { return_code: 8 } (L19) PGM=IDCAMS CPU 0.00 s elapsed < 1 min
+  L28-35 STEP020: NotRun (L28) PGM=IEFBR14 CPU 0.00 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:12:29 ON WEDNESDAY, NOVEMBER 25, 2026

@@ -78,7 +78,7 @@ pub fn analyze(dd: &Dd, options: &Options) -> Vec<Finding> {
 
     for step in &dd.steps {
         let name = step.display_name();
-        let rule = rules.step(&step.name, &name);
+        let rule = rules.step(&step.name, &name, step.program.as_deref());
         let max_return_code = rule
             .and_then(|r| r.max_return_code)
             .or(rules.max_return_code)

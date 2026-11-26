@@ -8,7 +8,7 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use jes_reader_core::{Dd, FindingSeverity, Options, analyze, parse_file};
+use jes_reader_core::{Dd, FindingSeverity, Options, analyze, duration_text, parse_file};
 
 #[test]
 fn corpus() {
@@ -30,7 +30,13 @@ fn corpus() {
             .replace('\\', "/");
         let bytes = std::fs::read(&file).unwrap();
         let text = anonymize(&String::from_utf8_lossy(&bytes));
-        let dd = parse_file(&relative, &text);
+        let mut dd = parse_file(&relative, &text);
+        // Programs come from the JESJCL next to the file, as in the editor.
+        let jcl = file.with_file_name("JESJCL.txt");
+        if jcl.is_file() {
+            let jcl_text = anonymize(&String::from_utf8_lossy(&std::fs::read(&jcl).unwrap()));
+            dd.attach_programs(&parse_file(&jcl.to_string_lossy(), &jcl_text));
+        }
         let name: String = relative
             .chars()
             .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
@@ -88,9 +94,19 @@ fn render(path: &str, dd: &Dd) -> String {
     if !dd.steps.is_empty() {
         writeln!(s, "\nsteps:").unwrap();
         for step in &dd.steps {
+            let mut details = String::new();
+            if let Some(program) = &step.program {
+                write!(details, " PGM={program}").unwrap();
+            }
+            if let Some(cpu) = step.cpu {
+                write!(details, " CPU {}", duration_text(cpu)).unwrap();
+            }
+            if let Some(elapsed) = step.elapsed_text() {
+                write!(details, " elapsed {elapsed}").unwrap();
+            }
             writeln!(
                 s,
-                "  L{}-{} {}: {:?} (L{})",
+                "  L{}-{} {}: {:?} (L{}){details}",
                 step.lines.start + 1,
                 step.lines.end,
                 step.display_name(),
@@ -104,9 +120,14 @@ fn render(path: &str, dd: &Dd) -> String {
     if !dd.statements.is_empty() {
         writeln!(s, "\nstatements:").unwrap();
         for st in &dd.statements {
+            let program = st
+                .program
+                .as_ref()
+                .map(|p| format!(" PGM={p}"))
+                .unwrap_or_default();
             writeln!(
                 s,
-                "  {:>3} L{}-{} {:?} {} {}",
+                "  {:>3} L{}-{} {:?} {} {}{program}",
                 st.number,
                 st.lines.start + 1,
                 st.lines.end,

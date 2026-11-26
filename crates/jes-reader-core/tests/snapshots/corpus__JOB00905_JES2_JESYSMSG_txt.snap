@@ -7,7 +7,7 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 91 lines
 job: JRS806 JOB00905
 
 steps:
-  L4-88 STEP010: Abended { code: "S806", reason: Some("00000004") } (L81)
+  L4-88 STEP010: Abended { code: "S806", reason: Some("00000004") } (L81) PGM=JRNOPGM CPU 0.06 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:53:21 ON WEDNESDAY, NOVEMBER 25, 2026

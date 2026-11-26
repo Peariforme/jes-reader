@@ -14,8 +14,11 @@
 //! column 2 (`IGD17101I`, `IEC141I`).
 
 use super::{Messages, StepNames, value_after};
+use std::time::Duration;
+
 use crate::model::{Dd, Message, Step, StepStatus};
 use crate::msgid::message_id_at;
+use crate::source::is_job_id;
 
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     let mut messages = Messages::new();
@@ -32,6 +35,20 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     }
     dd.messages = messages.finish();
     dd.steps = steps(&dd.messages, &mut dd.job_name);
+    if dd.job_id.is_none() {
+        dd.job_id = job_id(&dd.messages);
+    }
+}
+
+/// JES job ID from the content, when the path does not give it: the spool
+/// data sets of the job carry it (`IEF285I   Z99999.JRIDC8.JOB00868.D0000103.?`).
+fn job_id(messages: &[Message]) -> Option<String> {
+    messages.iter().find_map(|m| {
+        m.text
+            .split(|c: char| c == '.' || c.is_whitespace())
+            .find(|word| is_job_id(word))
+            .map(str::to_owned)
+    })
 }
 
 /// `         2 IEFC001I …`: statement number in columns 2-10, message ID
@@ -62,6 +79,12 @@ struct Pending {
     /// than from an allocation or timestamp message.
     name_is_final: bool,
     status: Option<(StepStatus, usize)>,
+    /// `IEF373I` START, in minutes (see [`timestamp`]).
+    started: Option<u64>,
+    /// `IEF032I` STOP, in minutes.
+    stopped: Option<u64>,
+    /// `CPU` of `IEF032I`.
+    cpu: Option<Duration>,
 }
 
 impl Pending {
@@ -84,12 +107,21 @@ impl Pending {
         let start = self.start?;
         let (name, proc_step) = self.name?;
         let (status, status_line) = self.status.unwrap_or((StepStatus::Unknown, start));
+        let elapsed = self
+            .started
+            .zip(self.stopped)
+            .and_then(|(start, stop)| stop.checked_sub(start))
+            .map(|minutes| Duration::from_secs(minutes * 60));
         Some(Step {
             name,
             proc_step,
             status,
             lines: start..end,
             status_line,
+            program: None,
+            cpu: self.cpu,
+            elapsed,
+            elapsed_in_minutes: true,
         })
     }
 }
@@ -154,8 +186,11 @@ fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
                 {
                     pending.name = Some((name.trim().to_owned(), None));
                 }
+                pending.started = value_after(&m.text, "/START ").and_then(timestamp);
             }
             "IEF032I" => {
+                pending.stopped = value_after(&m.text, "/STOP ").and_then(timestamp);
+                pending.cpu = cpu(&m.text);
                 steps.extend(std::mem::take(&mut pending).into_step(m.lines.end));
             }
             _ => {}
@@ -164,6 +199,41 @@ fn steps(messages: &[Message], job_name: &mut Option<String>) -> Vec<Step> {
     // Step still running (active job) or missing end of step.
     steps.extend(pending.into_step(last_end));
     steps
+}
+
+/// `2026329.0442` (Julian date, hour and minute) as minutes since year 0,
+/// so that a step running over midnight or New Year still gets its
+/// elapsed time.
+fn timestamp(text: &str) -> Option<u64> {
+    let (date, time) = text.split_once('.')?;
+    if date.len() != 7
+        || time.len() != 4
+        || !(date.bytes().chain(time.bytes())).all(|c| c.is_ascii_digit())
+    {
+        return None;
+    }
+    let year: u64 = date[..4].parse().ok()?;
+    let day: u64 = date[4..].parse().ok()?;
+    let hour: u64 = time[..2].parse().ok()?;
+    let minute: u64 = time[2..].parse().ok()?;
+    let previous = year.checked_sub(1)?;
+    let days = previous * 365 + previous / 4 - previous / 100 + previous / 400 + day;
+    Some((days * 24 + hour) * 60 + minute)
+}
+
+/// `CPU:     0 HR  00 MIN  00.01 SEC` in an `IEF032I` message.
+fn cpu(text: &str) -> Option<Duration> {
+    let rest = &text[text.find("CPU:")? + 4..];
+    let words: Vec<&str> = rest.split_whitespace().take(6).collect();
+    let [hours, "HR", minutes, "MIN", seconds, "SEC"] = words[..] else {
+        return None;
+    };
+    let (whole, fraction) = seconds.split_once('.').unwrap_or((seconds, "0"));
+    let hundredths: u64 = format!("{fraction:0<2}").get(..2)?.parse().ok()?;
+    let seconds = hours.parse::<u64>().ok()? * 3600
+        + minutes.parse::<u64>().ok()? * 60
+        + whole.parse::<u64>().ok()?;
+    Some(Duration::from_millis(seconds * 1000 + hundredths * 10))
 }
 
 /// `COMPLETION CODE - SYSTEM=0C7 USER=0000 REASON=00000007`: system abend
@@ -193,6 +263,33 @@ mod tests {
         let line = "         2 IEFC001I PROCEDURE ZXP$$CHK WAS EXPANDED";
         assert_eq!(numbered_message(line), Some((2, 11..19)));
         assert_eq!(numbered_message(" IEF142I @VSC1"), None);
+    }
+
+    #[test]
+    fn timings() {
+        assert_eq!(
+            timestamp("2026329.0443").unwrap() - timestamp("2026329.0442").unwrap(),
+            1
+        );
+        // Over New Year (2024 is a leap year: 366 days).
+        assert_eq!(
+            timestamp("2025001.0001").unwrap() - timestamp("2024366.2359").unwrap(),
+            2
+        );
+        assert_eq!(timestamp("2026329"), None);
+        assert_eq!(
+            cpu("STEP/S /STOP  2026329.0442 CPU:     0 HR  01 MIN  02.35 SEC    SRB: 0 HR"),
+            Some(Duration::from_millis(62_350))
+        );
+        assert_eq!(cpu("STEP/S /STOP  2026329.0442"), None);
+
+        let text = " IEF142I JRIDC8 STEP005 - STEP WAS EXECUTED - COND CODE 0004\n\
+                    \x20IEF373I STEP/STEP005 /START 2026329.2359\n\
+                    \x20IEF032I STEP/STEP005 /STOP  2026330.0002\n\
+                    \x20        CPU:     0 HR  00 MIN  00.01 SEC    SRB:     0 HR  00 MIN  00.00 SEC\n";
+        let dd = crate::parse_file("JOB00868/JES2/JESYSMSG.txt", text);
+        assert_eq!(dd.steps[0].cpu, Some(Duration::from_millis(10)));
+        assert_eq!(dd.steps[0].elapsed, Some(Duration::from_secs(180)));
     }
 
     #[test]

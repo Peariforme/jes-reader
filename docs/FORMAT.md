@@ -14,7 +14,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Opened without downloading, the document is named `<jobname>.<jobid>.<step>.<DD>.<n>` (`JRIDC12.JOB00922.JES2.JESMSGLG.2`), where `n` is the DD number in the spool. For a TSO session the job name is the user ID (`Z99999.TSU00812.JES2.JESYSMSG.4`).
 - The trailing number is the JES data set ID. JES2 numbers the system DDs JESMSGLG 2, JESJCL 3, JESYSMSG 4 (`JRIDC12.JOB00922.JES2.JESMSGLG.2`, `Z99999.TSU00812.JES2.JESYSMSG.4`); the extension relies on it to open the JESJCL of a Zowe document.
 - Consequence for the parser: **the unit of parsing is the DD**. The file name (or URI) gives the DD; the content is the fallback (see "Detection").
-- Whole spool in a single file: _not observed yet_ (separator between DDs unknown).
+- Whole spool in a single file: see "Whole spool" below.
 
 ## ASA carriage control (column 1)
 
@@ -55,7 +55,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
    04.12.31 JOB00823  -@VSC1    ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
   ```
 
-  It gives each step's return code without JESYSMSG. The `RC` column is columns 39-44: a system abend has a leading asterisk (`*S0C7`, `JOB00896`), a user abend does not (`U4038`, `JOB00885`). A step that did not run shows `FLUSH`, shifted under `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt`: `-STEP010           FLUSH`). The exact layout depends on the installation (IEFACTRT exit): _to be confirmed on other systems_.
+  It gives each step's return code without JESYSMSG. Its layout varies between sites (see "Whole spool" for another one): the parser reads the columns from its header. `TCB` (CPU) and `SRB` are in minutes with two decimals, `CLOCK` (elapsed) in minutes with one decimal; values are right-aligned under their header, which the parser uses to find them. The `RC` column is columns 39-44: a system abend has a leading asterisk (`*S0C7`, `JOB00896`), a user abend does not (`U4038`, `JOB00885`). A step that did not run shows `FLUSH`, shifted under `PROCSTEP` (`JOB00889/JES2/JESMSGLG.txt`: `-STEP010           FLUSH`). The exact layout depends on the installation (IEFACTRT exit): _to be confirmed on other systems_.
 - End of job, followed by the `JES2 JOB STATISTICS` block. `$HASP395` comes in three forms:
   - `ENDED - RC=0008`: highest step return code (`JOB00868`)
   - `ENDED - ABEND=S0C4` or `ABEND=U4038` (`JOB00893`, `JOB00885`)
@@ -75,6 +75,7 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Symbol substitution: `IEFC653I SUBSTITUTION JCL - …` from column 11, with no number.
 - The JOB card carries the JES job ID at the end of the line (columns 83-90).
 - These statement numbers are the targets of the `STMT NO.` column in JESYSMSG.
+- The program of a step is the `PGM=` of its EXEC: `//STEP010  EXEC PGM=IDCAMS` (`JOB00868`), `XXCOBOL   EXEC PGM=IGYCRCTL,REGION=0M` in a procedure (`JOB00896`). An EXEC that calls a procedure has none (`//COBRUN   EXEC IGYWCLG`). The step that runs the module just link-edited names a referback, `PGM=*.LKED.SYSLMOD`. With a symbol (`PGM=&PROG`), the `IEFC653I SUBSTITUTION JCL` line that follows gives the resolved value.
 
 ## JESYSMSG
 
@@ -90,8 +91,35 @@ The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from
 - Continuation lines: usually indented (column 10 or more), without a message ID (`CPU: …`, `VIRT: …`, `SWA=ABOVE,…`).
 - **Pitfall**: some continuations start in column 2, like a new message. Examples: `IGD17101I` then ` NOT DEFINED BECAUSE DUPLICATE NAME EXISTS IN CATALOG` (`JOB00890`), `IEC141I 013-18,…` then ` SYS1.MACLIB(JRNOMBR)` (`JOB00901`). A line in column 2 only starts a new message if it begins with a valid message ID; otherwise it continues the previous one.
 - Step names in messages: `<job> <step>` for a plain step, `<job> <procstep> <step>` for a procedure step (`IEF142I JRS0C7 COBOL COBRUN - …`).
-- Step timestamps: `IEF373I STEP/<step>/START yyyyddd.hhmm` and `IEF032I STEP/<step>/STOP yyyyddd.hhmm` (Julian date).
+- Step timestamps: `IEF373I STEP/<step>/START yyyyddd.hhmm` and `IEF032I STEP/<step>/STOP yyyyddd.hhmm` (Julian date). To the minute only: the elapsed time read from them is approximate.
+- Step CPU: the first continuation line of `IEF032I`, `CPU:     0 HR  00 MIN  00.04 SEC    SRB:     0 HR  00 MIN  00.00 SEC` (`JOB00885`), to the hundredth of a second.
 - End of job: `IEF375I JOB/<job>/START …` and `IEF033I JOB/<job>/STOP …`.
+
+## Whole spool
+
+Some tools save every DD of a job in one file, one after the other: BMC AMI DevX JES Explorer does, and it is common at French sites. JES2 writes the system DDs first, in this order: JESMSGLG, JESJCL, JESYSMSG, then the step output.
+
+- JESMSGLG starts with its banner (`J E S 2  J O B  L O G`) and ends with the `JES2 JOB STATISTICS` block.
+- JESJCL starts with statement 1, the JOB card, and holds only JCL lines: text from column 11 after a number or a blank number field, `IEFC653I` substitution lines and their continuations included.
+- JESYSMSG starts with `STMT NO. MESSAGE`, or, without conversion messages, with the first line that is not JCL (`ICH70001I`, `JOB00901`). It ends with `IEF033I` (end of job) and its continuation lines.
+- The step output has no signature and its DD names are not in the text.
+
+BMC AMI DevX, seen on a client workstation (screen captures, no file in the corpus): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes` (`…\.devx-workbench\templocaldatasetsfiles\…\<system>\<jobname>_<jobid>.jes`). The DDs are concatenated **as Zowe shows them, ASA column included**, with nothing in between: the JOB card of JESJCL comes right after the last statistics line of JESMSGLG, and JESYSMSG (`ICH70001I` first) right after the last JCL statement. Other findings there:
+
+- The JESMSGLG step table has another layout: a `JOBNAME` column first, `CPU` instead of `TCB`, a `STEPNO` column at the end, and the name of a plain step written under `PROCSTEP`:
+
+  ```
+  -JOBNAME  STEPNAME PROCSTEP    RC   EXCP    CPU    SRB  CLOCK   SERV  PG  PAGE  SWAP   VIO SWAPS STEPNO
+  -JRIDC8            STEP010     08     12    .00    .00    .00      1   0     0     0     0     0      2
+  ```
+
+  (values from the corpus). The parser therefore reads the columns from the header: names left-aligned under `STEPNAME` and `PROCSTEP`, the return code right-aligned under `RC`, times under `TCB` or `CPU` and `CLOCK`. A name under `PROCSTEP` alone is the step name.
+- Messages written by programs to the console have a `+` before their ID in JESMSGLG (`+WLM644E`, `+IDI0078E`); the ID starts one column later.
+- The accounting field of the JOB card may hold non-ASCII characters (`(ACCT£)`).
+
+A JES2 DD **without** the ASA column (fields one column to the left) is also read, by adding a blank column; no tool producing it has been observed.
+
+_Not observed yet_: how the DDs of the step output follow one another (a page eject `1` in column 1 may be the only sign), and the line endings. The corpus has no whole spool: tests build them by concatenating corpus DDs.
 
 ## Detection (content, when the file name says nothing)
 

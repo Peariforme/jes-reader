@@ -7,9 +7,9 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 25 lines
 job: PDSBUILD JOB01933
 
 steps:
-  L2-8 DELETE: Completed { return_code: 0 } (L2)
-  L9-15 ALLOC: Completed { return_code: 0 } (L9)
-  L16-22 POPULATE: Completed { return_code: 0 } (L16)
+  L2-8 DELETE: Completed { return_code: 0 } (L2) CPU 0.00 s elapsed < 1 min
+  L9-15 ALLOC: Completed { return_code: 0 } (L9) CPU 0.00 s elapsed < 1 min
+  L16-22 POPULATE: Completed { return_code: 0 } (L16) CPU 0.02 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 09:30:13 ON WEDNESDAY, NOVEMBER 25, 2026

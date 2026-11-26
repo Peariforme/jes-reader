@@ -8,9 +8,9 @@ job: JRNOTCAT JOB00890
 end of job: JclError
 
 steps:
-  L9-9 STEP005: Completed { return_code: 0 } (L9)
-  L10-10 STEP010: Completed { return_code: 0 } (L10)
-  L11-11 STEP020: NotRun (L11)
+  L9-9 STEP005: Completed { return_code: 0 } (L9) PGM=IEFBR14 CPU 0.00 s elapsed 0.00 s
+  L10-10 STEP010: Completed { return_code: 0 } (L10) PGM=IEFBR14 CPU 0.00 s elapsed 0.00 s
+  L11-11 STEP020: NotRun (L11) PGM=IEFBR14 CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

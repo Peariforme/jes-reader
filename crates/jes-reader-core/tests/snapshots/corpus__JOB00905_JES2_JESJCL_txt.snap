@@ -8,7 +8,7 @@ job: JRS806 JOB00905
 
 statements:
     1 L1-7 Job JRS806 JOB
-    2 L8-8 Job STEP010 EXEC
+    2 L8-8 Job STEP010 EXEC PGM=JRNOPGM
     3 L9-9 Job SYSPRINT DD
 
 messages:

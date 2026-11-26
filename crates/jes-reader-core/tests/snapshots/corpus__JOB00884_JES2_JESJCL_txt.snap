@@ -8,7 +8,7 @@ job: JRSETUP JOB00884
 
 statements:
     1 L1-10 Job JRSETUP JOB
-    2 L11-11 Job ALLOC EXEC
+    2 L11-11 Job ALLOC EXEC PGM=IEFBR14
     3 L12-16 Job LOAD DD
 
 messages:

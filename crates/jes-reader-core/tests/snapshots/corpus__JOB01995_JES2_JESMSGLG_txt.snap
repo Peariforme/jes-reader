@@ -8,11 +8,11 @@ job: JCL2 JOB01995
 end of job: ReturnCode(0)
 
 steps:
-  L10-10 BEFORE: Completed { return_code: 0 } (L10)
-  L11-11 COBRUN.COBOL: Completed { return_code: 0 } (L11)
-  L12-12 COBRUN.LKED: Completed { return_code: 0 } (L12)
-  L13-13 RUN: Completed { return_code: 0 } (L13)
-  L14-14 AFTER: Completed { return_code: 0 } (L14)
+  L10-10 BEFORE: Completed { return_code: 0 } (L10) PGM=IKJEFT01 CPU 0.00 s elapsed 0.00 s
+  L11-11 COBRUN.COBOL: Completed { return_code: 0 } (L11) CPU 0.00 s elapsed 0.00 s
+  L12-12 COBRUN.LKED: Completed { return_code: 0 } (L12) CPU 0.00 s elapsed 0.00 s
+  L13-13 RUN: Completed { return_code: 0 } (L13) PGM=CBL0001 CPU 0.00 s elapsed 0.00 s
+  L14-14 AFTER: Completed { return_code: 0 } (L14) PGM=IKJEFT1A CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

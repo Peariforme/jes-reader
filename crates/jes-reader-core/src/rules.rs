@@ -16,13 +16,21 @@
 //! text = "NOT CATLGD 2"      # optional: only when the text contains this
 //! severity = "error"
 //!
-//! # Steps: return code tolerated, by step name (`*` allowed).
+//! # Steps: return code tolerated, by step name and/or program (`*` allowed).
 //! [[steps]]
 //! name = "COBRUN.LKED"       # `step` or `step.procstep`
 //! max_return_code = 8
+//!
+//! [[steps]]
+//! program = "IDCAMS"         # `PGM=` of the EXEC statement, read in JESJCL
+//! max_return_code = 4
+//! note = "RC 4: empty file, expected"
 //! ```
 //!
-//! Rules apply in file order: the first matching rule wins.
+//! Rules apply in file order: the first matching rule wins. A step rule
+//! with both `name` and `program` needs both to match. A `program` rule
+//! only applies when the JESJCL of the job is available (open in the
+//! editor, or next to the downloaded file).
 
 use std::path::{Path, PathBuf};
 
@@ -77,7 +85,9 @@ pub struct MessageRule {
 #[serde(deny_unknown_fields)]
 pub struct StepRule {
     /// Step name pattern: `STEP020`, `COBRUN.LKED`, `IDC*`.
-    pub name: String,
+    pub name: Option<String>,
+    /// Program pattern (`PGM=` of the EXEC statement): `IDCAMS`, `IEB*`.
+    pub program: Option<String>,
     /// Return code tolerated for this step.
     pub max_return_code: Option<u16>,
     /// Added to the diagnostic text.
@@ -102,7 +112,18 @@ impl Rules {
     /// Parses a rules file. The error message names the offending key or
     /// line.
     pub fn parse(text: &str) -> Result<Self, String> {
-        toml::from_str(text).map_err(|e| e.to_string())
+        let rules: Self = toml::from_str(text).map_err(|e| e.to_string())?;
+        if let Some(i) = rules
+            .steps
+            .iter()
+            .position(|r| r.name.is_none() && r.program.is_none())
+        {
+            return Err(format!(
+                "[[steps]] rule {}: needs `name` or `program`",
+                i + 1
+            ));
+        }
+        Ok(rules)
     }
 
     /// Reads and parses a rules file; the error starts with its path.
@@ -118,11 +139,20 @@ impl Rules {
             .find(|r| matches(&r.id, id) && r.text.as_deref().is_none_or(|t| text.contains(t)))
     }
 
-    /// First step rule matching a step, by `name` or `name.procstep`.
-    pub fn step(&self, name: &str, display_name: &str) -> Option<&StepRule> {
-        self.steps
-            .iter()
-            .find(|r| matches(&r.name, display_name) || matches(&r.name, name))
+    /// First step rule matching a step, by `name` or `name.procstep`, and
+    /// by program when the rule names one.
+    pub fn step(&self, name: &str, display_name: &str, program: Option<&str>) -> Option<&StepRule> {
+        self.steps.iter().find(|r| {
+            let name_ok = r
+                .name
+                .as_deref()
+                .is_none_or(|p| matches(p, display_name) || matches(p, name));
+            let program_ok = r
+                .program
+                .as_deref()
+                .is_none_or(|p| program.is_some_and(|program| matches(p, program)));
+            name_ok && program_ok
+        })
     }
 }
 
@@ -196,14 +226,49 @@ mod tests {
         assert!(rules.message("IEF287I", "X NOT CATLGD 2").is_some());
         assert!(rules.message("IEF287I", "X NOT CATLGD 5").is_none());
         assert_eq!(
-            rules.step("COBRUN", "COBRUN.LKED").unwrap().max_return_code,
+            rules
+                .step("COBRUN", "COBRUN.LKED", None)
+                .unwrap()
+                .max_return_code,
             Some(4)
         );
         assert_eq!(
-            rules.step("IDCSTEP", "IDCSTEP").unwrap().max_return_code,
+            rules
+                .step("IDCSTEP", "IDCSTEP", None)
+                .unwrap()
+                .max_return_code,
             Some(12)
         );
-        assert!(rules.step("COBRUN", "COBRUN.GO").is_none());
+        assert!(rules.step("COBRUN", "COBRUN.GO", None).is_none());
+    }
+
+    #[test]
+    fn step_rules_by_program() {
+        let rules = Rules::parse(
+            r#"
+            [[steps]]
+            name = "LOAD*"
+            program = "IDCAMS"
+            max_return_code = 8
+
+            [[steps]]
+            program = "IDCAMS"
+            max_return_code = 4
+            "#,
+        )
+        .unwrap();
+        let rc = |name, program| rules.step(name, name, program).map(|r| r.max_return_code);
+        assert_eq!(rc("LOAD01", Some("IDCAMS")), Some(Some(8)));
+        assert_eq!(rc("STEP010", Some("IDCAMS")), Some(Some(4)));
+        assert_eq!(rc("STEP010", Some("IEBGENER")), None);
+        // Program unknown (no JESJCL): program rules do not apply.
+        assert_eq!(rc("LOAD01", None), None);
+
+        let error = Rules::parse("[[steps]]\nmax_return_code = 4\n").unwrap_err();
+        assert!(
+            error.contains("name") && error.contains("program"),
+            "{error}"
+        );
     }
 
     #[test]

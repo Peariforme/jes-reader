@@ -8,7 +8,7 @@ job: JCLSETUP JOB01967
 end of job: ReturnCode(0)
 
 steps:
-  L11-11 (unnamed step): Completed { return_code: 0 } (L11)
+  L11-11 (unnamed step): Completed { return_code: 0 } (L11) CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

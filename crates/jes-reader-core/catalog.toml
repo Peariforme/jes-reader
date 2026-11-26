@@ -222,6 +222,35 @@ summary = "End of one IDCAMS command, with its highest condition code."
 title = "IDCAMS processing complete"
 summary = "End of the IDCAMS step, with the highest condition code of all commands. It becomes the step return code."
 
+[messages.IDC0005I]
+title = "Records processed"
+summary = "Number of records REPRO copied."
+
+[messages.IDC0550I]
+title = "Entry deleted"
+summary = "The DELETE command deleted the catalog entry named in the message."
+
+[messages.IDC3003I]
+title = "IDCAMS function terminated"
+summary = "An IDCAMS command stopped because of the error reported just before, with the condition code it ended with."
+
+[messages.IDC3013I]
+title = "Duplicate data set name"
+summary = "DEFINE failed: an entry with this name is already in the catalog."
+action = "Delete the old entry first (DELETE before DEFINE), or use another name."
+
+[messages.IDC3014I]
+title = "Catalog error"
+summary = "Catalog management rejected the request; the message after it gives the catalog return and reason codes."
+
+[messages.IDC3302I]
+title = "Action error"
+summary = "IDCAMS could not process the data set named in the message; the messages around it say why."
+
+[messages.IDC3351I]
+title = "VSAM I/O error"
+summary = "A VSAM request failed with the return code given in the message, for example while REPRO read or wrote a data set."
+
 # --- Language Environment and COBOL --------------------------------------
 
 [messages.CEE3201S]
@@ -232,10 +261,32 @@ summary = "The program tried to run an invalid instruction: often a call to a mi
 title = "Protection exception (0C4)"
 summary = "The program accessed storage it is not allowed to use: an uninitialized pointer, a subscript out of range, or a parameter list mismatch."
 
+[messages.CEE3205S]
+title = "Addressing exception (0C5)"
+summary = "The program referred to an address that does not exist: usually an uninitialized or overwritten pointer."
+
+[messages.CEE3206S]
+title = "Specification exception (0C6)"
+summary = "An instruction had an invalid operand, such as a misaligned address: often a branch into data after storage was overwritten."
+
 [messages.CEE3207S]
 title = "Data exception (0C7)"
 summary = "A packed or zoned decimal field holds invalid data: spaces, letters or a bad sign in a numeric field."
 action = "Find the field used by the failing statement and where it was filled."
+
+[messages.CEE3209S]
+title = "Fixed-point divide exception (0C9)"
+summary = "A binary division by zero, or a quotient too large for its field."
+action = "Check the divisor of the failing statement before the division."
+
+[messages.CEE3211S]
+title = "Decimal divide exception (0CB)"
+summary = "A packed decimal division by zero, or a quotient too large for its field."
+action = "Check the divisor of the failing statement before the division."
+
+[messages.CEE0198S]
+title = "Thread ended by an unhandled condition"
+summary = "Language Environment ended the program because a condition was not handled; the messages before it name the condition."
 
 [messages.CEE3250C]
 title = "Abend in Language Environment"
@@ -249,6 +300,16 @@ action = "Add the DD statement, or a FILE STATUS clause to handle the error in t
 [messages.IGZ0006S]
 title = "Subscript out of range"
 summary = "A table reference was out of range; this is detected when the program is compiled with SSRANGE."
+
+[messages.IGZ0037S]
+title = "Control fell past the end of the program"
+summary = "Execution went beyond the last statement of a COBOL program without a GOBACK, STOP RUN or EXIT PROGRAM."
+action = "Add the missing GOBACK, or check the PERFORM or GO TO that led there."
+
+[messages.IGZ0201W]
+title = "File attribute mismatch"
+summary = "On OPEN, the file described in the program does not match the data set: record format, record length or organization."
+action = "Compare the FD of the file with the DCB of the data set (RECFM, LRECL)."
 
 # --- Security -----------------------------------------------------------
 
@@ -274,6 +335,30 @@ action = "Look up the SQLCODE; the message also gives the program and statement 
 [messages.DSNT404I]
 title = "SQL warning"
 summary = "An SQL statement completed with a positive SQLCODE (warning)."
+
+[messages.DSNT418I]
+title = "SQLSTATE"
+summary = "SQLSTATE of the SQL error or warning reported just before."
+
+[messages.DSNT500I]
+title = "Db2 resource unavailable"
+summary = "Db2 could not get a resource it needed (a table space, an index, a lock); the message gives the reason code, the resource type and its name."
+
+[messages.DSNU010I]
+title = "Db2 utility complete"
+summary = "The Db2 utility ended, with its highest return code."
+
+# --- IMS ----------------------------------------------------------------
+
+[messages.DFS554A]
+title = "IMS application program abended"
+summary = "The program running in the IMS region ended abnormally; the message gives the program, the PSB and the system or user abend code."
+action = "Look at the abend code, and at the program output of the region."
+severity = "error"
+
+[messages.DFS555I]
+title = "IMS transaction abended"
+summary = "A transaction ended abnormally; the message gives the transaction, the abend code and the input message that was being processed."
 
 # --- System abends ------------------------------------------------------
 

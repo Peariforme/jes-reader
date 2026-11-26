@@ -1,8 +1,15 @@
 //! Language server for JES2 sysouts, built on `lsp-server` (synchronous).
 //!
 //! Each open document is a DD, analysed on every change: diagnostics are
-//! pushed to the client; Outline, folding, Go to Definition and hovers are
-//! served on request.
+//! pushed to the client; Outline, folding, code lenses, semantic tokens,
+//! Go to Definition and hovers are served on request.
+//!
+//! A whole spool (every DD of a job in one file) is cut into its DDs, each
+//! analysed as if it had been opened on its own.
+//!
+//! Step programs (`PGM=`) come from the JESJCL of the same job: an open
+//! document, or `JESJCL.txt` next to a downloaded file. When a JESJCL is
+//! opened, the other DDs of its job are analysed again.
 //!
 //! Initialization options (`initializationOptions`):
 //!
@@ -18,21 +25,24 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use jes_reader_core::{Dd, Options, Rules, analyze, parse_file};
+use jes_reader_core::{Dd, DdKind, Options, Rules, analyze, parse_document, parse_file};
 use lsp_server::{Connection, ErrorCode, Message, Notification, Request, Response};
 use lsp_types::notification::{
     DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
     Notification as LspNotification, PublishDiagnostics, ShowMessage,
 };
 use lsp_types::request::{
-    DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition, HoverRequest, Request as LspRequest,
+    CodeLensRefresh, CodeLensRequest, DocumentSymbolRequest, FoldingRangeRequest, GotoDefinition,
+    HoverRequest, Request as LspRequest, SemanticTokensFullRequest, SemanticTokensRefresh,
 };
 use lsp_types::{
-    DocumentSymbolParams, DocumentSymbolResponse, FoldingRangeParams,
-    FoldingRangeProviderCapability, GotoDefinitionParams, GotoDefinitionResponse, Hover,
-    HoverContents, HoverParams, HoverProviderCapability, InitializeParams, Location, MarkupContent,
-    MarkupKind, MessageType, OneOf, Position, PublishDiagnosticsParams, ServerCapabilities,
-    ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
+    CodeLensOptions, CodeLensParams, Diagnostic, DocumentSymbolParams, DocumentSymbolResponse,
+    FoldingRangeParams, FoldingRangeProviderCapability, GotoDefinitionParams,
+    GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
+    InitializeParams, Location, MarkupContent, MarkupKind, MessageType, OneOf, Position,
+    PublishDiagnosticsParams, SemanticTokensFullOptions, SemanticTokensOptions,
+    SemanticTokensParams, SemanticTokensResult, SemanticTokensServerCapabilities,
+    ServerCapabilities, ShowMessageParams, TextDocumentSyncCapability, TextDocumentSyncKind, Uri,
 };
 
 use convert::Lines;
@@ -45,12 +55,44 @@ pub fn capabilities() -> ServerCapabilities {
         folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
         definition_provider: Some(OneOf::Left(true)),
         hover_provider: Some(HoverProviderCapability::Simple(true)),
+        code_lens_provider: Some(CodeLensOptions {
+            resolve_provider: Some(false),
+        }),
+        semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
+            SemanticTokensOptions {
+                legend: convert::semantic_legend(),
+                full: Some(SemanticTokensFullOptions::Bool(true)),
+                range: None,
+                work_done_progress_options: Default::default(),
+            },
+        )),
         ..ServerCapabilities::default()
     }
 }
 
 /// Open document: its URI, its text and its analysis.
 struct Document {
+    uri: Uri,
+    text: String,
+    /// One DD, or the DDs of a whole spool.
+    dds: Vec<Dd>,
+    /// Diagnostics last published for it.
+    diagnostics: Vec<Diagnostic>,
+}
+
+impl Document {
+    /// DD that holds line `line` (the last one starting before it).
+    fn dd_at(&self, line: usize) -> &Dd {
+        self.dds
+            .iter()
+            .rev()
+            .find(|dd| dd.first_line <= line)
+            .unwrap_or(&self.dds[0])
+    }
+}
+
+/// A JESJCL and the document that holds it.
+struct Jcl {
     uri: Uri,
     text: String,
     dd: Dd,
@@ -64,6 +106,12 @@ struct Server<'a> {
     rules_file: Option<PathBuf>,
     /// Workspace folders, searched for `.jesreader.toml`.
     workspace: Vec<PathBuf>,
+    /// The client accepts `workspace/codeLens/refresh`.
+    code_lens_refresh: bool,
+    /// The client accepts `workspace/semanticTokens/refresh`.
+    semantic_tokens_refresh: bool,
+    /// Number of requests sent to the client, for their IDs.
+    sent_requests: u32,
 }
 
 /// Performs the `initialize` handshake, then handles messages until `shutdown`.
@@ -88,6 +136,21 @@ pub fn run(connection: &Connection) -> Result<()> {
             .filter(|path| !path.is_empty())
             .map(PathBuf::from),
         workspace,
+        code_lens_refresh: params
+            .capabilities
+            .workspace
+            .as_ref()
+            .and_then(|w| w.code_lens.as_ref())
+            .and_then(|c| c.refresh_support)
+            .unwrap_or(false),
+        semantic_tokens_refresh: params
+            .capabilities
+            .workspace
+            .as_ref()
+            .and_then(|w| w.semantic_tokens.as_ref())
+            .and_then(|c| c.refresh_support)
+            .unwrap_or(false),
+        sent_requests: 0,
     };
     server.load_rules()?;
 
@@ -153,13 +216,16 @@ impl Server<'_> {
                 for (uri, text) in documents {
                     self.update(uri, text)?;
                 }
+                // Severities may have changed without any document change.
+                if self.semantic_tokens_refresh {
+                    self.send_request(SemanticTokensRefresh::METHOD)?;
+                }
             }
             _ => {}
         }
         Ok(())
     }
 
-    /// Analyses a document and publishes its diagnostics.
     /// Loads the house rules: the `rulesFile` option, otherwise the first
     /// `.jesreader.toml` of the workspace folders or the home directory. An
     /// invalid file is reported to the user and ignored.
@@ -185,22 +251,90 @@ impl Server<'_> {
         Ok(())
     }
 
+    /// Analyses a document and publishes its diagnostics. A JESJCL also
+    /// gives the programs of the other DDs of its job: those are analysed
+    /// again, and published again if their diagnostics changed.
     fn update(&mut self, uri: Uri, text: String) -> Result<()> {
-        let dd = parse_file(&decode_path(uri.path().as_str()), &text);
-        let lines = Lines::new(&text);
-        let diagnostics = analyze(&dd, &self.options)
+        let (dds, diagnostics) = self.analyse(&uri, &text);
+        let jcl = dds
             .iter()
-            .map(|f| convert::diagnostic(f, &lines, &uri))
-            .collect();
+            .find(|dd| dd.kind == DdKind::JesJcl && dd.job_id.is_some())
+            .cloned();
         self.documents.insert(
             uri.as_str().to_owned(),
             Document {
                 uri: uri.clone(),
                 text,
-                dd,
+                dds,
+                diagnostics: diagnostics.clone(),
             },
         );
-        self.publish(uri, diagnostics)
+        self.publish(uri.clone(), diagnostics)?;
+
+        let Some(jcl) = jcl else {
+            return Ok(());
+        };
+        let job: Vec<(String, Uri, String)> = self
+            .documents
+            .iter()
+            .filter(|(key, doc)| {
+                key.as_str() != uri.as_str() && doc.dds.iter().any(|dd| jcl.is_jcl_of(dd))
+            })
+            .map(|(key, doc)| (key.clone(), doc.uri.clone(), doc.text.clone()))
+            .collect();
+        for (key, uri, text) in &job {
+            let (dds, diagnostics) = self.analyse(uri, text);
+            let Some(doc) = self.documents.get_mut(key) else {
+                continue;
+            };
+            doc.dds = dds;
+            if doc.diagnostics != diagnostics {
+                doc.diagnostics.clone_from(&diagnostics);
+                self.publish(uri.clone(), diagnostics)?;
+            }
+        }
+        if !job.is_empty() && self.code_lens_refresh {
+            self.send_request(CodeLensRefresh::METHOD)?;
+        }
+        Ok(())
+    }
+
+    /// Sends a request without parameters to the client; its response is
+    /// ignored.
+    fn send_request(&mut self, method: &str) -> Result<()> {
+        self.sent_requests += 1;
+        let id = format!("jes-reader-{}", self.sent_requests);
+        let request = Request::new(id.into(), method.to_owned(), ());
+        self.connection.sender.send(request.into())?;
+        Ok(())
+    }
+
+    /// Parses a document (one DD, or the DDs of a whole spool), fills the
+    /// step programs from the JESJCL of the job and computes the diagnostics.
+    fn analyse(&self, uri: &Uri, text: &str) -> (Vec<Dd>, Vec<Diagnostic>) {
+        let mut dds = parse_document(&decode_path(uri.path().as_str()), text);
+        let own_jcl: Vec<Dd> = dds
+            .iter()
+            .filter(|dd| dd.kind == DdKind::JesJcl)
+            .cloned()
+            .collect();
+        for dd in &mut dds {
+            if dd.kind == DdKind::JesJcl {
+                continue;
+            }
+            if let Some(jcl) = own_jcl.iter().find(|jcl| jcl.is_jcl_of(dd)) {
+                dd.attach_programs(jcl);
+            } else if let Some(jcl) = self.jcl_of(uri, dd) {
+                dd.attach_programs(&jcl.dd);
+            }
+        }
+        let lines = Lines::new(text);
+        let diagnostics = dds
+            .iter()
+            .flat_map(|dd| analyze(dd, &self.options))
+            .map(|f| convert::diagnostic(&f, &lines, uri))
+            .collect();
+        (dds, diagnostics)
     }
 
     fn publish(&self, uri: Uri, diagnostics: Vec<lsp_types::Diagnostic>) -> Result<()> {
@@ -216,8 +350,8 @@ impl Server<'_> {
             DocumentSymbolRequest::METHOD => {
                 let params: DocumentSymbolParams = serde_json::from_value(req.params)?;
                 let symbols = self.document(&params.text_document.uri).map(|doc| {
-                    DocumentSymbolResponse::Nested(convert::symbols(
-                        &doc.dd,
+                    DocumentSymbolResponse::Nested(convert::document_symbols(
+                        &doc.dds,
                         &Lines::new(&doc.text),
                     ))
                 });
@@ -227,7 +361,7 @@ impl Server<'_> {
                 let params: FoldingRangeParams = serde_json::from_value(req.params)?;
                 let ranges = self
                     .document(&params.text_document.uri)
-                    .map(|doc| convert::folding_ranges(&doc.dd));
+                    .map(|doc| convert::document_folding_ranges(&doc.dds));
                 Response::new_ok(req.id, ranges)
             }
             GotoDefinition::METHOD => {
@@ -235,6 +369,28 @@ impl Server<'_> {
                 let at = params.text_document_position_params;
                 let location = self.definition(&at.text_document.uri, at.position);
                 Response::new_ok(req.id, location.map(GotoDefinitionResponse::Scalar))
+            }
+            CodeLensRequest::METHOD => {
+                let params: CodeLensParams = serde_json::from_value(req.params)?;
+                let lenses = self.document(&params.text_document.uri).map(|doc| {
+                    let lines = Lines::new(&doc.text);
+                    doc.dds
+                        .iter()
+                        .flat_map(|dd| convert::code_lenses(dd, &lines))
+                        .collect::<Vec<_>>()
+                });
+                Response::new_ok(req.id, lenses)
+            }
+            SemanticTokensFullRequest::METHOD => {
+                let params: SemanticTokensParams = serde_json::from_value(req.params)?;
+                let tokens = self.document(&params.text_document.uri).map(|doc| {
+                    SemanticTokensResult::Tokens(convert::semantic_tokens(
+                        &doc.dds,
+                        &self.options,
+                        &Lines::new(&doc.text),
+                    ))
+                });
+                Response::new_ok(req.id, tokens)
             }
             HoverRequest::METHOD => {
                 let params: HoverParams = serde_json::from_value(req.params)?;
@@ -260,41 +416,46 @@ impl Server<'_> {
         let doc = self.document(uri)?;
         let line = usize::try_from(position.line).ok()?;
         let column = Lines::new(&doc.text).byte_column(line, position.character);
-        Some((doc, navigate::target_at(&doc.dd, line, column)?))
+        Some((doc, navigate::target_at(doc.dd_at(line), line, column)?))
     }
 
-    /// JESJCL of the job `doc` belongs to: an open document first (the VS
-    /// Code extension opens it in the background for Zowe documents),
-    /// otherwise `JESJCL.txt` next to a downloaded file.
-    fn jcl_of(&self, doc: &Document) -> Option<Document> {
-        if let Some(jcl) = self
-            .documents
-            .values()
-            .find(|other| navigate::is_jcl_of(&other.dd, &doc.dd))
-        {
-            return Some(Document {
-                uri: jcl.uri.clone(),
-                text: jcl.text.clone(),
-                dd: jcl.dd.clone(),
+    /// JESJCL of the job `dd` belongs to: in an open document first (the
+    /// same whole spool, or the JESJCL that the VS Code extension opens in
+    /// the background for Zowe documents), otherwise `JESJCL.txt` next to a
+    /// downloaded file.
+    fn jcl_of(&self, uri: &Uri, dd: &Dd) -> Option<Jcl> {
+        let open = self.documents.values().find_map(|doc| {
+            let jcl = doc
+                .dds
+                .iter()
+                .find(|other| navigate::is_jcl_of(other, dd))?;
+            Some((doc, jcl))
+        });
+        if let Some((doc, jcl)) = open {
+            return Some(Jcl {
+                uri: doc.uri.clone(),
+                text: doc.text.clone(),
+                dd: jcl.clone(),
             });
         }
-        if !doc.uri.as_str().starts_with("file:") {
+        if !uri.as_str().starts_with("file:") {
             return None;
         }
-        let path = navigate::file_path(&decode_path(doc.uri.path().as_str()));
+        let path = navigate::file_path(&decode_path(uri.path().as_str()));
         let sibling = navigate::sibling_jcl(&path)?;
         let text = String::from_utf8_lossy(&std::fs::read(&sibling).ok()?).into_owned();
         let dd = parse_file(&sibling.to_string_lossy(), &text);
-        let (directory, _) = doc.uri.as_str().rsplit_once('/')?;
+        let (directory, _) = uri.as_str().rsplit_once('/')?;
         let uri = format!("{directory}/JESJCL.txt").parse().ok()?;
-        Some(Document { uri, text, dd })
+        Some(Jcl { uri, text, dd })
     }
 
     /// JCL statement behind the cursor, in the JESJCL of the same job.
     fn definition(&self, uri: &Uri, position: Position) -> Option<Location> {
         let (doc, target) = self.target(uri, position)?;
-        let jcl = self.jcl_of(doc)?;
-        let statement = navigate::resolve(target, &doc.dd, &jcl.dd)?;
+        let dd = doc.dd_at(usize::try_from(position.line).ok()?);
+        let jcl = self.jcl_of(&doc.uri, dd)?;
+        let statement = navigate::resolve(target, dd, &jcl.dd)?;
         let range = Lines::new(&jcl.text).content(statement.lines.start);
         Some(Location::new(jcl.uri, range))
     }
@@ -307,8 +468,9 @@ impl Server<'_> {
         let line = usize::try_from(position.line).ok()?;
         let lines = Lines::new(&doc.text);
         let column = lines.byte_column(line, position.character);
+        let dd = doc.dd_at(line);
 
-        if let Some(message) = explain::message_at(&doc.dd, line, column) {
+        if let Some(message) = explain::message_at(dd, line, column) {
             let range = lines.span(line, message.id_columns.clone());
             return Some(markdown(explain::message_hover(message), Some(range)));
         }
@@ -318,14 +480,11 @@ impl Server<'_> {
             return Some(markdown(text, None));
         }
 
-        let target = navigate::target_at(&doc.dd, line, column)?;
-        let jcl = self.jcl_of(doc);
-        let value = navigate::hover_text(
-            target,
-            &doc.dd,
-            jcl.as_ref().map(|j| (&j.dd, j.text.as_str())),
-        );
-        let range = match navigate::target_columns(&doc.dd, target, line) {
+        let target = navigate::target_at(dd, line, column)?;
+        let jcl = self.jcl_of(&doc.uri, dd);
+        let value =
+            navigate::hover_text(target, dd, jcl.as_ref().map(|j| (&j.dd, j.text.as_str())));
+        let range = match navigate::target_columns(dd, target, line) {
             Some(columns) => lines.span(line, columns),
             None => lines.content(line),
         };
