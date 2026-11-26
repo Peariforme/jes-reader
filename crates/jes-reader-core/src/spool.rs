@@ -18,9 +18,9 @@
 //! have no signature and their names are not in the text: they are kept as
 //! one DD of kind [`DdKind::Other`], without a name.
 //!
-//! BMC AMI DevX saves the spool without the ASA column and without any
-//! separator between DDs: the file is then read with a blank column added
-//! in front of each line.
+//! BMC AMI DevX saves the DDs with their ASA column and no separator
+//! between them (`<jobname>_<jobid>.jes`). A file without the ASA column
+//! is read too, with a blank column added in front of each line.
 //!
 //! _To be confirmed on a real file_: separators or banners that the saving
 //! tool may insert between DDs. Lines it adds before the next system DD stay
@@ -54,7 +54,7 @@ pub fn parse_spool(path: &str, text: &str) -> Option<Vec<Dd>> {
     let system = |parts: &[Part]| parts.iter().filter(|p| p.kind != DdKind::Other).count();
     let original: Vec<&str> = text.lines().collect();
     let mut parts = split(&original);
-    // Saved without the ASA column (BMC AMI DevX): try again with a blank
+    // Saved without the ASA column: try again with a blank
     // column added in front of each line, and move the columns back after.
     let padded: Vec<String>;
     let mut lines = original;
@@ -387,6 +387,55 @@ mod tests {
             .map(|f| f.code)
             .collect();
         assert!(codes.contains(&"S013".to_owned()), "{codes:?}");
+    }
+
+    /// Layout of a `.jes` file saved by BMC AMI DevX at a client site: every
+    /// DD concatenated, ASA column kept, no step table in JESMSGLG, program
+    /// messages (`+WLM644E`), a non-ASCII character in the JOB card.
+    #[test]
+    fn devx_jes_file() {
+        let msglg: String = corpus("JOB00868/JES2/JESMSGLG.txt")
+            .lines()
+            .filter(|l| l.get(18..21) != Some("  -"))
+            .flat_map(|l| {
+                let extra = l.contains("$HASP373").then_some(
+                    " 04.42.18 JOB00868  +WLM644E ******* PRODUCT GRACE PERIOD EXPIRED\n",
+                );
+                [format!("{l}\n"), extra.unwrap_or_default().to_owned()]
+            })
+            .collect();
+        let jcl = corpus("JOB00868/JES2/JESJCL.txt").replacen("JOB (", "JOB (£", 1);
+        let mut text = msglg + &jcl;
+        for dd in [
+            "JES2/JESYSMSG.txt",
+            "STEP005/SYSPRINT.txt",
+            "STEP010/SYSPRINT.txt",
+        ] {
+            text.push_str(&corpus(&format!("JOB00868/{dd}")));
+        }
+        let dds = parse_spool(r"c:\tmp\JRIDC8_JOB00868.jes", &text).unwrap();
+        let kinds: Vec<_> = dds.iter().map(|d| d.kind).collect();
+        assert_eq!(
+            kinds,
+            [
+                DdKind::JesMsgLg,
+                DdKind::JesJcl,
+                DdKind::JesYsMsg,
+                DdKind::Other
+            ]
+        );
+        assert!(dds[0].steps.is_empty(), "no step table");
+        assert!(dds[0].messages.iter().any(|m| m.id == "WLM644E"));
+        assert!(
+            dds[1].statements.len() >= 8,
+            "JCL with £: {:?}",
+            dds[1].statements.len()
+        );
+        let mut sysmsg = dds[2].clone();
+        assert_eq!(sysmsg.steps.len(), 3);
+        sysmsg.attach_programs(&dds[1]);
+        assert_eq!(sysmsg.steps[1].program.as_deref(), Some("IDCAMS"));
+        assert!(dds.iter().all(|d| d.job_id.as_deref() == Some("JOB00868")));
     }
 
     #[test]

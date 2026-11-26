@@ -104,9 +104,15 @@ Some tools save every DD of a job in one file, one after the other: BMC AMI DevX
 - JESYSMSG starts with `STMT NO. MESSAGE`, or, without conversion messages, with the first line that is not JCL (`ICH70001I`, `JOB00901`). It ends with `IEF033I` (end of job) and its continuation lines.
 - The step output has no signature and its DD names are not in the text.
 
-BMC AMI DevX, as reported from a client workstation (no file in the corpus yet): **no ASA column** and **no separator** between DDs. Without the ASA column every fixed field starts one column to the left (time in column 1 of JESMSGLG, `//` in column 10 of JESJCL, message IDs in column 1 of JESYSMSG); the parser then adds a blank column, parses, and moves the columns back. The same holds for single DDs opened from DevX.
+BMC AMI DevX, seen on a client workstation (screen captures, no file in the corpus): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes` (`…\.devx-workbench\templocaldatasetsfiles\…\<system>\<jobname>_<jobid>.jes`). The DDs are concatenated **as Zowe shows them, ASA column included**, with nothing in between: the JOB card of JESJCL comes right after the last statistics line of JESMSGLG, and JESYSMSG (`ICH70001I` first) right after the last JCL statement. Other findings there:
 
-_Not observed yet_ on a real file: what the tool writes between DDs (a separator, a banner with the DD name, a page eject `1` in column 1), its line width and line endings, and its file extension. The corpus has no whole spool: tests build them by concatenating corpus DDs.
+- No step table in JESMSGLG: that site does not print it, so steps come from JESYSMSG only.
+- Messages written by programs to the console have a `+` before their ID in JESMSGLG (`+WLM644E`, `+IDI0078E`); the ID starts one column later.
+- The accounting field of the JOB card may hold non-ASCII characters (`(ACCT£)`).
+
+A JES2 DD **without** the ASA column (fields one column to the left) is also read, by adding a blank column; no tool producing it has been observed.
+
+_Not observed yet_: how the DDs of the step output follow one another (a page eject `1` in column 1 may be the only sign), and the line endings. The corpus has no whole spool: tests build them by concatenating corpus DDs.
 
 ## Detection (content, when the file name says nothing)
 

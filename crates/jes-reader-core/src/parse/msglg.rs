@@ -33,7 +33,13 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
             dd.job_id = Some(job_id.to_owned());
         }
 
-        if let Some(id) = message_id_at(line, BODY) {
+        // `+WLM644E`: message written to the console by the program itself.
+        let id = message_id_at(line, BODY).or_else(|| {
+            (line.as_bytes().get(BODY) == Some(&b'+'))
+                .then(|| message_id_at(line, BODY + 1))
+                .flatten()
+        });
+        if let Some(id) = id {
             messages.start(i, line, id, None);
             continue;
         }
@@ -185,6 +191,22 @@ mod tests {
         );
         assert_eq!(timed_job_id("0------ JES2 JOB STATISTICS ------"), None);
         assert_eq!(timed_job_id(" 04:12:28 JOB00823"), None);
+    }
+
+    #[test]
+    fn program_messages() {
+        let lines = [
+            " 04.42.18 JOB00868  +WLM644E ******* PRODUCT 14 DAY GRACE EXPIRED",
+            " 04.42.18 JOB00868  IEF403I JRIDC8 - STARTED - TIME=04.42.18",
+        ];
+        let mut dd = crate::parse_file("JOB00868/JES2/JESMSGLG.txt", "");
+        parse(&lines, &mut dd);
+        let ids: Vec<_> = dd
+            .messages
+            .iter()
+            .map(|m| (m.id.as_str(), m.id_columns.clone()))
+            .collect();
+        assert_eq!(ids, [("WLM644E", 21..28), ("IEF403I", 20..27)]);
     }
 
     #[test]

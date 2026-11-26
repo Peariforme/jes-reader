@@ -44,15 +44,28 @@ impl DdSource {
             }
         }
 
+        // Whole spool saved by BMC AMI DevX: JRIDC8_JOB00868.jes
+        let stem = file_name
+            .rsplit_once('.')
+            .map_or(*file_name, |(stem, _)| stem);
+        if let Some((job_name, job_id)) = stem.rsplit_once('_')
+            && is_job_id(job_id)
+            && !job_name.is_empty()
+            && job_name.len() <= 8
+        {
+            return Self {
+                job_id: Some(job_id.to_owned()),
+                job_name: Some(job_name.to_owned()),
+                dd_name: None,
+            };
+        }
+
         // Downloaded job: …/JOB00823/JES2/JESMSGLG.txt
         let job_id = components[..components.len() - 1]
             .iter()
             .rev()
             .find(|c| is_job_id(c))
             .map(|c| (*c).to_owned());
-        let stem = file_name
-            .rsplit_once('.')
-            .map_or(*file_name, |(stem, _)| stem);
         let stem = strip_copy_suffix(stem);
         let dd_name = is_dd_name(stem).then(|| stem.to_owned());
         Self {
@@ -158,6 +171,18 @@ mod tests {
         let src = DdSource::from_path("corpus/sysout/JOB00896/LKED/COBRUN/SYSPRINT(1).txt");
         assert_eq!(src.job_id.as_deref(), Some("JOB00896"));
         assert_eq!(src.dd_name.as_deref(), Some("SYSPRINT"));
+    }
+
+    #[test]
+    fn devx_spool() {
+        let src = DdSource::from_path(
+            r"c:\Users\me\.devx-workbench\templocaldatasetsfiles\1-2\SYSA\JRIDC8_JOB00868.jes",
+        );
+        assert_eq!(src.job_id.as_deref(), Some("JOB00868"));
+        assert_eq!(src.job_name.as_deref(), Some("JRIDC8"));
+        assert_eq!(src.dd_name, None);
+        // Not a job ID after the underscore.
+        assert_eq!(DdSource::from_path("MY_FILE.txt").job_id, None);
     }
 
     #[test]

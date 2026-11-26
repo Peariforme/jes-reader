@@ -30,7 +30,7 @@ For anything else, run **JES Reader: Open as Sysout** from the Command Palette.
 
 ### With BMC AMI DevX
 
-Spools opened or saved with BMC AMI DevX JES Explorer have no ASA column (carriage control); JES Reader reads them as well, one DD or the whole spool. Plain text documents that start like a JES2 DD get the sysout language. Links from `JESYSMSG` to `JESJCL` work when the `JESJCL` of the same job is open too. For data set links, set `jesReader.zoweProfile` to the Zowe Explorer profile of the same system.
+The Job Explorer of BMC AMI DevX opens a job as one `.jes` file holding all its DDs. JES Reader cuts it into its DDs: one Outline entry per DD, the steps under `JESYSMSG`, and links from `JESYSMSG` to the `JESJCL` of the same file. For data set links, set `jesReader.zoweProfile` to the Zowe Explorer profile of the same system.
 
 ### With IBM Z Open Editor
 
