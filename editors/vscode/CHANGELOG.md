@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Lighter data set links: each link carries only its position, and its target is built when it is followed. On a large sysout, coming back to the editor no longer makes VS Code copy and parse hundreds of kilobytes of links.
 - A **JES Reader** output channel logs the server start, each analysis (lines, DDs, column offsets, diagnostics, time), slow requests, data set links and background `JESJCL` fetches. New setting `jesReader.trace.server` traces every exchange with the language server.
 - Data set links are kept for each version of a document: coming back to a large sysout no longer scans it again in the extension host.
 - The language server no longer stops when a request fails or panics: it answers with an error, logs it in the JES Reader output, and keeps the analysis of the open documents. It used to exit, and VS Code restarted it, losing the analysis meanwhile and giving up after a few restarts.

@@ -202,7 +202,24 @@ async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): P
  * Links on data set names: in documents opened from Zowe Explorer, and in
  * the others when the `jesReader.zoweProfile` setting names a profile.
  */
-export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
+/**
+ * Link on a data set name. It carries only its range: its target, a
+ * command URI of a few hundred characters, is built when the link is
+ * followed (`resolveDocumentLink`). A large sysout has thousands of data
+ * set names; with their targets, the links weighed hundreds of kilobytes,
+ * copied and parsed by VS Code each time the editor came back into view.
+ */
+class DatasetLink extends vscode.DocumentLink {
+  constructor(
+    range: vscode.Range,
+    readonly profile: string,
+    readonly reference: DatasetReference,
+  ) {
+    super(range);
+  }
+}
+
+export class DatasetLinkProvider implements vscode.DocumentLinkProvider<DatasetLink> {
   /**
    * Links of each document, for its version and profile. VS Code asks for
    * the links again each time an editor comes back into view; a large
@@ -211,10 +228,10 @@ export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
    */
   private readonly cache = new WeakMap<
     vscode.TextDocument,
-    { version: number; profile: string; links: vscode.DocumentLink[] }
+    { version: number; profile: string; links: DatasetLink[] }
   >();
 
-  provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
+  provideDocumentLinks(document: vscode.TextDocument): DatasetLink[] {
     const profile = linkProfile(document.uri);
     if (!profile) {
       return [];
@@ -233,26 +250,28 @@ export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
     this.cache.set(document, { version: document.version, profile, links });
     return links;
   }
+
+  /** Target of a link, built when it is followed. */
+  resolveDocumentLink(link: DatasetLink): DatasetLink {
+    const { profile, reference } = link;
+    const uri = datasetUri(profile, reference).toString();
+    const name = reference.member ? `${reference.dsn}(${reference.member})` : reference.dsn;
+    link.target = vscode.Uri.parse(
+      `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(
+        JSON.stringify([uri, name, profile, reference.dsn]),
+      )}`,
+    );
+    return link;
+  }
 }
 
 /** Links on the data set names of `document`, opened with `profile`. */
-function documentLinks(document: vscode.TextDocument, profile: string): vscode.DocumentLink[] {
-  const links: vscode.DocumentLink[] = [];
+function documentLinks(document: vscode.TextDocument, profile: string): DatasetLink[] {
+  const links: DatasetLink[] = [];
   for (let line = 0; line < document.lineCount; line++) {
     for (const reference of datasetReferences(document.lineAt(line).text)) {
-      const uri = datasetUri(profile, reference).toString();
-      const name = reference.member ? `${reference.dsn}(${reference.member})` : reference.dsn;
-      const target = vscode.Uri.parse(
-        `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(
-          JSON.stringify([uri, name, profile, reference.dsn]),
-        )}`,
-      );
-      const link = new vscode.DocumentLink(
-        new vscode.Range(line, reference.start, line, reference.end),
-        target,
-      );
-      link.tooltip = `Open ${name} with Zowe Explorer`;
-      links.push(link);
+      const range = new vscode.Range(line, reference.start, line, reference.end);
+      links.push(new DatasetLink(range, profile, reference));
     }
   }
   return links;
