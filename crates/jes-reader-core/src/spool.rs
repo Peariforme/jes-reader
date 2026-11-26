@@ -30,7 +30,7 @@ use std::ops::Range;
 
 use crate::model::{Dd, DdKind};
 use crate::msgid::message_id_at;
-use crate::parse::{parse_dd, parse_file};
+use crate::parse::{ascii_leads, parse_dd, parse_file, restore_lead_bytes};
 use crate::source::{DdSource, jes_dd_name};
 
 /// DD found in a whole spool.
@@ -51,7 +51,8 @@ pub fn parse_document(path: &str, text: &str) -> Vec<Dd> {
 /// DDs of a whole spool, or `None` if the text is not one: a whole spool
 /// holds at least two JES2 system DDs.
 pub fn parse_spool(path: &str, text: &str) -> Option<Vec<Dd>> {
-    let lines: Vec<&str> = text.lines().collect();
+    let (leads, lead_bytes) = ascii_leads(text);
+    let lines: Vec<&str> = leads.iter().map(|l| l.as_ref()).collect();
     let parts = split(&lines);
     if parts.iter().filter(|p| p.kind != DdKind::Other).count() < 2 {
         return None;
@@ -68,6 +69,7 @@ pub fn parse_spool(path: &str, text: &str) -> Option<Vec<Dd>> {
             // The content decides, whatever the name of the file says.
             dd.name = source.dd_name;
             shift(&mut dd, part.lines.start);
+            restore_lead_bytes(&mut dd, &lead_bytes, 0);
             dd
         })
         .collect::<Vec<_>>();
@@ -506,6 +508,46 @@ mod tests {
         }
         let exec = parsed[1].exec_statement(&parsed[2].steps[2]).unwrap();
         assert_eq!(exec.name.as_deref(), Some("GO"));
+    }
+
+    /// BMC AMI DevX as measured: JESJCL and JESYSMSG lines start with an
+    /// extra character the editor counts as one column, here a non-ASCII
+    /// one (two bytes in UTF-8).
+    #[test]
+    fn non_ascii_column_after_jesmsglg() {
+        let dds = ["JES2/JESMSGLG.txt", "JES2/JESJCL.txt", "JES2/JESYSMSG.txt"];
+        let (text, starts) = spool("JOB00896", &dds);
+        let devx: String = text
+            .lines()
+            .enumerate()
+            .map(|(i, l)| {
+                if i >= starts[1] {
+                    format!("\u{8b}{l}\n")
+                } else {
+                    format!("{l}\n")
+                }
+            })
+            .collect();
+        let original = parse_spool("x.jes", &text).unwrap();
+        let parsed = parse_spool("x.jes", &devx).unwrap();
+        let kinds: Vec<_> = parsed.iter().map(|d| (d.kind, d.first_line)).collect();
+        assert_eq!(
+            kinds,
+            [
+                (DdKind::JesMsgLg, starts[0]),
+                (DdKind::JesJcl, starts[1]),
+                (DdKind::JesYsMsg, starts[2]),
+            ]
+        );
+        let lines: Vec<&str> = devx.lines().collect();
+        for (a, b) in original.iter().zip(&parsed) {
+            assert_eq!(a.steps, b.steps);
+            assert_eq!(a.statements, b.statements);
+            assert_eq!(a.messages.len(), b.messages.len());
+            for m in &b.messages {
+                assert_eq!(&lines[m.lines.start][m.id_columns.clone()], m.id);
+            }
+        }
     }
 
     #[test]

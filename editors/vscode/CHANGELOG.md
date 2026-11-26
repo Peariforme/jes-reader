@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Data set links: a PDS is recognized before opening it (Zowe Explorer's file system says it is a directory), and also from the "actually a directory" error, then shown in Zowe Explorer's Data Sets view.
+- Lines starting with a non-ASCII character (a badly converted carriage-control byte, as in the `JESJCL` of BMC AMI DevX) are read with a space in its place, so the JOB card and the statements are found.
 - BMC AMI DevX whole spools are now cut into their DDs: DevX writes JESJCL one column to the right of JESMSGLG, so the JOB card was not recognized and the whole file read as one JESMSGLG. Each DD is now read with its own layout: in place, one column to the right, or without the ASA column.
 - Folding in `JESJCL`: an `EXEC` folds up to the next step (its procedure and DDs included), a procedure `EXEC` up to the next `EXEC`, the `JOB` card the whole job. It used to stop at the first DD.
 - Step tables of `JESMSGLG` with another layout (a `JOBNAME` column first, `CPU` instead of `TCB`) are read: their columns come from the header line.

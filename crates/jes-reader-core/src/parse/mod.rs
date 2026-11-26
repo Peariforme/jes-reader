@@ -6,6 +6,7 @@ mod msglg;
 mod other;
 mod sysmsg;
 
+use std::borrow::Cow;
 use std::ops::Range;
 use std::time::Duration;
 
@@ -25,10 +26,14 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
         .as_deref()
         .map_or(DdKind::Other, DdKind::from_dd_name);
     let kind = match by_name {
-        DdKind::Other => DdKind::sniff(text).unwrap_or(DdKind::Other),
+        DdKind::Other => {
+            let first = text.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+            DdKind::sniff(&ascii_leads(first).0.concat()).unwrap_or(DdKind::Other)
+        }
         kind => kind,
     };
-    let original: Vec<&str> = text.lines().collect();
+    let (leads, lead_bytes) = ascii_leads(text);
+    let original: Vec<&str> = leads.iter().map(|l| l.as_ref()).collect();
     // A JES2 DD whose fixed fields are one column off (no ASA column, or an
     // extra column in front, as BMC AMI DevX writes JESJCL): parse it with
     // its columns put back in place, then move the columns back.
@@ -86,7 +91,39 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
             m.id_columns = column(m.id_columns.start)..column(m.id_columns.end);
         }
     }
+    restore_lead_bytes(&mut dd, &lead_bytes, 0);
     dd
+}
+
+/// Lines whose first character is not plain ASCII get a space instead. A
+/// carriage-control byte badly converted from EBCDIC (BMC AMI DevX writes
+/// one in front of JESJCL) takes two or more bytes in UTF-8, while columns
+/// are counted in bytes: without this, every field of the line would be one
+/// byte further than the editor shows. Also returns, for each line, the
+/// number of bytes removed, to move the columns back after parsing.
+pub(crate) fn ascii_leads(text: &str) -> (Vec<Cow<'_, str>>, Vec<usize>) {
+    text.lines()
+        .map(|line| match line.chars().next() {
+            Some(c) if !c.is_ascii() => {
+                let rest = &line[c.len_utf8()..];
+                (Cow::Owned(format!(" {rest}")), c.len_utf8() - 1)
+            }
+            _ => (Cow::Borrowed(line), 0),
+        })
+        .unzip()
+}
+
+/// Moves the message columns of `dd` back to the bytes of the original
+/// lines (see [`ascii_leads`]); `first` is the index in `lead_bytes` of the
+/// first line of the DD.
+pub(crate) fn restore_lead_bytes(dd: &mut Dd, lead_bytes: &[usize], first: usize) {
+    if lead_bytes.iter().all(|b| *b == 0) {
+        return;
+    }
+    for m in &mut dd.messages {
+        let extra = lead_bytes.get(m.lines.start - first).copied().unwrap_or(0);
+        m.id_columns = m.id_columns.start + extra..m.id_columns.end + extra;
+    }
 }
 
 /// How far the fixed fields of a JES2 system DD are from where JES2 puts
@@ -384,6 +421,32 @@ mod tests {
                 .map(|(id, c)| (id, c + 1))
                 .collect();
             assert_eq!(ids(&dd), moved, "{path}");
+        }
+    }
+
+    /// A non-ASCII character in front of each line (a carriage-control byte
+    /// badly converted): the fields are found, and message columns point at
+    /// the IDs in the original lines.
+    #[test]
+    fn non_ascii_first_character() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../corpus/sysout");
+        for (path, name) in [
+            ("JOB00896/JES2/JESJCL.txt", "document"),
+            ("JOB00896/JES2/JESYSMSG.txt", "JESYSMSG.txt"),
+        ] {
+            let text =
+                String::from_utf8_lossy(&std::fs::read(root.join(path)).unwrap()).into_owned();
+            let prefixed: String = text.lines().map(|l| format!("\u{8b}{l}\n")).collect();
+            let original = parse_file(path, &text);
+            let dd = parse_file(name, &prefixed);
+            assert_eq!(dd.kind, original.kind, "{path}");
+            assert_eq!(dd.steps, original.steps, "{path}");
+            assert_eq!(dd.statements, original.statements, "{path}");
+            assert_eq!(dd.messages.len(), original.messages.len(), "{path}");
+            let lines: Vec<&str> = prefixed.lines().collect();
+            for m in &dd.messages {
+                assert_eq!(&lines[m.lines.start][m.id_columns.clone()], m.id, "{path}");
+            }
         }
     }
 
