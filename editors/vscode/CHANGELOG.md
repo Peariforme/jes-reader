@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Whole spools whose DDs do not all have the ASA column (JESMSGLG with it, JESJCL and JESYSMSG without) are cut into their DDs; each DD is read with its own layout.
 - Folding in `JESJCL`: an `EXEC` folds up to the next step (its procedure and DDs included), a procedure `EXEC` up to the next `EXEC`, the `JOB` card the whole job. It used to stop at the first DD.
 - Step tables of `JESMSGLG` with another layout (a `JOBNAME` column first, `CPU` instead of `TCB`) are read: their columns come from the header line.
 - BMC AMI DevX: the `.jes` file of the Job Explorer (every DD of a job, one after the other) is recognized and cut into its DDs. Messages that programs write to the console (`+WLM644E` in `JESMSGLG`) are read as messages. Sysouts without the ASA column are read too.

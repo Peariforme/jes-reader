@@ -30,7 +30,7 @@ use std::ops::Range;
 
 use crate::model::{Dd, DdKind};
 use crate::msgid::message_id_at;
-use crate::parse::{parse_dd, parse_file, remove_first_column};
+use crate::parse::{parse_dd, parse_file};
 use crate::source::{DdSource, jes_dd_name};
 
 /// DD found in a whole spool.
@@ -51,22 +51,10 @@ pub fn parse_document(path: &str, text: &str) -> Vec<Dd> {
 /// DDs of a whole spool, or `None` if the text is not one: a whole spool
 /// holds at least two JES2 system DDs.
 pub fn parse_spool(path: &str, text: &str) -> Option<Vec<Dd>> {
-    let system = |parts: &[Part]| parts.iter().filter(|p| p.kind != DdKind::Other).count();
-    let original: Vec<&str> = text.lines().collect();
-    let mut parts = split(&original);
-    // Saved without the ASA column: try again with a blank
-    // column added in front of each line, and move the columns back after.
-    let padded: Vec<String>;
-    let mut lines = original;
-    let mut without_asa = false;
-    if system(&parts) < 2 {
-        padded = lines.iter().map(|l| format!(" {l}")).collect();
-        let padded_lines: Vec<&str> = padded.iter().map(String::as_str).collect();
-        let padded_parts = split(&padded_lines);
-        if system(&padded_parts) < 2 {
-            return None;
-        }
-        (lines, parts, without_asa) = (padded_lines, padded_parts, true);
+    let lines: Vec<&str> = text.lines().collect();
+    let parts = split(&lines);
+    if parts.iter().filter(|p| p.kind != DdKind::Other).count() < 2 {
+        return None;
     }
     let source = DdSource::from_path(path);
     let dds = parts
@@ -79,9 +67,6 @@ pub fn parse_spool(path: &str, text: &str) -> Option<Vec<Dd>> {
             let mut dd = parse_dd(&source, &lines[part.lines.clone()].join("\n"));
             // The content decides, whatever the name of the file says.
             dd.name = source.dd_name;
-            if without_asa {
-                remove_first_column(&mut dd);
-            }
             shift(&mut dd, part.lines.start);
             dd
         })
@@ -135,7 +120,8 @@ pub fn split(lines: &[&str]) -> Vec<Part> {
             job_ended = false;
         }
         if parts.last().map(|p| p.kind) == Some(DdKind::JesYsMsg)
-            && message_id_at(line, 1).is_some_and(|id| &line[id] == "IEF033I")
+            && (message_id_at(line, 1).or_else(|| message_id_at(line, 0)))
+                .is_some_and(|id| &line[id] == "IEF033I")
         {
             job_ended = true;
         }
@@ -152,35 +138,41 @@ fn is_msglg_banner(line: &str) -> bool {
 }
 
 /// `        1 //NAME     JOB …`: first statement of JESJCL. Column 1 (ASA)
-/// may hold a page eject.
+/// may hold a page eject, or be missing: everything is then one column to
+/// the left.
 fn is_job_card(line: &str) -> bool {
-    line.get(1..9).map(str::trim) == Some("1")
-        && line.get(9..12) == Some(" //")
-        && line.contains(" JOB ")
+    let card = |number: usize| {
+        line.get(number..number + 8).map(str::trim) == Some("1")
+            && line.get(number + 8..number + 11) == Some(" //")
+    };
+    (card(1) || card(0)) && line.contains(" JOB ")
 }
 
 /// `  STMT NO. MESSAGE`
 fn is_sysmsg_header(line: &str) -> bool {
-    line.get(1..)
-        .is_some_and(|l| l.trim_start().starts_with("STMT NO. MESSAGE"))
+    line.trim_start().starts_with("STMT NO. MESSAGE")
 }
 
 /// Line of JESJCL: text from column 11, after a statement number or a
 /// blank number field (`        4 XXCOBOL …`, `          //  REGION=0M`,
-/// `          IEFC653I SUBSTITUTION JCL - …` and its continuation lines).
-/// JESYSMSG lines differ: a message from column 2, or a statement number
-/// that reaches column 10 (`         2 IEFC001I …`).
+/// `          IEFC653I SUBSTITUTION JCL - …` and its continuation lines),
+/// or one column to the left without the ASA column. JESYSMSG lines differ:
+/// a message from column 1 or 2.
 fn is_jcl_line(line: &str) -> bool {
-    let number = line.get(1..9).map(str::trim);
-    number.is_some_and(|n| n.bytes().all(|c| c.is_ascii_digit()))
-        && line.get(9..10) == Some(" ")
-        && line.as_bytes().get(10).is_some_and(|c| *c != b' ')
+    let at = |number: usize| {
+        line.get(number..number + 8)
+            .map(str::trim)
+            .is_some_and(|n| n.bytes().all(|c| c.is_ascii_digit()))
+            && line.get(number + 8..number + 9) == Some(" ")
+            && line.as_bytes().get(number + 9).is_some_and(|c| *c != b' ')
+    };
+    at(1) || at(0)
 }
 
-/// Continuation of a JESYSMSG message: indented, after the ASA column
+/// Continuation of a JESYSMSG message: indented
 /// (`         CPU:     0 HR  00 MIN …`).
 fn is_continuation(line: &str) -> bool {
-    line.len() > 10 && line.get(1..9).is_some_and(|l| l.trim().is_empty())
+    line.len() > 10 && line.get(..8).is_some_and(|l| l.trim().is_empty())
 }
 
 /// Moves every line number of `dd` down by `offset`.
@@ -435,6 +427,46 @@ mod tests {
         sysmsg.attach_programs(&dds[1]);
         assert_eq!(sysmsg.steps[1].program.as_deref(), Some("IDCAMS"));
         assert!(dds.iter().all(|d| d.job_id.as_deref() == Some("JOB00868")));
+    }
+
+    /// JESMSGLG with its ASA column, JESJCL and JESYSMSG without: each DD is
+    /// cut at the right line and read with its own layout.
+    #[test]
+    fn mixed_asa_columns() {
+        let dds = ["JES2/JESMSGLG.txt", "JES2/JESJCL.txt", "JES2/JESYSMSG.txt"];
+        let (text, starts) = spool("JOB00896", &dds);
+        let mixed: String = text
+            .lines()
+            .enumerate()
+            .map(|(i, l)| {
+                let l = if i >= starts[1] {
+                    l.get(1..).unwrap_or("")
+                } else {
+                    l
+                };
+                format!("{l}\n")
+            })
+            .collect();
+        let with_asa = parse_spool("x.jes", &text).unwrap();
+        let parsed = parse_spool("x.jes", &mixed).unwrap();
+        let kinds: Vec<_> = parsed
+            .iter()
+            .map(|d| (d.kind, d.first_line, d.has_asa))
+            .collect();
+        assert_eq!(
+            kinds,
+            [
+                (DdKind::JesMsgLg, starts[0], true),
+                (DdKind::JesJcl, starts[1], false),
+                (DdKind::JesYsMsg, starts[2], false),
+            ]
+        );
+        for (a, b) in with_asa.iter().zip(&parsed) {
+            assert_eq!(a.steps, b.steps);
+            assert_eq!(a.statements, b.statements);
+            assert_eq!(a.messages.len(), b.messages.len());
+        }
+        assert!(parsed[1].exec_statement(&parsed[2].steps[2]).is_some());
     }
 
     #[test]
