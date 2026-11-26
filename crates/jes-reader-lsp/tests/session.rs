@@ -693,7 +693,7 @@ fn logs_for_profiling() {
     let (server, connection) = Connection::memory();
     let handle = std::thread::spawn(move || jes_reader_lsp::run(&server));
     let mut logs = Vec::new();
-    let mut log_until = |connection: &Connection, method: &str, logs: &mut Vec<String>| loop {
+    let log_until = |connection: &Connection, method: &str, logs: &mut Vec<String>| loop {
         match connection.receiver.recv().unwrap() {
             Message::Notification(n) if n.method == "window/logMessage" => {
                 logs.push(n.params["message"].as_str().unwrap().to_owned());
