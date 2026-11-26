@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ keywords = ["zos", "mainframe", "jes2", "sysout", "zowe"]
 [workspace.dependencies]
 # `version` is needed to publish on crates.io: keep it equal to the
 # workspace version (the release workflow checks it).
-jes-reader-core = { path = "crates/jes-reader-core", version = "0.1.0" }
+jes-reader-core = { path = "crates/jes-reader-core", version = "0.2.0" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
