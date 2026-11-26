@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fewer requests to Zowe Explorer: the `JESJCL` of a Zowe spool is fetched in the background at most once per session, never when it is already open, and no longer on hovers or code lenses (Go to Definition may fetch it again). Each fetch could make Zowe Explorer ask for credentials.
+- When Zowe Explorer refuses a link because its credentials prompt was cancelled, JES Reader says so and what to do, instead of showing Zowe's raw error.
 - Data set links: a PDS is recognized before opening it (Zowe Explorer's file system says it is a directory), and also from the "actually a directory" error, then shown in Zowe Explorer's Data Sets view.
 - Lines starting with a non-ASCII character (a badly converted carriage-control byte) are read with a space in its place.
 - BMC AMI DevX whole spools are now cut into their DDs: DevX writes JESJCL one column to the right of JESMSGLG, so the JOB card was not recognized and the whole file read as one JESMSGLG. Each DD is now read with its own layout: in place, one column to the right, or without the ASA column.

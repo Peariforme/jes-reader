@@ -98,10 +98,32 @@ export async function openDataset(
       await openPartitioned(target, profile, dsn);
       return;
     }
+    if (isAuthCancelled(error)) {
+      showAuthCancelled(profile);
+      return;
+    }
     void vscode.window.showWarningMessage(
       `JES Reader: could not open ${name} through Zowe Explorer (${error instanceof Error ? error.message : String(error)}).`,
     );
   }
+}
+
+/**
+ * Zowe Explorer refuses to read once its credentials prompt was cancelled
+ * (`AuthCancelledError: User cancelled previous authentication`).
+ */
+export function isAuthCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+  return /AuthCancelled|cancelled previous authentication/i.test(message);
+}
+
+function showAuthCancelled(profile: string | undefined): void {
+  const where = profile ? ` to profile ${profile}` : '';
+  void vscode.window.showWarningMessage(
+    `JES Reader: Zowe Explorer is not connected${where}: its credentials prompt was cancelled. ` +
+      'Connect from Zowe Explorer, then click the link again. If Zowe Explorer still refuses ' +
+      'to open anything, run "Developer: Reload Window".',
+  );
 }
 
 /** True if Zowe Explorer's file system says `uri` is a directory (a PDS). */
@@ -154,6 +176,10 @@ async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): P
       await vscode.window.showTextDocument(document, { preview: true });
     }
   } catch (error) {
+    if (isAuthCancelled(error)) {
+      showAuthCancelled(profile);
+      return;
+    }
     void vscode.window.showWarningMessage(
       `JES Reader: could not list the members of ${dsn} (${error instanceof Error ? error.message : String(error)}).`,
     );
