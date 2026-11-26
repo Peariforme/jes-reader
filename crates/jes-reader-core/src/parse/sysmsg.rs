@@ -18,6 +18,7 @@ use std::time::Duration;
 
 use crate::model::{Dd, Message, Step, StepStatus};
 use crate::msgid::message_id_at;
+use crate::source::is_job_id;
 
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     let mut messages = Messages::new();
@@ -34,6 +35,20 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     }
     dd.messages = messages.finish();
     dd.steps = steps(&dd.messages, &mut dd.job_name);
+    if dd.job_id.is_none() {
+        dd.job_id = job_id(&dd.messages);
+    }
+}
+
+/// JES job ID from the content, when the path does not give it: the spool
+/// data sets of the job carry it (`IEF285I   Z99999.JRIDC8.JOB00868.D0000103.?`).
+fn job_id(messages: &[Message]) -> Option<String> {
+    messages.iter().find_map(|m| {
+        m.text
+            .split(|c: char| c == '.' || c.is_whitespace())
+            .find(|word| is_job_id(word))
+            .map(str::to_owned)
+    })
 }
 
 /// `         2 IEFC001I …`: statement number in columns 2-10, message ID

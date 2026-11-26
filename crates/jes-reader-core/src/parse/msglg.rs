@@ -18,10 +18,8 @@ const BODY: usize = 20;
 
 pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
     let mut messages = Messages::new();
-    let mut in_step_table = false;
-    // End columns of the TCB and CLOCK headers: values are right-aligned
-    // under them. The table layout depends on the installation (IEFACTRT).
-    let mut timing_columns = None;
+    // Columns of the step table being read, from its header line.
+    let mut table: Option<Table> = None;
 
     for (i, line) in lines.iter().enumerate() {
         let Some(job_id) = timed_job_id(line) else {
@@ -33,7 +31,13 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
             dd.job_id = Some(job_id.to_owned());
         }
 
-        if let Some(id) = message_id_at(line, BODY) {
+        // `+WLM644E`: message written to the console by the program itself.
+        let id = message_id_at(line, BODY).or_else(|| {
+            (line.as_bytes().get(BODY) == Some(&b'+'))
+                .then(|| message_id_at(line, BODY + 1))
+                .flatten()
+        });
+        if let Some(id) = id {
             messages.start(i, line, id, None);
             continue;
         }
@@ -42,16 +46,13 @@ pub(super) fn parse(lines: &[&str], dd: &mut Dd) {
             Some(b'-') => {
                 messages.close();
                 let row = &line[BODY + 1..];
-                if row.starts_with("STEPNAME ") {
-                    in_step_table = true;
-                    timing_columns = header_end(line, " TCB").zip(header_end(line, " CLOCK"));
+                if row.contains("STEPNAME") && row.contains("PROCSTEP") {
+                    table = Table::from_header(line);
                 } else if row.contains(" ENDED.  NAME-") {
-                    in_step_table = false;
-                } else if in_step_table && let Some(mut step) = step_row(line, i) {
-                    if let Some((tcb, clock)) = timing_columns {
-                        step.cpu = value_ending_at(line, tcb).and_then(minutes);
-                        step.elapsed = value_ending_at(line, clock).and_then(minutes);
-                    }
+                    table = None;
+                } else if let Some(table) = &table
+                    && let Some(step) = table.step(line, i)
+                {
                     dd.steps.push(step);
                 }
             }
@@ -98,42 +99,86 @@ fn value_ending_at(line: &str, end: usize) -> Option<&str> {
     head.split(' ').next_back().filter(|w| !w.is_empty())
 }
 
-/// Step table row:
-/// `-STEPNAME PROCSTEP    RC` in columns 22-29, 31-38 and 39-44 (offsets 21, 30, 38).
-fn step_row(line: &str, line_no: usize) -> Option<Step> {
-    // An unnamed step (`// EXEC` without a label) has a blank STEPNAME.
-    let name = line.get(21..29)?.trim();
-    let proc_step = line.get(30..38).map(str::trim).filter(|s| !s.is_empty());
-    let rc = line.get(38..44)?.trim();
-    if rc.is_empty() {
-        return None;
+/// Columns of a step table, read from its header. The layout belongs to
+/// the installation (IEFACTRT exit):
+///
+/// ```text
+/// -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK …
+/// -JOBNAME  STEPNAME PROCSTEP    RC   EXCP    CPU    SRB  CLOCK   SERV …
+/// ```
+///
+/// Names are left-aligned under their header, numbers right-aligned.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Table {
+    step: usize,
+    proc_step: usize,
+    /// Column just after the `RC` header.
+    rc_end: usize,
+    /// Column just after `TCB` (or `CPU`), and after `CLOCK`.
+    cpu_end: Option<usize>,
+    clock_end: Option<usize>,
+}
+
+impl Table {
+    fn from_header(header: &str) -> Option<Self> {
+        Some(Self {
+            step: header.find("STEPNAME")?,
+            proc_step: header.find("PROCSTEP")?,
+            rc_end: header_end(header, " RC")?,
+            cpu_end: header_end(header, " TCB").or_else(|| header_end(header, " CPU")),
+            clock_end: header_end(header, " CLOCK"),
+        })
     }
-    // System abend with a leading asterisk (`*S0C7`), user abend without
-    // (`U4038`).
-    let abend = rc.strip_prefix('*').unwrap_or(rc);
-    let status = if rc == "FLUSH" {
-        StepStatus::NotRun
-    } else if abend.starts_with(['S', 'U']) && abend.len() > 1 {
-        StepStatus::Abended {
-            code: abend.to_owned(),
-            reason: None,
+
+    /// Step of a table row. The return code is a right-aligned word:
+    /// `08`, `FLUSH` for a step that did not run, `*S0C7` for a system
+    /// abend (leading asterisk), `U4038` for a user abend.
+    fn step(&self, line: &str, line_no: usize) -> Option<Step> {
+        let rc = value_ending_at(line, self.rc_end)?;
+        let rc_start = self.rc_end - rc.len();
+        // A name stops where the return code starts (`FLUSH` is written
+        // under PROCSTEP in some tables).
+        let field = |start: usize| -> &str {
+            line.get(start..(start + 8).min(rc_start))
+                .map_or("", str::trim)
+        };
+        // An unnamed step (`// EXEC` without a label) has a blank STEPNAME.
+        let mut name = field(self.step);
+        let mut proc_step = Some(field(self.proc_step)).filter(|s| !s.is_empty());
+        // A name under PROCSTEP alone is the step name: there is no
+        // procedure step without a job step.
+        if name.is_empty()
+            && let Some(alone) = proc_step.take()
+        {
+            name = alone;
         }
-    } else {
-        StepStatus::Completed {
-            return_code: rc.parse().ok()?,
-        }
-    };
-    Some(Step {
-        name: name.to_owned(),
-        proc_step: proc_step.map(str::to_owned),
-        status,
-        lines: line_no..line_no + 1,
-        status_line: line_no,
-        program: None,
-        cpu: None,
-        elapsed: None,
-        elapsed_in_minutes: false,
-    })
+        let abend = rc.strip_prefix('*').unwrap_or(rc);
+        let status = if rc == "FLUSH" {
+            StepStatus::NotRun
+        } else if abend.starts_with(['S', 'U']) && abend.len() > 1 {
+            StepStatus::Abended {
+                code: abend.to_owned(),
+                reason: None,
+            }
+        } else {
+            StepStatus::Completed {
+                return_code: rc.parse().ok()?,
+            }
+        };
+        let time =
+            |end: Option<usize>| end.and_then(|e| value_ending_at(line, e)).and_then(minutes);
+        Some(Step {
+            name: name.to_owned(),
+            proc_step: proc_step.map(str::to_owned),
+            status,
+            lines: line_no..line_no + 1,
+            status_line: line_no,
+            program: None,
+            cpu: time(self.cpu_end),
+            elapsed: time(self.clock_end),
+            elapsed_in_minutes: false,
+        })
+    }
 }
 
 /// Job name and end of job, from `$HASP373`, `$HASP395` and `IEF453I`.
@@ -188,6 +233,22 @@ mod tests {
     }
 
     #[test]
+    fn program_messages() {
+        let lines = [
+            " 04.42.18 JOB00868  +WLM644E ******* PRODUCT 14 DAY GRACE EXPIRED",
+            " 04.42.18 JOB00868  IEF403I JRIDC8 - STARTED - TIME=04.42.18",
+        ];
+        let mut dd = crate::parse_file("JOB00868/JES2/JESMSGLG.txt", "");
+        parse(&lines, &mut dd);
+        let ids: Vec<_> = dd
+            .messages
+            .iter()
+            .map(|m| (m.id.as_str(), m.id_columns.clone()))
+            .collect();
+        assert_eq!(ids, [("WLM644E", 21..28), ("IEF403I", 20..27)]);
+    }
+
+    #[test]
     fn step_table_timings() {
         let text = [
             " 04.51.14 JOB00896  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV  WORKLOAD  PAGE  SWAP   VIO SWAPS",
@@ -210,9 +271,67 @@ mod tests {
         );
     }
 
+    /// Layout seen at a client site: JOBNAME first, CPU instead of TCB, the
+    /// step name of a plain step under PROCSTEP. Values from the corpus.
+    #[test]
+    fn step_table_with_job_name() {
+        let text = [
+            " 04.42.18 JOB00868  -                                         --TIMINGS (MINS.)--            ----PAGING COUNTS---",
+            " 04.42.18 JOB00868  -JOBNAME  STEPNAME PROCSTEP    RC   EXCP    CPU    SRB  CLOCK   SERV  PG   PAGE   SWAP    VIO SWAPS STEPNO",
+            " 04.42.18 JOB00868  -JRIDC8            STEP005     04     32    .01    .00    .02     5   0      0      0      0     0      1",
+            " 04.42.18 JOB00868  -JRIDC8            STEP010     08     12    .00    .00    .00     1   0      0      0      0     0      2",
+            " 04.42.18 JOB00868  IEF404I JRIDC8 - ENDED - TIME=04.42.18",
+            " 04.42.18 JOB00868  -JRIDC8   COBRUN   GO       *S0C7    282    .00    .00    .00   101   0      0      0      0     0      3",
+            " 04.42.18 JOB00868  -JRIDC8   ENDED.  NAME-JES-READER IDCAMS    TOTAL CPU TIME=   .01  TOTAL ELAPSED TIME=   .02",
+        ];
+        let mut dd = crate::parse_file("JOB00868/JES2/JESMSGLG.txt", "");
+        parse(&text, &mut dd);
+        let steps: Vec<_> = dd
+            .steps
+            .iter()
+            .map(|s| (s.display_name(), s.status.clone(), s.cpu, s.elapsed))
+            .collect();
+        use std::time::Duration;
+        assert_eq!(
+            steps,
+            [
+                (
+                    "STEP005".to_owned(),
+                    StepStatus::Completed { return_code: 4 },
+                    Some(Duration::from_millis(600)),
+                    Some(Duration::from_millis(1200)),
+                ),
+                (
+                    "STEP010".to_owned(),
+                    StepStatus::Completed { return_code: 8 },
+                    Some(Duration::ZERO),
+                    Some(Duration::ZERO),
+                ),
+                (
+                    "COBRUN.GO".to_owned(),
+                    StepStatus::Abended {
+                        code: "S0C7".into(),
+                        reason: None
+                    },
+                    Some(Duration::ZERO),
+                    Some(Duration::ZERO),
+                ),
+            ]
+        );
+        assert!(dd.messages.iter().any(|m| m.id == "IEF404I"));
+    }
+
     #[test]
     fn step_table() {
-        let row = |s: &str| step_row(s, 0).map(|step| (step.display_name(), step.status));
+        let table = Table::from_header(
+            " 04.51.14 JOB00896  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV",
+        )
+        .unwrap();
+        let row = |s: &str| {
+            table
+                .step(s, 0)
+                .map(|step| (step.display_name(), step.status))
+        };
         assert_eq!(
             row(" 04.51.14 JOB00896  -COBRUN   GO       *S0C7    282     44"),
             Some((

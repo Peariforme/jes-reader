@@ -118,6 +118,26 @@ Goal: one-click install at home, and offline install on a locked-down workstatio
 
 **Exit**: an offline VSIX works on a Windows workstation without admin rights.
 
+## Phase 5 — Whole spools and coverage
+
+Goal: the tool reads the files that sites actually exchange, and colors what it reports.
+
+- [x] Whole spool in one file (every DD of a job one after the other, as saved by BMC AMI DevX JES Explorer): cut into DDs, each analysed as if opened on its own, line numbers kept. System DDs are recognized by their content; the step output stays one unnamed DD
+- [ ] Step output of a whole spool split into its DDs, and their names: needs a real file to see what the saving tool writes between DDs (separator, banner, page eject). Fallback: the DD names allocated in JESYSMSG (`IEF237I JES2 ALLOCATED TO SYSPRINT`), in spool order
+- [x] Semantic tokens: message IDs colored by the severity the analysis gives them, house rules included. The TextMate grammar stays as the fallback when the server is not running
+- [x] Catalog extended to IDCAMS, Language Environment program checks, COBOL, Db2 and IMS (70 messages)
+- [ ] Integration test against a pinned Zowe Explorer version (URI scheme of spool documents)
+- [ ] Corpus: submit `long.jcl` and `idcams-rc12.jcl` (phase 0), a started task (`STC`) if possible, and a whole spool saved by BMC AMI DevX
+
+**Exit**: a whole spool saved by BMC AMI DevX gives the same findings, Outline and links as its DDs opened one by one.
+
+**Findings so far**
+
+- JESYSMSG does not always start with `STMT NO. MESSAGE`: the header is only there when the JCL conversion wrote messages (`JOB00901` starts with `ICH70001I`). In a whole spool, JESYSMSG therefore starts at the first line after JESJCL that is not JCL; the continuation lines of `IEFC653I` in JESJCL start in column 11 without `//` (`JOB00884`).
+- JESYSMSG ends after `IEF033I` (end of job) and its continuation lines; a job still running has none, and JESYSMSG then runs to the end of the file.
+- Every corpus job, its DDs concatenated, is cut at the right lines (`spool::tests::every_corpus_job`).
+- First use at a client site (BMC AMI DevX): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes`, DDs concatenated with their ASA column and nothing in between, so v0.1.0 read it as one JESMSGLG. Its step table has another layout (`-JOBNAME  STEPNAME PROCSTEP    RC …    CPU    SRB  CLOCK`, the name of a plain step under PROCSTEP), which the fixed columns of the parser missed, hence an empty Outline. The table columns now come from its header, and the whole-spool support cuts the file into DDs. Program messages in JESMSGLG (`+WLM644E`) are now read as messages, and the file name gives the job name and ID.
+
 ## Risks and open questions
 
 | Risk | Consequence | Mitigation |
@@ -131,4 +151,4 @@ Goal: one-click install at home, and offline install on a locked-down workstatio
 **Open questions**
 
 - JES3 in v1 or later
-- Whole-spool files: which tools produce them, and how DDs are separated
+- Whole-spool files: BMC AMI DevX JES Explorer produces them; what it writes between the DDs of the step output is still to be seen on a real file
