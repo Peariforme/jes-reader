@@ -8,8 +8,8 @@ job: JCL1 JOB01975
 end of job: ReturnCode(0)
 
 steps:
-  L9-9 COPYJCL2: Completed { return_code: 0 } (L9)
-  L10-10 COPYJCL3: Completed { return_code: 0 } (L10)
+  L9-9 COPYJCL2: Completed { return_code: 0 } (L9) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L10-10 COPYJCL3: Completed { return_code: 0 } (L10) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

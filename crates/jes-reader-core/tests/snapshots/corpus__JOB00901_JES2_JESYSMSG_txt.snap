@@ -7,7 +7,7 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 118 lines
 job: JRS013 JOB00901
 
 steps:
-  L4-115 STEP010: Abended { code: "S013", reason: Some("00000018") } (L105)
+  L4-115 STEP010: Abended { code: "S013", reason: Some("00000018") } (L105) PGM=IEBGENER CPU 0.11 s elapsed ~1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:51:09 ON WEDNESDAY, NOVEMBER 25, 2026

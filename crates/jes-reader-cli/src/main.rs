@@ -1,10 +1,14 @@
-use std::path::{Path, PathBuf};
+mod check;
+mod files;
+mod summary;
+
+use std::path::PathBuf;
 use std::process::ExitCode;
 
-use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use anyhow::Result;
+use clap::{Parser, Subcommand, ValueEnum};
+use jes_reader_core::Options;
 use jes_reader_core::rules::{self, Rules};
-use jes_reader_core::{FindingSeverity, Options, analyze, parse_file};
 
 /// Analysis of z/OS JES2 sysouts.
 #[derive(Parser)]
@@ -18,105 +22,109 @@ struct Cli {
 enum Command {
     /// Checks sysouts and reports failures (exit code 1 if there is an error).
     Check {
-        /// Files or directories (one DD per file, as Zowe Explorer downloads them).
-        #[arg(required = true)]
-        paths: Vec<PathBuf>,
-        /// Return code above which a step is reported (default 4, or the
-        /// rules file's max_return_code). Overrides the rules file.
-        #[arg(long)]
-        max_rc: Option<u16>,
-        /// House rules file. Default: .jesreader.toml in the current
-        /// directory, then in the home directory.
-        #[arg(long)]
-        rules: Option<PathBuf>,
+        #[command(flatten)]
+        input: Input,
+        /// Output format.
+        #[arg(long, value_enum, default_value_t = CheckFormat::Text)]
+        format: CheckFormat,
     },
+    /// Summarizes each job: end, then each step with its program, outcome,
+    /// CPU and elapsed time, then its errors and warnings.
+    Summary {
+        #[command(flatten)]
+        input: Input,
+        /// Output format.
+        #[arg(long, value_enum, default_value_t = SummaryFormat::Text)]
+        format: SummaryFormat,
+    },
+}
+
+/// Files to read and rules to apply, common to all commands.
+#[derive(clap::Args)]
+struct Input {
+    /// Files or directories (one DD per file, as Zowe Explorer downloads them).
+    #[arg(required = true)]
+    paths: Vec<PathBuf>,
+    /// Return code above which a step is reported (default 4, or the
+    /// rules file's max_return_code). Overrides the rules file.
+    #[arg(long)]
+    max_rc: Option<u16>,
+    /// House rules file. Default: .jesreader.toml in the current
+    /// directory, then in the home directory.
+    #[arg(long)]
+    rules: Option<PathBuf>,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum CheckFormat {
+    /// `file:line:column: severity[code] message`, one finding per line.
+    Text,
+    /// A JSON document with every finding.
+    Json,
+    /// SARIF 2.1.0, for code scanning tools (GitHub, Azure DevOps…).
+    Sarif,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum SummaryFormat {
+    /// One block per job.
+    Text,
+    /// A JSON document with every job.
+    Json,
+}
+
+impl Input {
+    /// Analysis options: the rules file, then `--max-rc`.
+    fn options(&self) -> Result<Options> {
+        let rules_file = self
+            .rules
+            .clone()
+            .or_else(|| rules::find(&[PathBuf::from(".")]));
+        let mut rules = match &rules_file {
+            Some(path) => Rules::load(path).map_err(anyhow::Error::msg)?,
+            None => Rules::default(),
+        };
+        if self.max_rc.is_some() {
+            rules.max_return_code = self.max_rc;
+        }
+        if let Some(path) = &rules_file {
+            eprintln!("rules: {}", path.display());
+        }
+        Ok(Options {
+            rules,
+            ..Options::default()
+        })
+    }
 }
 
 fn main() -> Result<ExitCode> {
     match Cli::parse().command {
-        Command::Check {
-            paths,
-            max_rc,
-            rules,
-        } => {
-            let rules_file = rules.or_else(|| rules::find(&[PathBuf::from(".")]));
-            let mut rules = match &rules_file {
-                Some(path) => Rules::load(path).map_err(anyhow::Error::msg)?,
-                None => Rules::default(),
+        Command::Check { input, format } => {
+            let options = input.options()?;
+            let files = files::load(&input.paths)?;
+            let report = check::Report::new(&files, &options);
+            let out = match format {
+                CheckFormat::Text => report.text(),
+                CheckFormat::Json => report.json().to_string(),
+                CheckFormat::Sarif => report.sarif().to_string(),
             };
-            if max_rc.is_some() {
-                rules.max_return_code = max_rc;
-            }
-            if let Some(path) = &rules_file {
-                eprintln!("rules: {}", path.display());
-            }
-            check(
-                &paths,
-                &Options {
-                    rules,
-                    ..Options::default()
-                },
-            )
+            println!("{}", out.trim_end());
+            Ok(if report.errors() > 0 {
+                ExitCode::FAILURE
+            } else {
+                ExitCode::SUCCESS
+            })
         }
-    }
-}
-
-fn check(paths: &[PathBuf], options: &Options) -> Result<ExitCode> {
-    let mut files = Vec::new();
-    for path in paths {
-        collect(path, &mut files)?;
-    }
-    files.sort();
-
-    let (mut errors, mut warnings) = (0, 0);
-    for file in &files {
-        let bytes = std::fs::read(file).with_context(|| format!("reading {}", file.display()))?;
-        // A sysout may contain bytes badly converted from EBCDIC: tolerate them.
-        let text = String::from_utf8_lossy(&bytes);
-        let dd = parse_file(&file.to_string_lossy(), &text);
-        for finding in analyze(&dd, options) {
-            let label = match finding.severity {
-                FindingSeverity::Error => {
-                    errors += 1;
-                    "error"
-                }
-                FindingSeverity::Warning => {
-                    warnings += 1;
-                    "warning"
-                }
-                FindingSeverity::Information => "info",
+        Command::Summary { input, format } => {
+            let options = input.options()?;
+            let files = files::load(&input.paths)?;
+            let jobs = summary::jobs(&files, &options);
+            let out = match format {
+                SummaryFormat::Text => summary::text(&jobs),
+                SummaryFormat::Json => summary::json(&jobs).to_string(),
             };
-            let column = finding.columns.map_or(1, |c| c.start + 1);
-            println!(
-                "{}:{}:{column}: {label}[{}] {}",
-                file.display(),
-                finding.line + 1,
-                finding.code,
-                finding.message
-            );
+            println!("{}", out.trim_end());
+            Ok(ExitCode::SUCCESS)
         }
     }
-    println!(
-        "{} file(s), {errors} error(s), {warnings} warning(s)",
-        files.len()
-    );
-    Ok(if errors > 0 {
-        ExitCode::FAILURE
-    } else {
-        ExitCode::SUCCESS
-    })
-}
-
-/// A file, or every file in a directory and its subdirectories.
-fn collect(path: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
-    if path.is_dir() {
-        let entries =
-            std::fs::read_dir(path).with_context(|| format!("reading {}", path.display()))?;
-        for entry in entries {
-            collect(&entry?.path(), files)?;
-        }
-    } else {
-        files.push(path.to_owned());
-    }
-    Ok(())
 }

@@ -7,9 +7,9 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 48 lines
 job: JRNOTCAT JOB00890
 
 steps:
-  L9-21 STEP005: Completed { return_code: 0 } (L14)
-  L22-34 STEP010: Completed { return_code: 0 } (L27)
-  L35-45 STEP020: NotRun (L39)
+  L9-21 STEP005: Completed { return_code: 0 } (L14) PGM=IEFBR14 CPU 0.00 s elapsed < 1 min
+  L22-34 STEP010: Completed { return_code: 0 } (L27) PGM=IEFBR14 CPU 0.00 s elapsed < 1 min
+  L35-45 STEP020: NotRun (L39) PGM=IEFBR14 CPU 0.00 s elapsed < 1 min
 
 messages:
   L3 col.12-20 IGD01007I [stmt 3] ZXPACS: STUDENTX Z99999 Z99999 00000003 Z99999.JESREAD.DUP

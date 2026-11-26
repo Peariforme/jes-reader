@@ -8,17 +8,21 @@ job: JRS013 JOB00901
 end of job: Abend("S013")
 
 steps:
-  L31-31 STEP010: Abended { code: "S013", reason: None } (L31)
+  L31-31 STEP010: Abended { code: "S013", reason: None } (L31) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.
   L5 col.21-29 ICH70001I Z99999   LAST ACCESS AT 04:51:09 ON WEDNESDAY, NOVEMBER 25, 2026
   L6 col.21-28 $HASP373 JRS013   STARTED - INIT 1    - CLASS A        - SYS S0W1
   L7 col.21-27 IEC141I 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
+  L9 col.22-29 IDI0001I Fault Analyzer V15R1M10 (UO07033 2026/03/05) invoked by IDIXDCAP using SVTSC.PARMLIB(IDICNF00)
+  L10 col.22-29 IDI0078E Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
+  L11 col.22-29 IDI0002I Module IEBGENER, CSECT IEBGENR3, offset X'318': Abend S013-X'18'
   L12 col.21-27 IEA995I SYMPTOM DUMP OUTPUT  296
   L28 col.21-27 IEF450I JRS013 STEP010 - ABEND=S013 U0000 REASON=00000018
   L33 col.21-28 $HASP395 JRS013   ENDED - ABEND=S013
 
 findings:
   L7 error [IEC141I] OPEN failed (S013-18: member not found in the partitioned data set): 013-18,IGG0191B,JRS013,STEP010,SYSUT1,1001,VTMVSC,  292
+  L10 error [IDI0078E] Open of fault history file ISM402.HIST failed because: MVS SAF check shows no Write access allowed
   L31 error [S013] Step STEP010: abend S013 (OPEN error)

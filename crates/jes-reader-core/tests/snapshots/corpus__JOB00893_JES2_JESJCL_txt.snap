@@ -10,7 +10,7 @@ statements:
     1 L1-8 Job JRS0C4 JOB
     2 L9-9 Job COBRUN EXEC
     3 L10-15 Procedure IGYWCLG PROC
-    4 L16-16 Procedure COBOL EXEC
+    4 L16-16 Procedure COBOL EXEC PGM=IGYCRCTL
     5 L17-18 Procedure STEPLIB DD
     6 L19-20 Procedure ? DD
     7 L21-22 Procedure ? DD
@@ -39,7 +39,7 @@ statements:
    30 L50-50 Procedure CEEDUMP DD
    31 L51-52 Procedure SYSUDUMP DD
    32 L53-54 Procedure SUCCESS IF
-   33 L55-55 Procedure LKED EXEC
+   33 L55-55 Procedure LKED EXEC PGM=IEWBLINK
    34 L56-57 Procedure SYSLIB DD
    35 L58-59 Procedure ? DD
    36 L60-61 Procedure ? DD
@@ -52,7 +52,7 @@ statements:
    43 L70-70 Procedure SYSUDUMP DD
    44 L71-72 Procedure ? ENDIF
    45 L73-74 Procedure GOODMOD IF
-   46 L75-75 Procedure GO EXEC
+   46 L75-75 Procedure GO EXEC PGM=*.LKED.SYSLMOD
    47 L76-77 Procedure STEPLIB DD
    48 L78-79 Procedure ? DD
    49 L80-81 Procedure ? DD

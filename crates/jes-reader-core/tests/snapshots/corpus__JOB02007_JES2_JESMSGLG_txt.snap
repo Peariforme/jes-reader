@@ -8,19 +8,19 @@ job: JCL3 JOB02007
 end of job: ReturnCode(0)
 
 steps:
-  L9-9 HEADER: Completed { return_code: 0 } (L9)
-  L10-10 POK: Completed { return_code: 0 } (L10)
-  L11-11 NHB: Completed { return_code: 0 } (L11)
-  L12-12 BEACON: Completed { return_code: 0 } (L12)
-  L13-13 CLDSPRNG: Completed { return_code: 0 } (L13)
-  L14-14 GARRISON: Completed { return_code: 0 } (L14)
-  L15-15 PEEKSKL: Completed { return_code: 0 } (L15)
-  L16-16 CORTLNDT: Completed { return_code: 0 } (L16)
-  L17-17 CORTLNDT: Completed { return_code: 0 } (L17)
-  L18-18 CROTONH: Completed { return_code: 0 } (L18)
-  L19-19 H125: Completed { return_code: 0 } (L19)
-  L20-20 GCT: Completed { return_code: 0 } (L20)
-  L21-21 PEAKINFO: Completed { return_code: 0 } (L21)
+  L9-9 HEADER: Completed { return_code: 0 } (L9) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L10-10 POK: Completed { return_code: 0 } (L10) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L11-11 NHB: Completed { return_code: 0 } (L11) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L12-12 BEACON: Completed { return_code: 0 } (L12) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L13-13 CLDSPRNG: Completed { return_code: 0 } (L13) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L14-14 GARRISON: Completed { return_code: 0 } (L14) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L15-15 PEEKSKL: Completed { return_code: 0 } (L15) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L16-16 CORTLNDT: Completed { return_code: 0 } (L16) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L17-17 CORTLNDT: Completed { return_code: 0 } (L17) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L18-18 CROTONH: Completed { return_code: 0 } (L18) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L19-19 H125: Completed { return_code: 0 } (L19) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L20-20 GCT: Completed { return_code: 0 } (L20) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
+  L21-21 PEAKINFO: Completed { return_code: 0 } (L21) PGM=IEBGENER CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

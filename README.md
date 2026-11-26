@@ -2,14 +2,17 @@
 
 A language server that turns a z/OS JES2 sysout into a navigable document: failures in the Problems panel, job steps in the Outline, messages colored by severity. Everything runs on your workstation; nothing is installed or opened on z/OS.
 
-It works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), one DD at a time, and on files you have downloaded.
+It works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), one DD at a time, on files you have downloaded, and on whole spools saved in one file (BMC AMI DevX JES Explorer).
 
-> Status: phase 1 (MVP) is done — parser, language server, CLI and VS Code extension. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> Status: phases 1 to 3 are done — parser, language server, CLI, VS Code extension, Zowe Explorer integration, hovers, house rules and job summaries. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it does
 
 - **Diagnostics**: abends (`S0C7`, `U4038`…) and JCL errors as errors, return codes above a threshold (4 by default) as warnings, steps that did not run as information. Severity is not read from the message suffix alone: `IEF453I` (JCL ERROR) and `IEF472I` (abend) both end in `I`.
-- **Outline**: steps with their outcome in `JESMSGLG` and `JESYSMSG`; a `JOB → EXEC → procedure EXEC → DD` tree in `JESJCL`.
+- **Outline**: steps with their outcome and program in `JESMSGLG` and `JESYSMSG`; a `JOB → EXEC → procedure EXEC → DD` tree in `JESJCL`.
+- **Step summaries**: a code lens above each step of `JESYSMSG` with its program, outcome, CPU and elapsed time.
+- **House rules** (`.jesreader.toml`): message severities, return codes tolerated by step name or by program.
+- **CLI** for scripts and CI: `jes-reader check` (text, JSON or SARIF) and `jes-reader summary` (text or JSON).
 - **Folding** of steps, JCL statements and multi-line messages.
 - **Syntax highlighting** of message IDs, abend codes, return codes, dataset names and JCL statements.
 
@@ -19,7 +22,7 @@ It works on the spool files you open from [Zowe Explorer](https://marketplace.vi
 | --- | --- |
 | `crates/jes-reader-core` | Parser, `Job → DD → step → message` model, rule engine |
 | `crates/jes-reader-lsp` | Language server (`lsp-server`, synchronous) |
-| `crates/jes-reader-cli` | `jes-reader` CLI (`jes-reader check <files or directories>`) |
+| `crates/jes-reader-cli` | `jes-reader` CLI (`check` and `summary` on files or directories) |
 | `editors/vscode` | VS Code extension (thin client, bundled server) |
 | `corpus/` | Test JCL and the sysouts they produce — no customer data |
 | `docs/` | Roadmap and sysout format notes |
@@ -41,6 +44,27 @@ cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo run -p jes-reader-cli -- check corpus/sysout/JOB00896
 cargo run -p jes-reader-cli -- check --rules my-rules.toml corpus/sysout   # house rules, see editors/vscode/README.md
+```
+
+### CLI
+
+```sh
+jes-reader check JOB00896                   # file:line:column: severity[code] message; exit code 1 on an error
+jes-reader check --format sarif . > jes.sarif   # SARIF 2.1.0, for code scanning
+jes-reader check --format json JOB00896
+jes-reader summary JOB00868                 # per job: end, steps (program, outcome, CPU, elapsed), failures
+jes-reader summary --format json JOB00868
+```
+
+Every command takes files or directories (one DD per file, as Zowe Explorer downloads them), `--rules <file>` (default: `.jesreader.toml` in the current directory, then in the home directory) and `--max-rc <n>`. Step programs come from the `JESJCL` of the same job, among the files or next to them.
+
+```text
+JRIDC8 JOB00868: ended, RC 8
+  STEP     PROGRAM  OUTCOME  CPU     ELAPSED
+  STEP005  IDCAMS   RC 4     0.00 s  0.00 s
+  STEP010  IDCAMS   RC 8     0.00 s  0.00 s
+  STEP020  IEFBR14  not run  0.00 s  0.00 s
+  warning: Step STEP010: return code 8 (JOB00868/JES2/JESYSMSG.txt:19)
 ```
 
 Corpus snapshots (`crates/jes-reader-core/tests/snapshots`) are updated with `INSTA_UPDATE=always cargo test -p jes-reader-core --test corpus`; review the diff before committing.

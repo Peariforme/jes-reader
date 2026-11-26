@@ -470,3 +470,165 @@ fn invalid_house_rules_are_reported() {
     client.stop(handle);
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn code_lenses_per_step() {
+    let (mut client, handle) = Client::start();
+    // Downloaded job: programs come from `JESJCL.txt` next to the file.
+    let sysmsg = corpus_uri("JOB00885/JES2/JESYSMSG.txt");
+    client.open(&sysmsg, corpus("JOB00885/JES2/JESYSMSG.txt"));
+    let lenses = client.request(
+        "textDocument/codeLens",
+        serde_json::json!({ "textDocument": { "uri": sysmsg.as_str() } }),
+    );
+    let titles: Vec<&str> = lenses
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|lens| lens["command"]["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        titles,
+        [
+            "COBRUN.COBOL · IGYCRCTL · RC 0 · CPU 0.04 s · elapsed ~1 min",
+            "COBRUN.LKED · IEWBLINK · RC 0 · CPU 0.01 s · elapsed < 1 min",
+            "COBRUN.GO · *.LKED.SYSLMOD · abend U4038 · CPU 0.00 s · elapsed < 1 min",
+        ]
+    );
+    // Above the first line of the step.
+    assert_eq!(lenses[0]["range"]["start"]["line"], 7);
+
+    // No lens in JESMSGLG: its step table already has the figures.
+    let msglg = corpus_uri("JOB00885/JES2/JESMSGLG.txt");
+    client.open(&msglg, corpus("JOB00885/JES2/JESMSGLG.txt"));
+    let lenses = client.request(
+        "textDocument/codeLens",
+        serde_json::json!({ "textDocument": { "uri": msglg.as_str() } }),
+    );
+    assert_eq!(lenses, serde_json::json!([]));
+
+    client.stop(handle);
+}
+
+#[test]
+fn program_rules_wait_for_the_jcl() {
+    let dir = std::env::temp_dir().join(format!("jes-reader-pgm-rules-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let rules = dir.join("team.toml");
+    std::fs::write(
+        &rules,
+        "[[steps]]\nprogram = \"IDCAMS\"\nmax_return_code = 8\n",
+    )
+    .unwrap();
+    let (client, handle) = Client::start_with(InitializeParams {
+        initialization_options: Some(serde_json::json!({
+            "rulesFile": rules.to_string_lossy(),
+        })),
+        ..InitializeParams::default()
+    });
+    let open = |uri: &Uri, path: &str| {
+        client.notify(
+            DidOpenTextDocument::METHOD,
+            DidOpenTextDocumentParams {
+                text_document: TextDocumentItem::new(
+                    uri.clone(),
+                    "jes-sysout".into(),
+                    1,
+                    corpus(path),
+                ),
+            },
+        );
+    };
+    let codes = |p: &PublishDiagnosticsParams| -> Vec<String> {
+        p.diagnostics
+            .iter()
+            .filter_map(|d| match &d.code {
+                Some(NumberOrString::String(code)) => Some(code.clone()),
+                _ => None,
+            })
+            .collect()
+    };
+    let sysmsg: Uri = "zowe-jobs:/zosmf/JOB00868/JRIDC8.JOB00868.JES2.JESYSMSG.4"
+        .parse()
+        .unwrap();
+    let jcl: Uri = "zowe-jobs:/zosmf/JOB00868/JRIDC8.JOB00868.JES2.JESJCL.3"
+        .parse()
+        .unwrap();
+
+    // Without JESJCL the program is unknown: RC 8 of STEP010 is reported.
+    open(&sysmsg, "JOB00868/JES2/JESYSMSG.txt");
+    assert!(codes(&client.diagnostics()).contains(&"RC".to_owned()));
+
+    // JESJCL arrives (opened in the background): STEP010 runs IDCAMS, RC 8
+    // is tolerated, and JESYSMSG is published again.
+    open(&jcl, "JOB00868/JES2/JESJCL.txt");
+    let published = client.diagnostics();
+    assert_eq!(published.uri, jcl);
+    let published = client.diagnostics();
+    assert_eq!(published.uri, sysmsg);
+    assert!(!codes(&published).contains(&"RC".to_owned()));
+
+    client.stop(handle);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn whole_spool() {
+    let (mut client, handle) = Client::start();
+    // JOB00896 saved as one file: its DDs one after the other.
+    let mut text = String::new();
+    let mut starts = Vec::new();
+    for dd in [
+        "JES2/JESMSGLG.txt",
+        "JES2/JESJCL.txt",
+        "JES2/JESYSMSG.txt",
+        "GO/COBRUN/SYSOUT.txt",
+    ] {
+        starts.push(u32::try_from(text.lines().count()).unwrap());
+        text.push_str(&corpus(&format!("JOB00896/{dd}")));
+    }
+    let uri: Uri = "untitled:JRS0C7-spool.txt".parse().unwrap();
+    client.notify(
+        DidOpenTextDocument::METHOD,
+        DidOpenTextDocumentParams {
+            text_document: TextDocumentItem::new(uri.clone(), "jes-sysout".into(), 1, text),
+        },
+    );
+    let (jcl, sysmsg) = (starts[1], starts[2]);
+
+    // The abend of COBRUN.GO, on its line in the spool.
+    let diagnostics = client.diagnostics().diagnostics;
+    let abend = diagnostics
+        .iter()
+        .find(|d| {
+            d.code == Some(NumberOrString::String("S0C7".into())) && d.range.start.line >= sysmsg
+        })
+        .expect("S0C7 in JESYSMSG");
+    assert_eq!(abend.range.start.line, sysmsg + 130);
+
+    // Outline: one entry per DD.
+    let symbols = client.request(
+        DocumentSymbolRequest::METHOD,
+        DocumentSymbolParams {
+            text_document: TextDocumentIdentifier::new(uri.clone()),
+            work_done_progress_params: Default::default(),
+            partial_result_params: Default::default(),
+        },
+    );
+    let names: Vec<&str> = symbols
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["JESMSGLG", "JESJCL", "JESYSMSG", "Step output"]);
+
+    // Go to Definition stays in the spool: the expanded `XXGO EXEC`.
+    let location = client.definition(&uri, sysmsg + 130, 5).unwrap();
+    assert_eq!(
+        (location.uri, location.range.start.line),
+        (uri.clone(), jcl + 73)
+    );
+
+    client.stop(handle);
+}

@@ -7,8 +7,8 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 38 lines
 job: JCL1 JOB01975
 
 steps:
-  L4-19 COPYJCL2: Completed { return_code: 0 } (L9)
-  L20-35 COPYJCL3: Completed { return_code: 0 } (L25)
+  L4-19 COPYJCL2: Completed { return_code: 0 } (L9) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L20-35 COPYJCL3: Completed { return_code: 0 } (L25) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 10:23:15 ON WEDNESDAY, NOVEMBER 25, 2026

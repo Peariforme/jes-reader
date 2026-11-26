@@ -81,7 +81,7 @@
     },
     "known-messages": {
       "comment": "Error messages whose suffix says nothing (I): same list as the rule engine.",
-      "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEC130I|IEC030I|IEC031I|IEC032I|IEF472I|IEF450I)\\b",
+      "match": "\\b(?:IEF453I|IEFA107I|IEF212I|IGD17101I|CSV003I|IEC141I|IEC130I|IEC030I|IEC031I|IEC032I|IEF472I|IEF450I|DFS554A)\\b",
       "name": "token.error-token.message-id.jes-sysout"
     },
     "message-ids": {

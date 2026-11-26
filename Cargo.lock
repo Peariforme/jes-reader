@@ -227,6 +227,7 @@ dependencies = [
  "anyhow",
  "clap",
  "jes-reader-core",
+ "serde_json",
 ]
 
 [[package]]

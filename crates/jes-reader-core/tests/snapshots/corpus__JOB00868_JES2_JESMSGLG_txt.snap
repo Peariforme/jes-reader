@@ -8,9 +8,9 @@ job: JRIDC8 JOB00868
 end of job: ReturnCode(8)
 
 steps:
-  L9-9 STEP005: Completed { return_code: 4 } (L9)
-  L10-10 STEP010: Completed { return_code: 8 } (L10)
-  L11-11 STEP020: NotRun (L11)
+  L9-9 STEP005: Completed { return_code: 4 } (L9) PGM=IDCAMS CPU 0.00 s elapsed 0.00 s
+  L10-10 STEP010: Completed { return_code: 8 } (L10) PGM=IDCAMS CPU 0.00 s elapsed 0.00 s
+  L11-11 STEP020: NotRun (L11) PGM=IEFBR14 CPU 0.00 s elapsed 0.00 s
 
 messages:
   L4 col.21-27 IRR010I USERID Z99999   IS ASSIGNED TO THIS JOB.

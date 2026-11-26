@@ -7,7 +7,7 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 19 lines
 job: JRSETUP JOB00884
 
 steps:
-  L4-16 ALLOC: Completed { return_code: 0 } (L9)
+  L4-16 ALLOC: Completed { return_code: 0 } (L9) PGM=IEFBR14 CPU 0.00 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 04:43:06 ON WEDNESDAY, NOVEMBER 25, 2026

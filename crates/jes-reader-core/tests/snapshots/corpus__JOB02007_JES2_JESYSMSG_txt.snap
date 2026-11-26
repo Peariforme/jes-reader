@@ -7,19 +7,19 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 107 lines
 job: JCL3 JOB02007
 
 steps:
-  L2-8 HEADER: Completed { return_code: 0 } (L2)
-  L9-16 POK: Completed { return_code: 0 } (L10)
-  L17-24 NHB: Completed { return_code: 0 } (L18)
-  L25-32 BEACON: Completed { return_code: 0 } (L26)
-  L33-40 CLDSPRNG: Completed { return_code: 0 } (L34)
-  L41-48 GARRISON: Completed { return_code: 0 } (L42)
-  L49-56 PEEKSKL: Completed { return_code: 0 } (L50)
-  L57-64 CORTLNDT: Completed { return_code: 0 } (L58)
-  L65-72 CORTLNDT: Completed { return_code: 0 } (L66)
-  L73-80 CROTONH: Completed { return_code: 0 } (L74)
-  L81-88 H125: Completed { return_code: 0 } (L82)
-  L89-96 GCT: Completed { return_code: 0 } (L90)
-  L97-104 PEAKINFO: Completed { return_code: 0 } (L98)
+  L2-8 HEADER: Completed { return_code: 0 } (L2) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L9-16 POK: Completed { return_code: 0 } (L10) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L17-24 NHB: Completed { return_code: 0 } (L18) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L25-32 BEACON: Completed { return_code: 0 } (L26) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L33-40 CLDSPRNG: Completed { return_code: 0 } (L34) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L41-48 GARRISON: Completed { return_code: 0 } (L42) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L49-56 PEEKSKL: Completed { return_code: 0 } (L50) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L57-64 CORTLNDT: Completed { return_code: 0 } (L58) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L65-72 CORTLNDT: Completed { return_code: 0 } (L66) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L73-80 CROTONH: Completed { return_code: 0 } (L74) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L81-88 H125: Completed { return_code: 0 } (L82) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L89-96 GCT: Completed { return_code: 0 } (L90) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
+  L97-104 PEAKINFO: Completed { return_code: 0 } (L98) PGM=IEBGENER CPU 0.00 s elapsed < 1 min
 
 messages:
   L1 col.2-10 ICH70001I Z99999   LAST ACCESS AT 10:31:32 ON WEDNESDAY, NOVEMBER 25, 2026

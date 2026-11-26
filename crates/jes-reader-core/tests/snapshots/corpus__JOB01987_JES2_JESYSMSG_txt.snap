@@ -7,11 +7,11 @@ DD JESYSMSG (JesYsMsg), ASA: yes, 57 lines
 job: JCL2 JOB01987
 
 steps:
-  L5-11 BEFORE: Completed { return_code: 0 } (L5)
-  L12-18 COBRUN.COBOL: Completed { return_code: 0 } (L12)
-  L19-25 COBRUN.LKED: Completed { return_code: 0 } (L19)
-  L26-47 RUN: Abended { code: "U4038", reason: Some("00000001") } (L26)
-  L48-54 AFTER: NotRun (L48)
+  L5-11 BEFORE: Completed { return_code: 0 } (L5) PGM=IKJEFT01 CPU 0.01 s elapsed < 1 min
+  L12-18 COBRUN.COBOL: Completed { return_code: 0 } (L12) CPU 0.05 s elapsed < 1 min
+  L19-25 COBRUN.LKED: Completed { return_code: 0 } (L19) CPU 0.01 s elapsed < 1 min
+  L26-47 RUN: Abended { code: "U4038", reason: Some("00000001") } (L26) PGM=CBL0001 CPU 0.00 s elapsed < 1 min
+  L48-54 AFTER: NotRun (L48) PGM=IKJEFT1A CPU 0.00 s elapsed < 1 min
 
 messages:
   L2 col.12-19 IEFC001I [stmt 7] PROCEDURE IGYWCL WAS EXPANDED USING SYSTEM LIBRARY VENDOR.PROCLIB
