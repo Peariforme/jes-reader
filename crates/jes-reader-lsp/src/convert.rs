@@ -170,7 +170,7 @@ pub fn document_folding_ranges(dds: &[Dd]) -> Vec<FoldingRange> {
                 }),
         );
         ranges.sort_by_key(|r| (r.start_line, std::cmp::Reverse(r.end_line)));
-        ranges.dedup_by_key(|r| (r.start_line, r.end_line));
+        ranges.dedup_by_key(|r| r.start_line);
     }
     ranges
 }
@@ -416,10 +416,12 @@ fn statement_symbol(
 
 /// Folding ranges: steps, statements and multi-line messages.
 fn folding_ranges(dd: &Dd) -> Vec<FoldingRange> {
+    let jcl_blocks = jcl_blocks(&dd.statements);
     let blocks = dd
         .steps
         .iter()
         .map(|s| &s.lines)
+        .chain(&jcl_blocks)
         .chain(dd.statements.iter().map(|s| &s.lines))
         .chain(dd.messages.iter().map(|m| &m.lines));
     let mut ranges: Vec<FoldingRange> = blocks
@@ -430,14 +432,80 @@ fn folding_ranges(dd: &Dd) -> Vec<FoldingRange> {
             ..FoldingRange::default()
         })
         .collect();
+    // One range per start line, the longest: an EXEC block hides the
+    // range of the EXEC statement alone.
     ranges.sort_by_key(|r| (r.start_line, std::cmp::Reverse(r.end_line)));
-    ranges.dedup_by_key(|r| (r.start_line, r.end_line));
+    ranges.dedup_by_key(|r| r.start_line);
     ranges
+}
+
+/// JESJCL blocks, as in the Outline: a JOB up to the next JOB, a job-level
+/// EXEC up to the next job-level EXEC (its procedure and DDs included), a
+/// procedure EXEC up to the next EXEC. Each ends where the next one starts,
+/// or with the last statement.
+fn jcl_blocks(statements: &[Statement]) -> Vec<Range<usize>> {
+    // 0: JOB, 1: job-level EXEC, 2: procedure EXEC.
+    let level = |st: &Statement| match st.operation.as_deref() {
+        Some("JOB") => Some(0),
+        Some("EXEC") if st.origin == StatementOrigin::Job => Some(1),
+        Some("EXEC") => Some(2),
+        _ => None,
+    };
+    let Some(last) = statements.last() else {
+        return Vec::new();
+    };
+    statements
+        .iter()
+        .enumerate()
+        .filter_map(|(i, st)| {
+            let own = level(st)?;
+            let end = statements[i + 1..]
+                .iter()
+                .find(|next| level(next).is_some_and(|l| l <= own))
+                .map_or(last.lines.end, |next| next.lines.start);
+            Some(st.lines.start..end)
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn jcl_folding() {
+        // JOB, EXEC calling a procedure (PROC, EXEC COBOL, DDs, EXEC LKED,
+        // DD), a DD override, then a second job-level EXEC with a DD.
+        let text = "        1 //JRS0C7   JOB (ACCT)\n\
+                    \x20       2 //COBRUN   EXEC IGYWCLG\n\
+                    \x20       3 XXIGYWCLG PROC LNGPRFX='IGY'\n\
+                    \x20       4 XXCOBOL   EXEC PGM=IGYCRCTL,\n\
+                    \x20         XX             REGION=0M\n\
+                    \x20       5 XXSTEPLIB DD DSN=IGY.SIGYCOMP,\n\
+                    \x20         XX             DISP=SHR\n\
+                    \x20       6 XXSYSPRINT DD SYSOUT=*\n\
+                    \x20       7 XXLKED    EXEC PGM=IEWBLINK\n\
+                    \x20       8 XXSYSLIB  DD DSN=CEE.SCEELKED,DISP=SHR\n\
+                    \x20       9 //COBOL.SYSIN DD *\n\
+                    \x20      10 //STEP2    EXEC PGM=IEFBR14\n\
+                    \x20      11 //DD1      DD DUMMY\n";
+        let dd = jes_reader_core::parse_file("JOB00896/JES2/JESJCL.txt", text);
+        let ranges: Vec<(u32, u32)> = folding_ranges(&dd)
+            .iter()
+            .map(|r| (r.start_line, r.end_line))
+            .collect();
+        assert_eq!(
+            ranges,
+            [
+                (0, 12),  // JOB: whole job
+                (1, 10),  // COBRUN: procedure and override, up to STEP2
+                (3, 7),   // COBOL: up to LKED
+                (5, 6),   // STEPLIB, continued
+                (8, 10),  // LKED: up to STEP2, the override included
+                (11, 12), // STEP2: its DD
+            ]
+        );
+    }
 
     #[test]
     fn utf16_columns() {

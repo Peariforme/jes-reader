@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Folding in `JESJCL`: an `EXEC` folds up to the next step (its procedure and DDs included), a procedure `EXEC` up to the next `EXEC`, the `JOB` card the whole job. It used to stop at the first DD.
 - Step tables of `JESMSGLG` with another layout (a `JOBNAME` column first, `CPU` instead of `TCB`) are read: their columns come from the header line.
 - BMC AMI DevX: the `.jes` file of the Job Explorer (every DD of a job, one after the other) is recognized and cut into its DDs. Messages that programs write to the console (`+WLM644E` in `JESMSGLG`) are read as messages. Sysouts without the ASA column are read too.
 - Data set links: a partitioned data set opens in Zowe Explorer's Data Sets view instead of an error. The new `jesReader.zoweProfile` setting enables links in documents that do not come from Zowe Explorer.
