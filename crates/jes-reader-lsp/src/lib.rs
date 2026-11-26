@@ -154,19 +154,47 @@ pub fn run(connection: &Connection) -> Result<()> {
     };
     server.load_rules()?;
 
+    // A request or notification that fails or panics is reported and
+    // skipped: the server keeps running. Ending it would make the client
+    // restart it, losing the analysis of every open document meanwhile, and
+    // give up after a few restarts.
     for msg in &connection.receiver {
         match msg {
             Message::Request(req) => {
                 if connection.handle_shutdown(&req)? {
                     return Ok(());
                 }
-                server.request(req)?;
+                let (id, method) = (req.id.clone(), req.method.clone());
+                if let Err(error) = guarded(|| server.request(req)) {
+                    eprintln!("jes-reader-lsp: {method} failed: {error}");
+                    let response =
+                        Response::new_err(id, ErrorCode::InternalError as i32, error.clone());
+                    connection.sender.send(response.into())?;
+                }
             }
-            Message::Notification(not) => server.notification(not)?,
+            Message::Notification(not) => {
+                let method = not.method.clone();
+                if let Err(error) = guarded(|| server.notification(not)) {
+                    eprintln!("jes-reader-lsp: {method} failed: {error}");
+                }
+            }
             Message::Response(_) => {}
         }
     }
     Ok(())
+}
+
+/// Runs `handle`, turning an error or a panic into a message.
+fn guarded(handle: impl FnOnce() -> Result<()>) -> std::result::Result<(), String> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(handle)) {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(format!("{error:#}")),
+        Err(panic) => Err(panic
+            .downcast_ref::<&str>()
+            .map(|s| (*s).to_owned())
+            .or_else(|| panic.downcast_ref::<String>().cloned())
+            .map_or_else(|| "panic".to_owned(), |m| format!("panic: {m}"))),
+    }
 }
 
 /// Reads `maxReturnCode` from the initialization options, otherwise the default.
@@ -539,6 +567,17 @@ mod tests {
         );
         assert_eq!(decode_path("100%"), "100%");
         assert_eq!(decode_path("%zz"), "%zz");
+    }
+
+    #[test]
+    fn guarded_handlers() {
+        assert_eq!(guarded(|| Ok(())), Ok(()));
+        assert_eq!(
+            guarded(|| Err(anyhow::anyhow!("bad params"))),
+            Err("bad params".into())
+        );
+        let error = guarded(|| panic!("index out of bounds")).unwrap_err();
+        assert!(error.contains("index out of bounds"), "{error}");
     }
 
     #[test]

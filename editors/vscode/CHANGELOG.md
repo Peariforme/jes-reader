@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The language server no longer stops when a request fails or panics: it answers with an error, logs it in the JES Reader output, and keeps the analysis of the open documents. It used to exit, and VS Code restarted it, losing the analysis meanwhile and giving up after a few restarts.
 - Fewer requests to Zowe Explorer: the `JESJCL` of a Zowe spool is fetched in the background at most once per session, never when it is already open, and no longer on hovers or code lenses (Go to Definition may fetch it again). Each fetch could make Zowe Explorer ask for credentials.
 - When Zowe Explorer refuses a link because its credentials prompt was cancelled, JES Reader says so and what to do, instead of showing Zowe's raw error.
 - Data set links: a PDS is recognized before opening it (Zowe Explorer's file system says it is a directory), and also from the "actually a directory" error, then shown in Zowe Explorer's Data Sets view.

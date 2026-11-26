@@ -632,3 +632,49 @@ fn whole_spool() {
 
     client.stop(handle);
 }
+
+/// A request the server cannot handle gets an error, and the server keeps
+/// running: it used to stop, and the client restarted it, losing the
+/// analysis of the open documents meanwhile.
+#[test]
+fn bad_request_does_not_stop_the_server() {
+    let (mut client, handle) = Client::start();
+    let uri = corpus_uri("JOB00896/JES2/JESYSMSG.txt");
+    client.open(&uri, corpus("JOB00896/JES2/JESYSMSG.txt"));
+
+    client.next_id += 1;
+    let id = RequestId::from(client.next_id);
+    client
+        .connection
+        .sender
+        .send(
+            Request::new(
+                id.clone(),
+                HoverRequest::METHOD.into(),
+                serde_json::json!({}),
+            )
+            .into(),
+        )
+        .unwrap();
+    match client.connection.receiver.recv().unwrap() {
+        Message::Response(resp) if resp.id == id => assert!(resp.response_result.is_err()),
+        other => panic!("expected an error response, got {other:?}"),
+    }
+    // A bad notification is skipped too.
+    client.notify(
+        DidOpenTextDocument::METHOD,
+        serde_json::json!({ "bad": true }),
+    );
+
+    // Still running, with the document still analysed.
+    let symbols = client.request(
+        DocumentSymbolRequest::METHOD,
+        DocumentSymbolParams {
+            text_document: TextDocumentIdentifier::new(uri),
+            work_done_progress_params: Default::default(),
+            partial_result_params: Default::default(),
+        },
+    );
+    assert_eq!(symbols.as_array().map(Vec::len), Some(3));
+    client.stop(handle);
+}
