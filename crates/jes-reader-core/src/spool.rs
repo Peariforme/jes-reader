@@ -550,6 +550,42 @@ mod tests {
         }
     }
 
+    /// As inspected in the editor on a client workstation: JESJCL lines one
+    /// column to the right with plain spaces (`         1 //NAME JOB ,'…'`,
+    /// nine spaces before the number), JESMSGLG and JESYSMSG in place.
+    #[test]
+    fn devx_jesjcl_with_spaces() {
+        let dds = ["JES2/JESMSGLG.txt", "JES2/JESJCL.txt", "JES2/JESYSMSG.txt"];
+        let (text, starts) = spool("JOB00868", &dds);
+        let devx: String = text
+            .lines()
+            .enumerate()
+            .map(|(i, l)| {
+                if (starts[1]..starts[2]).contains(&i) {
+                    format!(" {l}\n")
+                } else {
+                    format!("{l}\n")
+                }
+            })
+            .collect();
+        let card = devx.lines().nth(starts[1]).unwrap();
+        assert!(card.starts_with("         1 //"), "{card}");
+        let parsed = parse_spool("JRIDC8_JOB00868.jes", &devx).unwrap();
+        let kinds: Vec<_> = parsed.iter().map(|d| (d.kind, d.first_line)).collect();
+        assert_eq!(
+            kinds,
+            [
+                (DdKind::JesMsgLg, starts[0]),
+                (DdKind::JesJcl, starts[1]),
+                (DdKind::JesYsMsg, starts[2]),
+            ]
+        );
+        assert!(parsed[1].statements.len() >= 8);
+        let mut sysmsg = parsed[2].clone();
+        sysmsg.attach_programs(&parsed[1]);
+        assert_eq!(sysmsg.steps[1].program.as_deref(), Some("IDCAMS"));
+    }
+
     #[test]
     fn header_and_running_job() {
         // JESYSMSG with its header; TSO session still running (no IEF033I).
