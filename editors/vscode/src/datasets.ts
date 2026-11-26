@@ -191,29 +191,51 @@ async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): P
  * the others when the `jesReader.zoweProfile` setting names a profile.
  */
 export class DatasetLinkProvider implements vscode.DocumentLinkProvider {
+  /**
+   * Links of each document, for its version and profile. VS Code asks for
+   * the links again each time an editor comes back into view; a large
+   * sysout then answers at once instead of being scanned again in the
+   * extension host, which all extensions share.
+   */
+  private readonly cache = new WeakMap<
+    vscode.TextDocument,
+    { version: number; profile: string; links: vscode.DocumentLink[] }
+  >();
+
   provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
     const profile = linkProfile(document.uri);
     if (!profile) {
       return [];
     }
-    const links: vscode.DocumentLink[] = [];
-    for (let line = 0; line < document.lineCount; line++) {
-      for (const reference of datasetReferences(document.lineAt(line).text)) {
-        const uri = datasetUri(profile, reference).toString();
-        const name = reference.member ? `${reference.dsn}(${reference.member})` : reference.dsn;
-        const target = vscode.Uri.parse(
-          `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(
-            JSON.stringify([uri, name, profile, reference.dsn]),
-          )}`,
-        );
-        const link = new vscode.DocumentLink(
-          new vscode.Range(line, reference.start, line, reference.end),
-          target,
-        );
-        link.tooltip = `Open ${name} with Zowe Explorer`;
-        links.push(link);
-      }
+    const cached = this.cache.get(document);
+    if (cached && cached.version === document.version && cached.profile === profile) {
+      return cached.links;
     }
+    const links = documentLinks(document, profile);
+    this.cache.set(document, { version: document.version, profile, links });
     return links;
   }
+}
+
+/** Links on the data set names of `document`, opened with `profile`. */
+function documentLinks(document: vscode.TextDocument, profile: string): vscode.DocumentLink[] {
+  const links: vscode.DocumentLink[] = [];
+  for (let line = 0; line < document.lineCount; line++) {
+    for (const reference of datasetReferences(document.lineAt(line).text)) {
+      const uri = datasetUri(profile, reference).toString();
+      const name = reference.member ? `${reference.dsn}(${reference.member})` : reference.dsn;
+      const target = vscode.Uri.parse(
+        `command:${OPEN_DATASET_COMMAND}?${encodeURIComponent(
+          JSON.stringify([uri, name, profile, reference.dsn]),
+        )}`,
+      );
+      const link = new vscode.DocumentLink(
+        new vscode.Range(line, reference.start, line, reference.end),
+        target,
+      );
+      link.tooltip = `Open ${name} with Zowe Explorer`;
+      links.push(link);
+    }
+  }
+  return links;
 }
