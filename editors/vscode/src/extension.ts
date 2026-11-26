@@ -182,7 +182,7 @@ async function openSiblingJcl(document: vscode.TextDocument): Promise<void> {
  * package.json.
  */
 const JES2_FIRST_LINE =
-  /^(1?\s*J E S 2 {2}J O B {2}L O G|\s*STMT NO\. MESSAGE|\s{7,8}1 \/\/\S+\s+JOB\b)/;
+  /^(1?\s*J E S 2 {2}J O B {2}L O G|\s*STMT NO\. MESSAGE|\s{7,9}1 \/\/\S+\s+JOB\b)/;
 
 /**
  * Plain text documents that are sysouts get our language. VS Code applies

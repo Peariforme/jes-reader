@@ -29,22 +29,34 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
         kind => kind,
     };
     let original: Vec<&str> = text.lines().collect();
-    // JES2 DDs saved without their ASA column (BMC AMI DevX): parse them
-    // with a blank column added, then move the columns back.
-    let without_asa = kind != DdKind::Other && lacks_asa(kind, &original);
-    let padded: Vec<String> = if without_asa {
-        original.iter().map(|l| format!(" {l}")).collect()
-    } else {
-        Vec::new()
+    // A JES2 DD whose fixed fields are one column off (no ASA column, or an
+    // extra column in front, as BMC AMI DevX writes JESJCL): parse it with
+    // its columns put back in place, then move the columns back.
+    let offset = match kind {
+        DdKind::Other => 0,
+        kind => column_offset(kind, &original),
     };
-    let lines: Vec<&str> = if without_asa {
-        padded.iter().map(String::as_str).collect()
-    } else {
+    let realigned: Vec<String> = match offset {
+        -1 => original.iter().map(|l| format!(" {l}")).collect(),
+        1 => original
+            .iter()
+            .map(|l| {
+                l.char_indices()
+                    .nth(1)
+                    .map_or("", |(i, _)| &l[i..])
+                    .to_owned()
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    let lines: Vec<&str> = if offset == 0 {
         original
+    } else {
+        realigned.iter().map(String::as_str).collect()
     };
     let has_asa = match kind {
         DdKind::Other => detect_asa(&lines),
-        _ => !without_asa,
+        _ => offset != -1,
     };
     let mut dd = Dd {
         name: source
@@ -68,54 +80,58 @@ pub fn parse_dd(source: &DdSource, text: &str) -> Dd {
         DdKind::JesYsMsg => sysmsg::parse(&lines, &mut dd),
         DdKind::Other => other::parse(&lines, &mut dd),
     }
-    if without_asa {
-        remove_first_column(&mut dd);
+    if offset != 0 {
+        for m in &mut dd.messages {
+            let column = |c: usize| c.saturating_add_signed(offset);
+            m.id_columns = column(m.id_columns.start)..column(m.id_columns.end);
+        }
     }
     dd
 }
 
-/// True if a JES2 system DD has no ASA column: its fixed fields start one
-/// column to the left.
+/// How far the fixed fields of a JES2 system DD are from where JES2 puts
+/// them: `0` normally, `-1` without the ASA column, `+1` with an extra
+/// column in front (JESJCL from BMC AMI DevX). Decided by the first line
+/// that shows a field:
 ///
-/// - JESMSGLG: time in column 1 (`04.12.28 JOB00823  IRR010I …`);
-/// - JESJCL: `//` in column 10 after the statement number (`       1 //JOB…`);
-/// - JESYSMSG: a message ID in column 1 (`IEF142I …`).
-pub(crate) fn lacks_asa(kind: DdKind, lines: &[&str]) -> bool {
-    let time = |l: &str| {
+/// - JESMSGLG: the time, normally in column 2 (`04.12.28 JOB00823  …`);
+/// - JESJCL: a statement number followed by `//`, normally in column 11;
+/// - JESYSMSG: a message ID, normally in column 2 (`IEF142I …`).
+pub(crate) fn column_offset(kind: DdKind, lines: &[&str]) -> isize {
+    let time = |l: &str, at: usize| {
         let b = l.as_bytes();
-        b.len() > 9
-            && b[..8].iter().enumerate().all(|(k, c)| {
+        b.len() > at + 9
+            && b[at..at + 8].iter().enumerate().all(|(k, c)| {
                 if k % 3 == 2 {
                     *c == b'.'
                 } else {
                     c.is_ascii_digit()
                 }
             })
-            && b[8] == b' '
+            && b[at + 8] == b' '
+            && (at == 0 || b[..at].iter().all(|c| *c == b' '))
     };
-    let statement = |l: &str| {
-        l.get(..8)
+    let statement = |l: &str, at: usize| {
+        l.get(at..at + 8)
             .map(str::trim)
             .is_some_and(|n| !n.is_empty() && n.bytes().all(|c| c.is_ascii_digit()))
-            && l.get(8..11) == Some(" //")
+            && l.get(at + 8..at + 11) == Some(" //")
     };
-    let message = |l: &str| crate::msgid::message_id_at(l, 0).is_some();
-    let test: &dyn Fn(&str) -> bool = match kind {
+    let message = |l: &str, at: usize| {
+        crate::msgid::message_id_at(l, at).is_some()
+            && l.get(..at).is_some_and(|p| p.trim().is_empty())
+    };
+    let test: &dyn Fn(&str, usize) -> bool = match kind {
         DdKind::JesMsgLg => &time,
         DdKind::JesJcl => &statement,
         DdKind::JesYsMsg => &message,
-        DdKind::Other => return false,
+        DdKind::Other => return 0,
     };
-    lines.iter().take(200).any(|l| test(l))
-}
-
-/// Moves every column of `dd` one to the left: the DD was parsed with a
-/// blank ASA column added in front of each line.
-pub(crate) fn remove_first_column(dd: &mut Dd) {
-    for m in &mut dd.messages {
-        m.id_columns = m.id_columns.start.saturating_sub(1)..m.id_columns.end.saturating_sub(1);
-    }
-    dd.has_asa = false;
+    lines
+        .iter()
+        .take(200)
+        .find_map(|l| [1, 0, 2].into_iter().find(|&at| test(l, at)))
+        .map_or(0, |at| at as isize - 1)
 }
 
 /// A DD has ASA characters if every non-empty line starts with one of the
@@ -336,6 +352,38 @@ mod tests {
                 .map(|(id, c)| (id, c - 1))
                 .collect();
             assert_eq!(ids(&dd), shifted, "{path}");
+        }
+    }
+
+    /// An extra column in front of every line (JESJCL and JESYSMSG from
+    /// BMC AMI DevX): read like the originals, columns one to the right.
+    #[test]
+    fn extra_first_column() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../corpus/sysout");
+        for (path, name) in [
+            ("JOB00896/JES2/JESMSGLG.txt", "document"),
+            ("JOB00896/JES2/JESJCL.txt", "document"),
+            ("JOB00896/JES2/JESYSMSG.txt", "JESYSMSG.txt"),
+        ] {
+            let text =
+                String::from_utf8_lossy(&std::fs::read(root.join(path)).unwrap()).into_owned();
+            let shifted: String = text.lines().map(|l| format!(" {l}\n")).collect();
+            let original = parse_file(path, &text);
+            let dd = parse_file(name, &shifted);
+            assert_eq!(dd.kind, original.kind, "{path}");
+            assert_eq!(dd.steps, original.steps, "{path}");
+            assert_eq!(dd.statements, original.statements, "{path}");
+            let ids = |d: &Dd| -> Vec<_> {
+                d.messages
+                    .iter()
+                    .map(|m| (m.id.clone(), m.id_columns.start))
+                    .collect()
+            };
+            let moved: Vec<_> = ids(&original)
+                .into_iter()
+                .map(|(id, c)| (id, c + 1))
+                .collect();
+            assert_eq!(ids(&dd), moved, "{path}");
         }
     }
 

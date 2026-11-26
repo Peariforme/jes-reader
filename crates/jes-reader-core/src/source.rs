@@ -97,11 +97,14 @@ impl DdKind {
             return Some(Self::JesYsMsg);
         }
         // `        1 //NAME     JOB …`: number in column 9, `//` in column 11;
-        // one column to the left without the ASA column.
+        // one column to the left without the ASA column, one to the right
+        // with an extra column (BMC AMI DevX).
         let card = |number: Option<&str>, slashes: Option<&str>| {
             number.map(str::trim) == Some("1") && slashes == Some("//")
         };
-        if (card(first.get(1..9), first.get(10..12)) || card(first.get(..8), first.get(9..11)))
+        if (card(first.get(1..9), first.get(10..12))
+            || card(first.get(..8), first.get(9..11))
+            || card(first.get(2..10), first.get(11..13)))
             && first.contains(" JOB ")
         {
             return Some(Self::JesJcl);

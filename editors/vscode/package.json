@@ -47,7 +47,7 @@
           "**/{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9]/**/*.txt",
           "*.{JOB,TSU,STC}[0-9][0-9][0-9][0-9][0-9].*.*.[0-9]*"
         ],
-        "firstLine": "^(1?\\s*J E S 2  J O B  L O G|\\s*STMT NO\\. MESSAGE|\\s{7,8}1 //\\S+\\s+JOB\\b)",
+        "firstLine": "^(1?\\s*J E S 2  J O B  L O G|\\s*STMT NO\\. MESSAGE|\\s{7,9}1 //\\S+\\s+JOB\\b)",
         "configuration": "./language-configuration.json"
       }
     ],

@@ -120,8 +120,10 @@ pub fn split(lines: &[&str]) -> Vec<Part> {
             job_ended = false;
         }
         if parts.last().map(|p| p.kind) == Some(DdKind::JesYsMsg)
-            && (message_id_at(line, 1).or_else(|| message_id_at(line, 0)))
-                .is_some_and(|id| &line[id] == "IEF033I")
+            && (message_id_at(line, 1)
+                .or_else(|| message_id_at(line, 0))
+                .or_else(|| message_id_at(line, 2)))
+            .is_some_and(|id| &line[id] == "IEF033I")
         {
             job_ended = true;
         }
@@ -139,13 +141,13 @@ fn is_msglg_banner(line: &str) -> bool {
 
 /// `        1 //NAME     JOB …`: first statement of JESJCL. Column 1 (ASA)
 /// may hold a page eject, or be missing: everything is then one column to
-/// the left.
+/// the left. BMC AMI DevX writes JESJCL one column to the right.
 fn is_job_card(line: &str) -> bool {
     let card = |number: usize| {
         line.get(number..number + 8).map(str::trim) == Some("1")
             && line.get(number + 8..number + 11) == Some(" //")
     };
-    (card(1) || card(0)) && line.contains(" JOB ")
+    (card(1) || card(0) || card(2)) && line.contains(" JOB ")
 }
 
 /// `  STMT NO. MESSAGE`
@@ -156,7 +158,7 @@ fn is_sysmsg_header(line: &str) -> bool {
 /// Line of JESJCL: text from column 11, after a statement number or a
 /// blank number field (`        4 XXCOBOL …`, `          //  REGION=0M`,
 /// `          IEFC653I SUBSTITUTION JCL - …` and its continuation lines),
-/// or one column to the left without the ASA column. JESYSMSG lines differ:
+/// or one column off (no ASA column, or an extra column in front). JESYSMSG lines differ:
 /// a message from column 1 or 2.
 fn is_jcl_line(line: &str) -> bool {
     let at = |number: usize| {
@@ -166,7 +168,7 @@ fn is_jcl_line(line: &str) -> bool {
             && line.get(number + 8..number + 9) == Some(" ")
             && line.as_bytes().get(number + 9).is_some_and(|c| *c != b' ')
     };
-    at(1) || at(0)
+    at(1) || at(0) || at(2)
 }
 
 /// Continuation of a JESYSMSG message: indented
@@ -467,6 +469,43 @@ mod tests {
             assert_eq!(a.messages.len(), b.messages.len());
         }
         assert!(parsed[1].exec_statement(&parsed[2].steps[2]).is_some());
+    }
+
+    /// BMC AMI DevX: JESMSGLG in place, JESJCL and JESYSMSG one column to
+    /// the right (the JOB card number in column 10, `//` in column 12).
+    #[test]
+    fn extra_column_after_jesmsglg() {
+        let dds = ["JES2/JESMSGLG.txt", "JES2/JESJCL.txt", "JES2/JESYSMSG.txt"];
+        let (text, starts) = spool("JOB00896", &dds);
+        let devx: String = text
+            .lines()
+            .enumerate()
+            .map(|(i, l)| {
+                if i >= starts[1] {
+                    format!(" {l}\n")
+                } else {
+                    format!("{l}\n")
+                }
+            })
+            .collect();
+        let original = parse_spool("x.jes", &text).unwrap();
+        let parsed = parse_spool("x.jes", &devx).unwrap();
+        let kinds: Vec<_> = parsed.iter().map(|d| (d.kind, d.first_line)).collect();
+        assert_eq!(
+            kinds,
+            [
+                (DdKind::JesMsgLg, starts[0]),
+                (DdKind::JesJcl, starts[1]),
+                (DdKind::JesYsMsg, starts[2]),
+            ]
+        );
+        for (a, b) in original.iter().zip(&parsed) {
+            assert_eq!(a.steps, b.steps);
+            assert_eq!(a.statements, b.statements);
+            assert_eq!(a.messages.len(), b.messages.len());
+        }
+        let exec = parsed[1].exec_statement(&parsed[2].steps[2]).unwrap();
+        assert_eq!(exec.name.as_deref(), Some("GO"));
     }
 
     #[test]
