@@ -84,20 +84,69 @@ export async function openDataset(
   profile?: string,
   dsn?: string,
 ): Promise<void> {
+  const target = vscode.Uri.parse(uri);
+  // A PDS is a directory in Zowe Explorer's file system: ask first.
+  if (profile && dsn && (await isDirectory(target))) {
+    await openPartitioned(target, profile, dsn);
+    return;
+  }
   try {
-    const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+    const document = await vscode.workspace.openTextDocument(target);
     await vscode.window.showTextDocument(document, { preview: true });
   } catch (error) {
-    const directory =
-      error instanceof vscode.FileSystemError && error.code === 'FileIsADirectory';
-    if (directory && profile && dsn) {
-      await openPartitioned(vscode.Uri.parse(uri), profile, dsn);
+    if (profile && dsn && isDirectoryError(error)) {
+      await openPartitioned(target, profile, dsn);
+      return;
+    }
+    if (isAuthCancelled(error)) {
+      showAuthCancelled(profile);
       return;
     }
     void vscode.window.showWarningMessage(
       `JES Reader: could not open ${name} through Zowe Explorer (${error instanceof Error ? error.message : String(error)}).`,
     );
   }
+}
+
+/**
+ * Zowe Explorer refuses to read once its credentials prompt was cancelled
+ * (`AuthCancelledError: User cancelled previous authentication`).
+ */
+export function isAuthCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+  return /AuthCancelled|cancelled previous authentication/i.test(message);
+}
+
+function showAuthCancelled(profile: string | undefined): void {
+  const where = profile ? ` to profile ${profile}` : '';
+  void vscode.window.showWarningMessage(
+    `JES Reader: Zowe Explorer is not connected${where}: its credentials prompt was cancelled. ` +
+      'Connect from Zowe Explorer, then click the link again. If Zowe Explorer still refuses ' +
+      'to open anything, run "Developer: Reload Window".',
+  );
+}
+
+/** True if Zowe Explorer's file system says `uri` is a directory (a PDS). */
+async function isDirectory(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri);
+    return (stat.type & vscode.FileType.Directory) !== 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Opening a PDS as a document fails, but not always with the
+ * `FileIsADirectory` code: VS Code may wrap it in a plain error whose
+ * message says "… that is actually a directory".
+ */
+export function isDirectoryError(error: unknown): boolean {
+  if (error instanceof vscode.FileSystemError && error.code === 'FileIsADirectory') {
+    return true;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  return /actually a directory|FileIsADirectory|EISDIR/i.test(message);
 }
 
 /**
@@ -127,6 +176,10 @@ async function openPartitioned(uri: vscode.Uri, profile: string, dsn: string): P
       await vscode.window.showTextDocument(document, { preview: true });
     }
   } catch (error) {
+    if (isAuthCancelled(error)) {
+      showAuthCancelled(profile);
+      return;
+    }
     void vscode.window.showWarningMessage(
       `JES Reader: could not list the members of ${dsn} (${error instanceof Error ? error.message : String(error)}).`,
     );

@@ -95,6 +95,10 @@ Windows x64, Linux x64 and arm64, macOS x64 and arm64. The language server is a 
 - Some product messages are reported by their suffix even when they are not about your job (for example Fault Analyzer's `IDI0078E`): silence them with a house rule.
 - A step that runs a program loaded from a previous step (`PGM=*.LKED.SYSLMOD`) shows that reference as its program.
 
+### Zowe Explorer credentials
+
+A data set link, or the `JESJCL` that JES Reader fetches in the background for a Zowe spool, goes through Zowe Explorer, which may ask for your credentials. If you cancel that prompt, Zowe Explorer may refuse every read from then on (`AuthCancelledError: User cancelled previous authentication`), even after you connect from its tree; run **Developer: Reload Window** to start again. To avoid it, connect from Zowe Explorer before following links.
+
 ## Feedback
 
 Issues and suggestions: [github.com/Peariforme/jes-reader](https://github.com/Peariforme/jes-reader/issues). Please never attach a real customer sysout — describe the message pattern instead.

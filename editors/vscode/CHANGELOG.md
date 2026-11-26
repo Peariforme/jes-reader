@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fewer requests to Zowe Explorer: the `JESJCL` of a Zowe spool is fetched in the background at most once per session, never when it is already open, and no longer on hovers or code lenses (Go to Definition may fetch it again). Each fetch could make Zowe Explorer ask for credentials.
+- When Zowe Explorer refuses a link because its credentials prompt was cancelled, JES Reader says so and what to do, instead of showing Zowe's raw error.
+- Data set links: a PDS is recognized before opening it (Zowe Explorer's file system says it is a directory), and also from the "actually a directory" error, then shown in Zowe Explorer's Data Sets view.
+- Lines starting with a non-ASCII character (a badly converted carriage-control byte) are read with a space in its place.
+- BMC AMI DevX whole spools are now cut into their DDs: DevX writes JESJCL one column to the right of JESMSGLG, so the JOB card was not recognized and the whole file read as one JESMSGLG. Each DD is now read with its own layout: in place, one column to the right, or without the ASA column.
 - Folding in `JESJCL`: an `EXEC` folds up to the next step (its procedure and DDs included), a procedure `EXEC` up to the next `EXEC`, the `JOB` card the whole job. It used to stop at the first DD.
 - Step tables of `JESMSGLG` with another layout (a `JOBNAME` column first, `CPU` instead of `TCB`) are read: their columns come from the header line.
 - BMC AMI DevX: the `.jes` file of the Job Explorer (every DD of a job, one after the other) is recognized and cut into its DDs. Messages that programs write to the console (`+WLM644E` in `JESMSGLG`) are read as messages. Sysouts without the ASA column are read too.

@@ -79,20 +79,12 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     },
     middleware: {
       // The JESJCL opened in the background may have been released by VS
-      // Code since: make sure the server has it before resolving a link.
+      // Code since: Go to Definition, an explicit action, may fetch it
+      // again. Hovers and code lenses do not: each fetch can make Zowe
+      // Explorer ask for credentials.
       provideDefinition: async (document, position, token, next) => {
-        await openSiblingJcl(document);
+        await openSiblingJcl(document, true);
         return next(document, position, token);
-      },
-      // The hover shows the JCL statement a link leads to: same need.
-      provideHover: async (document, position, token, next) => {
-        await openSiblingJcl(document);
-        return next(document, position, token);
-      },
-      // Code lenses show each step's program, read in JESJCL.
-      provideCodeLenses: async (document, token, next) => {
-        await openSiblingJcl(document);
-        return next(document, token);
       },
     },
   };
@@ -163,18 +155,35 @@ function siblingJcl(uri: vscode.Uri): vscode.Uri | undefined {
  * fetches only that DD, and the language server receives it like any open
  * document, which enables Go to Definition from JESYSMSG and JESMSGLG.
  */
-async function openSiblingJcl(document: vscode.TextDocument): Promise<void> {
+async function openSiblingJcl(
+  document: vscode.TextDocument,
+  userAction = false,
+): Promise<void> {
   const jcl = siblingJcl(document.uri);
   if (!jcl) {
     return;
   }
+  const key = jcl.toString();
+  if (vscode.workspace.textDocuments.some((open) => open.uri.toString() === key)) {
+    return;
+  }
+  // In the background, try each JESJCL once per session: a fetch that
+  // failed (spool purged, Zowe not connected) is not repeated, so that
+  // JES Reader does not make Zowe Explorer ask for credentials again and
+  // again. Go to Definition tries again.
+  if (!userAction && jclAttempts.has(key)) {
+    return;
+  }
+  jclAttempts.add(key);
   try {
     await vscode.workspace.openTextDocument(jcl);
   } catch {
-    // Spool purged, DD not numbered as expected, Zowe not connected: links
-    // are simply unavailable.
+    // Links are simply unavailable.
   }
 }
+
+/** JESJCL documents already fetched, or tried, in the background. */
+const jclAttempts = new Set<string>();
 
 /**
  * First line of a JES2 system DD, with or without the ASA column: JESMSGLG
@@ -182,7 +191,7 @@ async function openSiblingJcl(document: vscode.TextDocument): Promise<void> {
  * package.json.
  */
 const JES2_FIRST_LINE =
-  /^(1?\s*J E S 2 {2}J O B {2}L O G|\s*STMT NO\. MESSAGE|\s{7,8}1 \/\/\S+\s+JOB\b)/;
+  /^(1?\s*J E S 2 {2}J O B {2}L O G|\s*STMT NO\. MESSAGE|\s{7,9}1 \/\/\S+\s+JOB\b)/;
 
 /**
  * Plain text documents that are sysouts get our language. VS Code applies
