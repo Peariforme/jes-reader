@@ -40,7 +40,6 @@ A single Rust engine, exposed through a language server for editors and a CLI fo
 - `crates/jes-reader-lsp`: language server
 - `crates/jes-reader-cli`: CLI
 - `editors/vscode`: VS Code extension
-- `editors/zed`: Zed extension (phase 4)
 - `corpus/`: test sysouts and the JCL that produces them
 
 ## Phase 0 — Foundations and corpus
@@ -111,12 +110,17 @@ Goal: the tool adapts to each site's conventions and is also useful outside the 
 Goal: one-click install at home, and offline install on a locked-down workstation.
 
 - [x] Cross-compiled releases through GitHub Actions (Windows x64, Linux x64 and arm64, macOS x64 and arm64), published on `v*` tags
-- [ ] Publication on the VS Code Marketplace (Trusted Publishing with GitHub OIDC; needs the publisher, its policy and the `PUBLISH_MARKETPLACE` variable) and Open VSX (`OVSX_PAT` secret)
+- [x] Publication on the VS Code Marketplace (Trusted Publishing with GitHub OIDC)
+- [ ] Publication on crates.io of `jes-reader-core`, `jes-reader-lsp` and `jes-reader-cli` (Trusted Publishing; the first version is published by hand, then the `PUBLISH_CRATES` variable enables the workflow)
 - [ ] Platform-specific VSIX installed offline and tested on a Windows workstation without admin rights
-- [ ] Zed extension: language declaration and LSP launch. Zed does not use TextMate, so highlighting needs a tree-sitter grammar
 - [ ] README with an animated capture, announcement on the Open Mainframe Project Slack
 
 **Exit**: an offline VSIX works on a Windows workstation without admin rights.
+
+**Later**
+
+- Open VSX: the workflow already publishes there once the `OVSX_PAT` secret exists.
+- Zed extension: not planned for now. It would need a tree-sitter grammar, since Zed does not use TextMate.
 
 ## Phase 5 — Whole spools and coverage
 

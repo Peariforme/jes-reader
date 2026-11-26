@@ -7,6 +7,12 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories = ["development-tools", "text-editors"]
+readme = "README.md"
+# Tests read the corpus at the root of the repository: not packaged.
+include = ["src/**/*.rs", "README.md"]
 
 [dependencies]
 anyhow = "1.0.105"
