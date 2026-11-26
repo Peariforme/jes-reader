@@ -136,6 +136,7 @@ Goal: the tool reads the files that sites actually exchange, and colors what it 
 - JESYSMSG does not always start with `STMT NO. MESSAGE`: the header is only there when the JCL conversion wrote messages (`JOB00901` starts with `ICH70001I`). In a whole spool, JESYSMSG therefore starts at the first line after JESJCL that is not JCL; the continuation lines of `IEFC653I` in JESJCL start in column 11 without `//` (`JOB00884`).
 - JESYSMSG ends after `IEF033I` (end of job) and its continuation lines; a job still running has none, and JESYSMSG then runs to the end of the file.
 - Every corpus job, its DDs concatenated, is cut at the right lines (`spool::tests::every_corpus_job`).
+- First use at a client site (BMC AMI DevX): spools have no ASA column and no separator between DDs. JESMSGLG was not recognized and the whole spool was not cut; both are read now, with a blank column added. JESYSMSG takes its job ID from its content, so that links to JESJCL do not depend on the document name.
 
 ## Risks and open questions
 

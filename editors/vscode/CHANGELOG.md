@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- BMC AMI DevX: spools without the ASA column are read, one DD (`JESMSGLG` was not recognized) or the whole spool (it was not cut into DDs). Plain text documents that start like a JES2 DD get the sysout language.
+- Data set links: a partitioned data set opens in Zowe Explorer's Data Sets view instead of an error. The new `jesReader.zoweProfile` setting enables links in documents that do not come from Zowe Explorer.
+- Links from `JESYSMSG` to `JESJCL` no longer need the job ID in the document name: it is read from the content, and the job name is used when there is none.
 - Whole spools: a file holding every DD of a job (BMC AMI DevX JES Explorer) is cut into its DDs, with one Outline entry per DD and links to the `JESJCL` of the same file.
 - Message IDs are colored by the severity of the analysis (semantic highlighting), house rules included.
 - 19 more messages in the catalog: IDCAMS, Language Environment, COBOL, Db2 and IMS.

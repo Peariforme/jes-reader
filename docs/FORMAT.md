@@ -104,6 +104,8 @@ Some tools save every DD of a job in one file, one after the other: BMC AMI DevX
 - JESYSMSG starts with `STMT NO. MESSAGE`, or, without conversion messages, with the first line that is not JCL (`ICH70001I`, `JOB00901`). It ends with `IEF033I` (end of job) and its continuation lines.
 - The step output has no signature and its DD names are not in the text.
 
+BMC AMI DevX, as reported from a client workstation (no file in the corpus yet): **no ASA column** and **no separator** between DDs. Without the ASA column every fixed field starts one column to the left (time in column 1 of JESMSGLG, `//` in column 10 of JESJCL, message IDs in column 1 of JESYSMSG); the parser then adds a blank column, parses, and moves the columns back. The same holds for single DDs opened from DevX.
+
 _Not observed yet_ on a real file: what the tool writes between DDs (a separator, a banner with the DD name, a page eject `1` in column 1), its line width and line endings, and its file extension. The corpus has no whole spool: tests build them by concatenating corpus DDs.
 
 ## Detection (content, when the file name says nothing)
