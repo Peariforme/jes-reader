@@ -215,6 +215,10 @@ pub struct Dd {
     pub job_id: Option<String>,
     /// True if column 1 holds an ASA carriage-control character.
     pub has_asa: bool,
+    /// How far the fixed fields of a JES2 DD were from where JES2 puts them:
+    /// `0` normally, `-1` without the ASA column, `+1` with an extra column
+    /// in front (JESJCL from BMC AMI DevX). Columns are already corrected.
+    pub column_offset: isize,
     /// Line of the document where the DD starts: 0, unless the DD was cut
     /// out of a whole spool (see [`crate::spool`]). Every line number of the
     /// DD (messages, steps, statements) counts from the top of the document.
@@ -389,6 +393,7 @@ mod tests {
             job_name: None,
             job_id: None,
             has_asa: true,
+            column_offset: 0,
             first_line: 0,
             line_count: 0,
             messages: Vec::new(),

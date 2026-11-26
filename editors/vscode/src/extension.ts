@@ -8,6 +8,7 @@ import {
   type ServerOptions,
 } from 'vscode-languageclient/node';
 import { DatasetLinkProvider, OPEN_DATASET_COMMAND, openDataset } from './datasets';
+import { documentName, log, since } from './log';
 
 /** Our language ID. */
 const LANGUAGE = 'jes-sysout';
@@ -23,11 +24,19 @@ const ZOPEN_LANGUAGES = ['spool', 'jesmsglg', 'jesjcl'];
 let client: LanguageClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  const version = (context.extension.packageJSON as { version?: string }).version ?? '?';
+  log.info(`JES Reader ${version} activated (VS Code ${vscode.version})`);
   context.subscriptions.push(
+    log,
     vscode.commands.registerCommand('jesReader.openAsSysout', openAsSysout),
     vscode.commands.registerCommand('jesReader.restartServer', () => restart(context)),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('jesReader')) {
+      // The language client applies `jesReader.trace.server` by itself.
+      if (
+        event.affectsConfiguration('jesReader') &&
+        !event.affectsConfiguration('jesReader.trace.server')
+      ) {
+        log.info('settings changed: restarting the language server');
         void restart(context);
       }
     }),
@@ -55,6 +64,7 @@ export async function deactivate(): Promise<void> {
 async function start(context: vscode.ExtensionContext): Promise<void> {
   const command = serverPath(context);
   if (!command) {
+    log.error('jes-reader-lsp binary not found');
     void vscode.window.showErrorMessage(
       'JES Reader: jes-reader-lsp binary not found. Set "jesReader.serverPath" ' +
         'or run "npm run build:server".',
@@ -67,6 +77,9 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     // No `scheme`: local files, untitled documents and documents opened
     // by Zowe Explorer (`zowe-jobs:`).
     documentSelector: [LANGUAGE, ...ZOPEN_LANGUAGES].map((language) => ({ language })),
+    // Server log lines (`window/logMessage`) and LSP traces
+    // (`jesReader.trace.server`) go to the same channel as the extension's.
+    outputChannel: log,
     initializationOptions: {
       maxReturnCode: config.get<number>('maxReturnCode', 4),
       rulesFile: config.get<string>('rulesFile', ''),
@@ -89,7 +102,10 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     },
   };
   client = new LanguageClient('jesReader', 'JES Reader', serverOptions, clientOptions);
+  const started = performance.now();
+  log.info(`starting the language server: ${command}`);
   await client.start();
+  log.info(`language server ready in ${since(started)}`);
 }
 
 async function restart(context: vscode.ExtensionContext): Promise<void> {
@@ -175,10 +191,16 @@ async function openSiblingJcl(
     return;
   }
   jclAttempts.add(key);
+  const started = performance.now();
   try {
     await vscode.workspace.openTextDocument(jcl);
-  } catch {
+    log.info(`${documentName(document.uri)}: JESJCL fetched in ${since(started)}`);
+  } catch (error) {
     // Links are simply unavailable.
+    log.warn(
+      `${documentName(document.uri)}: JESJCL not fetched in ${since(started)} ` +
+        `(${error instanceof Error ? error.message : String(error)})`,
+    );
   }
 }
 
@@ -208,6 +230,7 @@ async function detectSysout(document: vscode.TextDocument): Promise<void> {
       continue;
     }
     if (JES2_FIRST_LINE.test(text)) {
+      log.info(`${documentName(document.uri)}: plain text that starts like a JES2 DD, read as a sysout`);
       await vscode.languages.setTextDocumentLanguage(document, LANGUAGE);
     }
     return;

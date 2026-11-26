@@ -54,7 +54,7 @@ impl Client {
             .sender
             .send(Request::new(id.clone(), method.into(), params).into())
             .unwrap();
-        match self.connection.receiver.recv().unwrap() {
+        match next(&self.connection.receiver) {
             Message::Response(resp) if resp.id == id => resp
                 .response_result
                 .unwrap_or_else(|e| panic!("{method}: error {e:?}")),
@@ -63,7 +63,7 @@ impl Client {
     }
 
     fn diagnostics(&self) -> PublishDiagnosticsParams {
-        match self.connection.receiver.recv().unwrap() {
+        match next(&self.connection.receiver) {
             Message::Notification(n) if n.method == PublishDiagnostics::METHOD => {
                 serde_json::from_value(n.params).unwrap()
             }
@@ -448,15 +448,12 @@ fn invalid_house_rules_are_reported() {
             .into(),
         )
         .unwrap();
-    assert!(matches!(
-        connection.receiver.recv().unwrap(),
-        Message::Response(_)
-    ));
+    assert!(matches!(next(&connection.receiver), Message::Response(_)));
     connection
         .sender
         .send(Notification::new("initialized".into(), serde_json::json!({})).into())
         .unwrap();
-    match connection.receiver.recv().unwrap() {
+    match next(&connection.receiver) {
         Message::Notification(n) if n.method == "window/showMessage" => {
             let message = n.params["message"].as_str().unwrap().to_owned();
             assert!(message.contains("max_rc"), "{message}");
@@ -631,4 +628,158 @@ fn whole_spool() {
     );
 
     client.stop(handle);
+}
+
+/// A request the server cannot handle gets an error, and the server keeps
+/// running: it used to stop, and the client restarted it, losing the
+/// analysis of the open documents meanwhile.
+#[test]
+fn bad_request_does_not_stop_the_server() {
+    let (mut client, handle) = Client::start();
+    let uri = corpus_uri("JOB00896/JES2/JESYSMSG.txt");
+    client.open(&uri, corpus("JOB00896/JES2/JESYSMSG.txt"));
+
+    client.next_id += 1;
+    let id = RequestId::from(client.next_id);
+    client
+        .connection
+        .sender
+        .send(
+            Request::new(
+                id.clone(),
+                HoverRequest::METHOD.into(),
+                serde_json::json!({}),
+            )
+            .into(),
+        )
+        .unwrap();
+    match next(&client.connection.receiver) {
+        Message::Response(resp) if resp.id == id => assert!(resp.response_result.is_err()),
+        other => panic!("expected an error response, got {other:?}"),
+    }
+    // A bad notification is skipped too.
+    client.notify(
+        DidOpenTextDocument::METHOD,
+        serde_json::json!({ "bad": true }),
+    );
+
+    // Still running, with the document still analysed.
+    let symbols = client.request(
+        DocumentSymbolRequest::METHOD,
+        DocumentSymbolParams {
+            text_document: TextDocumentIdentifier::new(uri),
+            work_done_progress_params: Default::default(),
+            partial_result_params: Default::default(),
+        },
+    );
+    assert_eq!(symbols.as_array().map(Vec::len), Some(3));
+    client.stop(handle);
+}
+
+/// Next message from the server, without its log lines (`window/logMessage`).
+fn next(receiver: &crossbeam_channel::Receiver<Message>) -> Message {
+    loop {
+        match receiver.recv().unwrap() {
+            Message::Notification(n) if n.method == "window/logMessage" => {}
+            message => return message,
+        }
+    }
+}
+
+/// The server logs its start, its house rules and each analysis (file,
+/// lines, DDs with their lines and column offset, diagnostics, time).
+#[test]
+fn logs_for_profiling() {
+    let (server, connection) = Connection::memory();
+    let handle = std::thread::spawn(move || jes_reader_lsp::run(&server));
+    let mut logs = Vec::new();
+    let log_until = |connection: &Connection, method: &str, logs: &mut Vec<String>| loop {
+        match connection.receiver.recv().unwrap() {
+            Message::Notification(n) if n.method == "window/logMessage" => {
+                logs.push(n.params["message"].as_str().unwrap().to_owned());
+            }
+            Message::Notification(n) if n.method == method => return,
+            Message::Response(_) if method == "response" => return,
+            _ => {}
+        }
+    };
+    connection
+        .sender
+        .send(
+            Request::new(
+                RequestId::from(1),
+                "initialize".into(),
+                InitializeParams::default(),
+            )
+            .into(),
+        )
+        .unwrap();
+    log_until(&connection, "response", &mut logs);
+    connection
+        .sender
+        .send(Notification::new("initialized".into(), serde_json::json!({})).into())
+        .unwrap();
+
+    // JOB00896 saved as one file, JESJCL one column to the right.
+    let mut text = corpus("JOB00896/JES2/JESMSGLG.txt");
+    let msglg_lines = text.lines().count();
+    let jcl: String = corpus("JOB00896/JES2/JESJCL.txt")
+        .lines()
+        .map(|l| format!(" {l}\n"))
+        .collect();
+    text.push_str(&jcl);
+    text.push_str(&corpus("JOB00896/JES2/JESYSMSG.txt"));
+    connection
+        .sender
+        .send(
+            Notification::new(
+                DidOpenTextDocument::METHOD.into(),
+                DidOpenTextDocumentParams {
+                    text_document: TextDocumentItem::new(
+                        "file:///tmp/JRS0C7_JOB00896.jes".parse().unwrap(),
+                        "jes-sysout".into(),
+                        1,
+                        text,
+                    ),
+                },
+            )
+            .into(),
+        )
+        .unwrap();
+    log_until(&connection, PublishDiagnostics::METHOD, &mut logs);
+
+    assert!(
+        logs[0].starts_with("jes-reader-lsp ") && logs[0].contains(" started"),
+        "{logs:?}"
+    );
+    assert!(
+        logs.iter().any(|l| l.starts_with("house rules: ")),
+        "{logs:?}"
+    );
+    let analysed = logs
+        .iter()
+        .find(|l| l.starts_with("analysed JRS0C7_JOB00896.jes: "))
+        .unwrap();
+    assert!(
+        analysed.contains(&format!(
+            "JESMSGLG L1-{msglg_lines}, JESJCL L{}-",
+            msglg_lines + 1
+        )),
+        "{analysed}"
+    );
+    assert!(
+        analysed.contains("(+1 column)") && analysed.contains(" ms"),
+        "{analysed}"
+    );
+
+    connection
+        .sender
+        .send(Request::new(RequestId::from(2), "shutdown".into(), ()).into())
+        .unwrap();
+    log_until(&connection, "response", &mut logs);
+    connection
+        .sender
+        .send(Notification::new("exit".into(), ()).into())
+        .unwrap();
+    handle.join().unwrap().unwrap();
 }

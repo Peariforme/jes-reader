@@ -19,7 +19,7 @@ fn initialize_then_shutdown() {
             .into(),
         )
         .unwrap();
-    let Message::Response(resp) = client.receiver.recv().unwrap() else {
+    let Message::Response(resp) = next(&client.receiver) else {
         panic!("expected a response to initialize");
     };
     let result: InitializeResult = serde_json::from_value(resp.response_result.unwrap()).unwrap();
@@ -36,7 +36,7 @@ fn initialize_then_shutdown() {
         .sender
         .send(Request::new(RequestId::from(2), "shutdown".into(), ()).into())
         .unwrap();
-    let Message::Response(resp) = client.receiver.recv().unwrap() else {
+    let Message::Response(resp) = next(&client.receiver) else {
         panic!("expected a response to shutdown");
     };
     assert_eq!(resp.id, RequestId::from(2));
@@ -46,4 +46,14 @@ fn initialize_then_shutdown() {
         .unwrap();
 
     handle.join().unwrap().unwrap();
+}
+
+/// Next message from the server, without its log lines (`window/logMessage`).
+fn next(receiver: &crossbeam_channel::Receiver<Message>) -> Message {
+    loop {
+        match receiver.recv().unwrap() {
+            Message::Notification(n) if n.method == "window/logMessage" => {}
+            message => return message,
+        }
+    }
 }

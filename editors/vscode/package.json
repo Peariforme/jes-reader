@@ -102,6 +102,16 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Zowe Explorer profile used to open the data sets named in documents that do not come from Zowe Explorer (opened from BMC AMI DevX, downloaded files). Empty: data set names are links only in documents opened from Zowe Explorer, which use the profile of their job."
+        },
+        "jesReader.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "markdownDescription": "Traces the messages between VS Code and the language server in the **JES Reader** output channel, with their duration (`verbose`: with their content). For diagnosing slowness; leave `off` otherwise."
         }
       }
     },
