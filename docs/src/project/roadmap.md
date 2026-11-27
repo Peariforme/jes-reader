@@ -1,157 +1,43 @@
 # Roadmap
 
-## Vision and scope
+## Scope
 
-A language server that turns a z/OS sysout into a navigable document: failures in the Problems panel, steps in the Outline, messages colored by severity. It runs entirely on the workstation; nothing is installed or opened on z/OS.
+JES Reader reads JES2 sysouts on the workstation and explains them. It stays out of:
 
-**Audience**: mainframe developers and operators on locked-down workstations, where VS Code is allowed but SSH and USS are not.
+- connecting to z/OS: Zowe Explorer and the Zowe CLI already do that;
+- interpreting dumps;
+- reproducing IBM manuals: explanations are written in our own words, with links to IBM Docs.
 
-**In scope (v1)**
+## Done
 
-- JES2 sysouts downloaded as files, or opened directly from Zowe Explorer
-- System DDs (JESMSGLG, JESJCL, JESYSMSG) and application DDs (SYSPRINT, SYSOUT, CEEDUMP read as text)
-- Common IBM messages (IEF, IEC, IGD, $HASP, CEE, IGZ, DSN, DFS) and user-defined house rules
+Everything planned for the first versions is there:
 
-**Out of scope (v1)**
+- a parser that works one DD at a time, as Zowe Explorer opens spools, and cuts whole spools (BMC AMI DevX) into their DDs;
+- diagnostics, Outline, step summaries, folding, links to the JCL and to data sets, hovers, colors that follow the analysis;
+- house rules (`.jesreader.toml`);
+- the VS Code extension, with Zowe Explorer and IBM Z Open Editor;
+- the `jes-reader` command line (text, JSON, SARIF) and the language server for other editors;
+- releases for five platforms, offline VSIX, VS Code Marketplace and crates.io.
 
-- Any connection to the mainframe: Zowe Explorer already does that
-- JES3, to be reconsidered depending on the corpus
-- Dump interpretation
-- Reproducing IBM manuals (copyright): our own summaries and links to IBM Docs
+See the [changelog](changelog.md) for the details of each version.
 
-Each phase ends with a verifiable exit criterion. The tool becomes useful day to day at the end of phase 1.
+## Next
 
-## Technical choices
+### A more reliable parser
 
-A single Rust engine, exposed through a language server for editors and a CLI for CI.
+Sysouts vary from site to site: installation exits change the step tables, export tools add or remove the carriage-control column, products add their own DDs and messages. The parser never fails, but it can miss a step or a message on a layout it has not seen.
 
-| Component | Choice | Why |
-| --- | --- | --- |
-| Language | Rust | Single binary, no Node runtime to install for the server, fast parsing |
-| Protocol | LSP (`lsp-server`) | Used by VS Code, Zed, Neovim and Eclipse |
-| Highlighting | TextMate grammar (+ semantic tokens later) | TextMate works without the server; semantic tokens would carry the severity |
-| VS Code extension | TypeScript + vscode-languageclient | Thin client, server binary bundled per platform |
-| CLI | clap | `jes-reader check` (text, JSON, SARIF) and `jes-reader summary` (text, JSON) |
-| Tests | insta (snapshots) | Every corpus sysout has its expected analysis under version control |
+- More layouts in the corpus: started tasks, long jobs, step tables written by other `IEFACTRT` exits, other export tools.
+- In whole spools, the output of the steps split into its DDs, with their names.
+- Tests on malformed and unexpected input, so that no file makes the parser stop or lose its place.
 
-**Repository layout** (Cargo workspace)
+### A larger message catalog
 
-- `crates/jes-reader-core`: parser, `Job → DD → step → message` model, rule engine
-- `crates/jes-reader-lsp`: language server
-- `crates/jes-reader-cli`: CLI
-- `editors/vscode`: VS Code extension
-- `corpus/`: test sysouts and the JCL that produces them
+Hovers and severities come from a catalog of about 70 messages and 20 abend codes. Next:
 
-## Phase 0 — Foundations and corpus
+- more messages from the components jobs meet every day: data management (`IEC`, `IGD`, VSAM), sort products, Db2, CICS, IMS, Language Environment and the compilers;
+- the reason codes of the common abends (`S0C4`, `S806`, `Sx37`, `S913`…), and what to check for each.
 
-Goal: a repository that builds, and a corpus of real sysouts with no customer data.
+## How you can help
 
-- [x] Get IBM Z Xplore access; check that COBOL compiles and jobs can be submitted
-- [x] Write jobs that fail on purpose: S0C7, S0C4, S806, S322, S013, JCL ERROR, data set not found, NOT CATLGD, RC 4/8/12 through IDCAMS, COBOL user abend (IGZ)
-- [x] Retrieve each sysout through Zowe Explorer. Finding: Zowe reads and downloads spools one DD at a time (`<jobid>/<step>/<DD>.txt`), with no whole-spool file by default, so the parser works one DD at a time (see [Sysout format](../reference/sysout-format.md))
-- [x] Cargo workspace and GitHub Actions CI (fmt, clippy, tests)
-- [x] Pick the LSP library: `lsp-server`
-- [x] Keep [format notes](../reference/sysout-format.md): ASA column, line width, DD layout, page headers, JES2 header markers
-
-**Exit**: at least 15 sysouts under version control and a green CI. **Status**: 13 sysouts; the last two jobs (`long.jcl`, `idcams-rc12.jcl`) are written but not submitted yet.
-
-## Phase 1 — MVP
-
-Goal: open a sysout in VS Code and see at once which step failed and why.
-
-1. **Parser** (`jes-reader-core`): **the unit of parsing is the DD** (`parse_dd`), because Zowe Explorer opens spools one DD at a time; a whole spool would first be split into DDs. The DD kind comes from the file name or URI, otherwise from the content. `Job` is an optional aggregate of the open DDs with the same JES job ID (`JOB`, `TSU` or `STC`). Then: steps and their outcome (IEF start, end and return code messages), and messages by ID. The parser never fails: what it does not understand stays plain text.
-2. **Language detection**: language ID `jes-sysout` by extension (`.sysout`, `.joblog`), by DD name and by content (JES2 header in the first lines), plus an "Open as Sysout" command. The client also attaches to IBM Z Open Editor's language IDs (`spool`, `jesmsglg`, `jesjcl`, assigned by file name): when that extension is installed it keeps its basic TextMate highlighting and we add diagnostics and the Outline on top. Z Open Editor has no language server for spools (checked on 6.9.0). Nothing is copied from its grammar (IBM property).
-3. **TextMate grammar**: message IDs, return codes, abend codes, data set names, JCL statements.
-4. **Language server**: Outline of steps, folding, diagnostics (abends and JCL errors as errors, RC > 4 as warnings, configurable threshold).
-5. **VS Code extension**: thin client, bundled binary.
-6. **Tests**: one snapshot per corpus sysout.
-
-**Exit**: on the whole corpus, the failing step is at the top of the Problems panel and the Outline is right.
-
-**Status**: done. All six items are implemented, and the exit criterion was checked by hand in VS Code (Outline, Problems, language detection). Semantic tokens are not done: the TextMate grammar already colors the known error messages. Findings:
-
-- Severity cannot be read from the suffix: `IEF453I`, `IEF472I`, `IEFA107I` end in `I`. The rule engine (`analysis.rs`) and the grammar share a list of known messages that must be kept in sync.
-- Severity comes from the steps (abend, RC, not run), then from that list, then from the `E`/`S`/`W` suffix.
-- `IDI0078E` (Fault Analyzer cannot write its history file) is reported as an error although it is not about the job: a typical case for the house rules of phase 3.
-
-## Phase 2 — Zowe Explorer and hovers
-
-Goal: the tool is used on everyday jobs, without downloading anything.
-
-- [x] Identify the URI scheme of spools opened by Zowe Explorer (`zowe-jobs:`) and attach the extension to it. Checked: a job opened directly from Zowe Explorer is analysed (diagnostics, Outline).
-- [x] Links: statement numbers in JESYSMSG to the matching line of JESJCL (Go to Definition)
-- [x] Navigation: from a step in JESYSMSG or in the JESMSGLG step table to its EXEC in JESJCL, procedure steps included (`COBRUN.GO` → the expanded `GO` EXEC)
-- [x] Cross-DD links for Zowe documents: the extension opens just the JESJCL DD in the background through Zowe's file system (`….JES2.JESJCL.3`), without downloading the whole spool. Checked against a live Zowe connection. Downloaded jobs: the server reads `JESJCL.txt` next to the file.
-- [x] Hovers: our own TOML catalog (`crates/jes-reader-core/catalog.toml`, 51 messages and 20 abends to start) with a link to IBM Docs for all the others. The same catalog makes diagnostics readable (title, reason code meaning), decides the severity of messages whose suffix is misleading, and links each failed step to the messages that caused it
-- [x] Clickable data set names opening in Zowe Explorer: in documents opened from Zowe, data set names link to `zowe-ds:/<profile>/<DSN>[/<member>]` (Zowe Explorer's file system), the profile being the job's. Temporary and spool data sets, symbolic names, DD overrides and dump text are left out
-
-**Exit**: a job opened from Zowe Explorer is analysed without any download.
-
-## Phase 3 — Summaries, house rules, CLI
-
-Goal: the tool adapts to each site's conventions and is also useful outside the editor.
-
-- [x] Code lens per step: name, program, return code, CPU and elapsed time when the end-of-step messages give them
-- [x] House rules in a `.jesreader.toml` (setting, workspace or home directory): message ID pattern and optional text → severity or `ignore`, return code tolerated per step name pattern, notes. Reloaded on save; an invalid file is reported and ignored. Same file for the CLI (`--rules`)
-- [x] House rules by program (`PGM=IDCAMS` → RC 4 accepted): needs the step program from JESJCL
-- [x] CLI: `jes-reader summary`, JSON and SARIF output for `check`
-
-**Exit**: a rules file of about ten lines is enough to adapt the tool to an application.
-
-**Status**: done. The exit criterion is a CLI test (`rules_by_program`): a ten-line file that tolerates RC 8 for IDCAMS and silences Fault Analyzer leaves no warning on `JOB00868` and no `IDI0078E` on `JOB00901`. Findings:
-
-- Step programs come from the `PGM=` of the EXEC statement in JESJCL, after symbol substitution (`IEFC653I`). A step that runs the module just link-edited shows a referback (`PGM=*.LKED.SYSLMOD`), not a program name. The language server attaches programs from the open JESJCL of the job, or `JESJCL.txt` next to a downloaded file; when JESJCL is opened after the other DDs (Zowe documents), those are analysed again and published only if their diagnostics change.
-- Timings have two sources of different precision. JESYSMSG: CPU to the hundredth of a second (`IEF032I`), elapsed time only from `IEF373I`/`IEF032I` timestamps (`hhmm`), so shown as `< 1 min` or `~N min`. JESMSGLG step table: `TCB` and `CLOCK` in minutes (hundredths and tenths), read under their headers since the layout belongs to the installation (IEFACTRT). `jes-reader summary` takes the steps of JESYSMSG and the elapsed time of JESMSGLG when both are there.
-- Code lenses are only shown in JESYSMSG: the JESMSGLG step table already prints one line per step with the same figures.
-- `jes-reader summary` reports each failure once per job, although JESMSGLG, JESYSMSG and the Fault Analyzer report all show it (`IEC141I` three times for `JOB00901`).
-
-## Phase 4 — Distribution
-
-Goal: one-click install at home, and offline install on a locked-down workstation.
-
-- [x] Cross-compiled releases through GitHub Actions (Windows x64, Linux x64 and arm64, macOS x64 and arm64), published on `v*` tags
-- [x] Publication on the VS Code Marketplace (Trusted Publishing with GitHub OIDC)
-- [x] Publication on crates.io of `jes-reader-core`, `jes-reader-lsp` and `jes-reader-cli` (Trusted Publishing; the first version is published by hand, then the `PUBLISH_CRATES` variable enables the workflow)
-- [x] Platform-specific VSIX installed offline and tested on a Windows workstation without admin rights
-- [ ] Documentation site with screenshots and an animated capture, announcement on the Open Mainframe Project Slack
-
-**Exit**: an offline VSIX works on a Windows workstation without admin rights.
-
-**Later**
-
-- Open VSX: the workflow already publishes there once the `OVSX_PAT` secret exists.
-- Zed extension: not planned for now. It would need a tree-sitter grammar, since Zed does not use TextMate.
-
-## Phase 5 — Whole spools and coverage
-
-Goal: the tool reads the files that sites actually exchange, and colors what it reports.
-
-- [x] Whole spool in one file (every DD of a job one after the other, as saved by BMC AMI DevX JES Explorer): cut into DDs, each analysed as if opened on its own, line numbers kept. System DDs are recognized by their content; the step output stays one unnamed DD
-- [ ] Step output of a whole spool split into its DDs, and their names: needs a real file to see what the saving tool writes between DDs (separator, banner, page eject). Fallback: the DD names allocated in JESYSMSG (`IEF237I JES2 ALLOCATED TO SYSPRINT`), in spool order
-- [x] Semantic tokens: message IDs colored by the severity the analysis gives them, house rules included. The TextMate grammar stays as the fallback when the server is not running
-- [x] Catalog extended to IDCAMS, Language Environment program checks, COBOL, Db2 and IMS (70 messages)
-- [ ] Integration test against a pinned Zowe Explorer version (URI scheme of spool documents)
-- [ ] Corpus: submit `long.jcl` and `idcams-rc12.jcl` (phase 0), a started task (`STC`) if possible, and a whole spool saved by BMC AMI DevX
-
-**Exit**: a whole spool saved by BMC AMI DevX gives the same findings, Outline and links as its DDs opened one by one.
-
-**Findings so far**
-
-- JESYSMSG does not always start with `STMT NO. MESSAGE`: the header is only there when the JCL conversion wrote messages (`JOB00901` starts with `ICH70001I`). In a whole spool, JESYSMSG therefore starts at the first line after JESJCL that is not JCL; the continuation lines of `IEFC653I` in JESJCL start in column 11 without `//` (`JOB00884`).
-- JESYSMSG ends after `IEF033I` (end of job) and its continuation lines; a job still running has none, and JESYSMSG then runs to the end of the file.
-- Every corpus job, its DDs concatenated, is cut at the right lines (`spool::tests::every_corpus_job`).
-- First use at a client site (BMC AMI DevX): the Job Explorer saves the whole job as `<jobname>_<jobid>.jes`, DDs concatenated with their ASA column and nothing in between, so v0.1.0 read it as one JESMSGLG. Its step table has another layout (`-JOBNAME  STEPNAME PROCSTEP    RC …    CPU    SRB  CLOCK`, the name of a plain step under PROCSTEP), which the fixed columns of the parser missed, hence an empty Outline. The table columns now come from its header, and the whole-spool support cuts the file into DDs. Program messages in JESMSGLG (`+WLM644E`) are now read as messages, and the file name gives the job name and ID.
-
-## Risks and open questions
-
-| Risk | Consequence | Mitigation |
-| --- | --- | --- |
-| Format varies with the export tool | Fragile parsing | Multi-source corpus, tolerant parser that degrades instead of failing |
-| Corpus limited to Z Xplore | Production messages missing | House rules, collecting message patterns (never data) from users |
-| Confidentiality of customer sysouts | Real cases cannot be shared | No customer sysout in the repository, cases rebuilt as synthetic data |
-| IBM documentation copyright | Thin hovers | Our own summaries, links to IBM Docs |
-| Zowe Explorer URI scheme changes | Broken integration | Integration test on a pinned version |
-
-**Open questions**
-
-- JES3 in v1 or later
+The most useful contribution is a message JES Reader does not know, or reports with the wrong severity: [open a "Message or abend" issue](https://github.com/Peariforme/jes-reader/issues/new?template=message.yml) with the message ID and one anonymized line. A layout the parser gets wrong is just as welcome as a [bug report](https://github.com/Peariforme/jes-reader/issues/new?template=bug.yml). Please never attach a real sysout from your site.
