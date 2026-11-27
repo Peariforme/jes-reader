@@ -18,6 +18,6 @@ let findings = analyze(&dd, &Options::default());
 assert_eq!(findings[0].code, "S0C7");
 ```
 
-Used by the [`jes-reader-lsp`](https://crates.io/crates/jes-reader-lsp) language server and the [`jes-reader-cli`](https://crates.io/crates/jes-reader-cli) command line. See the [repository](https://github.com/Peariforme/jes-reader) for the VS Code extension and the sysout format notes.
+Used by the [`jes-reader-lsp`](https://crates.io/crates/jes-reader-lsp) language server and the [`jes-reader-cli`](https://crates.io/crates/jes-reader-cli) command line. See the [documentation](https://peariforme.github.io/jes-reader/) for the VS Code extension, and the [sysout format notes](https://peariforme.github.io/jes-reader/reference/sysout-format.html).
 
 License: MIT or Apache-2.0, at your option.

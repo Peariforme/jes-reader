@@ -1,121 +1,80 @@
-# jes-reader
+<h1 align="center">
+  <img src="editors/vscode/images/icon.png" alt="" width="96"><br>
+  JES Reader
+</h1>
 
-A language server that turns a z/OS JES2 sysout into a navigable document: failures in the Problems panel, job steps in the Outline, messages colored by severity. Everything runs on your workstation; nothing is installed or opened on z/OS.
+<p align="center">
+  <strong>Read z/OS JES2 sysouts the way you read code.</strong><br>
+  Failures in the Problems panel, job steps in the Outline, a click from a message to its JCL.
+</p>
 
-It works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), one DD at a time, on files you have downloaded, and on whole spools saved in one file (BMC AMI DevX JES Explorer).
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader"><img src="https://img.shields.io/visual-studio-marketplace/v/peariforme.jes-reader?label=VS%20Code%20Marketplace" alt="VS Code Marketplace"></a>
+  <a href="https://crates.io/crates/jes-reader-cli"><img src="https://img.shields.io/crates/v/jes-reader-cli?label=crates.io" alt="crates.io"></a>
+  <a href="https://github.com/Peariforme/jes-reader/actions/workflows/ci.yml"><img src="https://github.com/Peariforme/jes-reader/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License: MIT OR Apache-2.0"></a>
+</p>
 
-> Status: phases 1 to 3 are done — parser, language server, CLI, VS Code extension, Zowe Explorer integration, hovers, house rules and job summaries. See [docs/ROADMAP.md](docs/ROADMAP.md).
+<p align="center">
+  <a href="https://peariforme.github.io/jes-reader/">Documentation</a> ·
+  <a href="https://peariforme.github.io/jes-reader/getting-started/installation.html">Install</a> ·
+  <a href="https://peariforme.github.io/jes-reader/project/changelog.html">Changelog</a>
+</p>
 
-## What it does
+![JES Reader in VS Code: a job that ended with S0C7, its steps in the Outline, the abend in the Problems panel](docs/src/images/demo.gif)
 
-- **Diagnostics**: abends (`S0C7`, `U4038`…) and JCL errors as errors, return codes above a threshold (4 by default) as warnings, steps that did not run as information. Severity is not read from the message suffix alone: `IEF453I` (JCL ERROR) and `IEF472I` (abend) both end in `I`.
-- **Outline**: steps with their outcome and program in `JESMSGLG` and `JESYSMSG`; a `JOB → EXEC → procedure EXEC → DD` tree in `JESJCL`.
-- **Step summaries**: a code lens above each step of `JESYSMSG` with its program, outcome, CPU and elapsed time.
-- **House rules** (`.jesreader.toml`): message severities, return codes tolerated by step name or by program.
-- **CLI** for scripts and CI: `jes-reader check` (text, JSON or SARIF) and `jes-reader summary` (text or JSON).
-- **Folding** of steps, JCL statements and multi-line messages.
-- **Syntax highlighting** of message IDs, abend codes, return codes, dataset names and JCL statements.
+A sysout is thousands of lines of fixed-width text, and finding *which step failed and why* means knowing that `IEF472I` is an abend although it ends in `I`. JES Reader does that reading for you, in VS Code, on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe), on downloaded jobs, and on whole spools saved by BMC AMI DevX.
+
+Everything runs on your workstation: nothing is installed on z/OS, nothing is sent over the network.
+
+## Features
+
+- **Failures first**: abends (`S0C7`, `S806`, `U4038`…), JCL errors and missing data sets as errors, return codes above a threshold as warnings, each linked to the messages that explain it.
+- **The job at a glance**: steps in the Outline with their program and outcome; above each step, its return code, CPU and elapsed time.
+- **Navigation**: Ctrl+click from a message or a step to the expanded JCL, from a data set name to the data set in Zowe Explorer.
+- **Explanations**: hovers on message IDs and abend codes, in plain words, with the reason code and a link to IBM Docs.
+- **House rules**: a small `.jesreader.toml` to silence a message or tolerate a return code, shared with your team.
+- **The same analysis in CI**: `jes-reader check` with text, JSON or SARIF output, `jes-reader summary` for a per-step report.
 
 ## Install
 
-- **VS Code**: the [JES Reader extension](https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader) bundles the language server. For a workstation without internet access, download the VSIX of your platform from a [GitHub release](https://github.com/Peariforme/jes-reader/releases) and run *Extensions: Install from VSIX…*; no admin rights are needed.
-- **CLI**: `cargo install jes-reader-cli` (binary `jes-reader`), or an archive from a GitHub release.
-- **Language server** for another editor: `cargo install jes-reader-lsp`.
+| | |
+| --- | --- |
+| **VS Code** | [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader), or a VSIX from the [latest release](https://github.com/Peariforme/jes-reader/releases/latest) for an offline workstation (no admin rights needed) |
+| **Command line** | `cargo install jes-reader-cli`, or an archive from the [latest release](https://github.com/Peariforme/jes-reader/releases/latest) |
+| **Neovim, Helix…** | `cargo install jes-reader-lsp`, see [Other editors](https://peariforme.github.io/jes-reader/guide/other-editors.html) |
 
-## Repository layout
+Windows x64, Linux x64 and arm64, macOS x64 and arm64. No runtime to install.
+
+## Command line
+
+```console
+$ jes-reader summary JOB00896
+JRS0C7 JOB00896: ended, abend S0C7
+  STEP          PROGRAM         OUTCOME              CPU     ELAPSED
+  COBRUN.COBOL  IGYCRCTL        RC 0                 0.04 s  0.00 s
+  COBRUN.LKED   IEWBLINK        RC 0                 0.01 s  0.00 s
+  COBRUN.GO     *.LKED.SYSLMOD  abend S0C7 reason 7  0.00 s  0.00 s
+  error: Step COBRUN.GO: abend S0C7 (Data exception), reason 00000007 (JOB00896/JES2/JESYSMSG.txt:131)
+```
+
+See [Command line](https://peariforme.github.io/jes-reader/guide/cli.html) for `check`, the output formats and a CI example.
+
+## Project
 
 | Path | Contents |
 | --- | --- |
-| `crates/jes-reader-core` | Parser, `Job → DD → step → message` model, rule engine |
-| `crates/jes-reader-lsp` | Language server (`lsp-server`, synchronous) |
-| `crates/jes-reader-cli` | `jes-reader` CLI (`check` and `summary` on files or directories) |
-| `editors/vscode` | VS Code extension (thin client, bundled server) |
-| `corpus/` | Test JCL and the sysouts they produce — no customer data |
-| `docs/` | Roadmap and sysout format notes |
+| [`crates/jes-reader-core`](crates/jes-reader-core) | Parser, analysis, message catalog, house rules |
+| [`crates/jes-reader-lsp`](crates/jes-reader-lsp) | Language server |
+| [`crates/jes-reader-cli`](crates/jes-reader-cli) | `jes-reader` command line |
+| [`editors/vscode`](editors/vscode) | VS Code extension |
+| [`corpus`](corpus) | Test JCL and the sysouts they produce on IBM Z Xplore, no customer data |
+| [`docs`](docs) | Documentation site |
 
-## Development
-
-Once after cloning, enable the Git filter that anonymizes the corpus on `git add` (IBM Z Xplore user IDs become `Z99999`):
-
-```sh
-git config filter.anonymize.clean "sh scripts/anonymize.sh"
-git config filter.anonymize.smudge cat
-git config filter.anonymize.required true
-```
-
-Your working copy keeps the real values; only what is committed is anonymized. CI fails if a real user ID gets through anyway.
-
-```sh
-cargo test --workspace
-cargo clippy --workspace --all-targets -- -D warnings
-cargo run -p jes-reader-cli -- check corpus/sysout/JOB00896
-cargo run -p jes-reader-cli -- check --rules my-rules.toml corpus/sysout   # house rules, see editors/vscode/README.md
-```
-
-### CLI
-
-```sh
-jes-reader check JOB00896                   # file:line:column: severity[code] message; exit code 1 on an error
-jes-reader check --format sarif . > jes.sarif   # SARIF 2.1.0, for code scanning
-jes-reader check --format json JOB00896
-jes-reader summary JOB00868                 # per job: end, steps (program, outcome, CPU, elapsed), failures
-jes-reader summary --format json JOB00868
-```
-
-Every command takes files or directories (one DD per file, as Zowe Explorer downloads them), `--rules <file>` (default: `.jesreader.toml` in the current directory, then in the home directory) and `--max-rc <n>`. Step programs come from the `JESJCL` of the same job, among the files or next to them.
-
-```text
-JRIDC8 JOB00868: ended, RC 8
-  STEP     PROGRAM  OUTCOME  CPU     ELAPSED
-  STEP005  IDCAMS   RC 4     0.00 s  0.00 s
-  STEP010  IDCAMS   RC 8     0.00 s  0.00 s
-  STEP020  IEFBR14  not run  0.00 s  0.00 s
-  warning: Step STEP010: return code 8 (JOB00868/JES2/JESYSMSG.txt:19)
-```
-
-Corpus snapshots (`crates/jes-reader-core/tests/snapshots`) are updated with `INSTA_UPDATE=always cargo test -p jes-reader-core --test corpus`; review the diff before committing.
-
-### VS Code extension
-
-```sh
-cd editors/vscode
-npm ci
-npm run build:server   # cargo build --release, copied into server/
-npm run compile        # type check (tsc) and bundle (esbuild) into out/extension.js
-npm run lint           # ESLint
-```
-
-Open `editors/vscode` in VS Code and run **JES Reader extension** (F5): a second window opens on `corpus/sysout`.
-
-### Packaging and releases
-
-`npm run package -- <target>` (in `editors/vscode`) builds `dist/jes-reader-<target>-<version>.vsix` with the server compiled for that platform. Targets: `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`; without an argument, the current machine. Close any F5 development window first: it locks `server/`.
-
-The `Package` workflow builds the VSIX and CLI archives for five platforms on every PR and push to `main` (run artifacts). To release:
-
-1. Set the same version in `editors/vscode/package.json` and `Cargo.toml` — the workflow rejects a tag that does not match.
-2. Push a `vX.Y.Z` tag.
-3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes to the VS Code Marketplace when the repository variable `PUBLISH_MARKETPLACE` is `true`, to Open VSX when the `OVSX_PAT` secret exists, and the three crates to crates.io when the variable `PUBLISH_CRATES` is `true`. The jobs can be re-run: an existing release gets its assets replaced, and a crate version already on crates.io is skipped.
-
-The version also appears in the `jes-reader-core` dependency of the root `Cargo.toml` (crates.io needs it); the workflow checks it too.
-
-**VS Code Marketplace** publishing uses [Trusted Publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension): GitHub proves the repository and workflow with an OIDC token (`vsce publish --oidc`, vsce 4), so no token is stored. Azure DevOps personal access tokens are not used: the global ones the Marketplace needed are being retired. Setup, once:
-
-1. Create the `peariforme` publisher on [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage) (the ID must match `publisher` in `editors/vscode/package.json`).
-2. If Trusted Publishing cannot create a new extension, upload the first VSIX of each platform by hand from the same page.
-3. On the publisher, under *Trusted Publishing*, add a policy for the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`.
-4. In the repository settings, add the Actions variable `PUBLISH_MARKETPLACE` = `true`.
-
-**crates.io** publishing uses [Trusted Publishing](https://crates.io/docs/trusted-publishing) as well: `rust-lang/crates-io-auth-action` exchanges GitHub's OIDC token for a short-lived publish token. Crates are published in dependency order: `jes-reader-core`, `jes-reader-lsp`, `jes-reader-cli`. Setup, once:
-
-1. A crate must exist before Trusted Publishing can be set up on it: publish the first version by hand, from the tagged commit, with an API token from [crates.io/settings/tokens](https://crates.io/settings/tokens): `cargo login`, then `cargo publish --workspace`.
-2. On each of the three crates, under *Settings → Trusted Publishing*, add the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`. Then revoke the API token.
-3. In the repository settings, add the Actions variable `PUBLISH_CRATES` = `true`.
-
-`cargo publish --workspace --dry-run` runs in CI so that the crates stay publishable.
-
-**Open VSX**: `OVSX_PAT` is an open-vsx.org token, after creating the namespace once with `npx ovsx create-namespace peariforme`.
+Status and plans: [Roadmap](https://peariforme.github.io/jes-reader/project/roadmap.html). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Please never attach a real sysout from your site to an issue.
 
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
+
+JES Reader is an independent project, not affiliated with IBM, BMC or the Zowe project.

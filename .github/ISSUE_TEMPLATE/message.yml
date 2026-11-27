@@ -1,0 +1,29 @@
+name: Message or abend
+description: A message or abend code JES Reader should explain, or reports with the wrong severity.
+labels: [catalog]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a real sysout from your site.** The message ID and an anonymized example line are enough.
+  - type: input
+    id: id
+    attributes:
+      label: Message ID or abend code
+      placeholder: IEC161I, S0C4-11…
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example line (anonymized)
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should JES Reader say or do?
+      description: Severity you expect, what the message means at your site, what to check.
+    validations:
+      required: true

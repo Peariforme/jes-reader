@@ -1,0 +1,18 @@
+[book]
+title = "JES Reader"
+description = "Read z/OS JES2 sysouts the way you read code: failures in the Problems panel, job steps in the Outline, messages colored by severity."
+authors = ["Richard Huot"]
+language = "en"
+src = "src"
+
+[output.html]
+site-url = "/jes-reader/"
+git-repository-url = "https://github.com/Peariforme/jes-reader"
+edit-url-template = "https://github.com/Peariforme/jes-reader/edit/main/docs/{path}"
+default-theme = "light"
+preferred-dark-theme = "navy"
+additional-css = ["theme/custom.css"]
+
+[output.html.fold]
+enable = true
+level = 1

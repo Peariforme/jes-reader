@@ -2,7 +2,11 @@
 
 Read z/OS JES2 sysouts the way you read code: failures in the **Problems** panel, job steps in the **Outline**, messages colored by severity.
 
-JES Reader works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) and on sysouts you have downloaded. Everything runs locally: nothing is installed or started on z/OS.
+JES Reader works on the spool files you open from [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) and on sysouts you have downloaded. Everything runs locally: nothing is installed or started on z/OS, nothing is sent over the network.
+
+![A job that ended with S0C7: the abend in the Problems panel, the steps in the Outline, a summary above each step](https://raw.githubusercontent.com/Peariforme/jes-reader/main/docs/src/images/demo.gif)
+
+**[Documentation](https://peariforme.github.io/jes-reader/)** · [Installation on an offline workstation](https://peariforme.github.io/jes-reader/getting-started/installation.html#offline-workstation) · [House rules](https://peariforme.github.io/jes-reader/guide/house-rules.html) · [Command line for CI](https://peariforme.github.io/jes-reader/guide/cli.html)
 
 ## Features
 
@@ -14,6 +18,11 @@ JES Reader works on the spool files you open from [Zowe Explorer](https://market
 - **Folding** of steps, JCL statements and multi-line messages.
 - **Hovers on messages and abend codes**: a short explanation in our own words, the meaning of the reason code when known (`S013-18`: member not found), what to check, and links to IBM Docs: the message page of the z/OS 3.2 documentation for z/OS messages (`IEF`, `IEC`, `IGD`, `IEA`, `CSV`, `IDC`, `ICH`, `IRR`, `$HASP`, `CEE`), and a search for the others. Abend codes are recognized wherever they appear (`SYSTEM=0C7`, `*S0C7`, `ABEND=U4038`, `ABEND806-04`).
 - **Cause and effect**: in the Problems panel, a failed step points to the messages that explain it (for example `IEC141I` for an `S013`), and each of those messages points back to the step.
+
+  ![The Problems panel on a job that ended with S013, linked to the IEC141I message that explains it](https://raw.githubusercontent.com/Peariforme/jes-reader/main/docs/src/images/problems.png)
+
+  ![Hover on an abend code: explanation, reason code, what to check, link to IBM Docs](https://raw.githubusercontent.com/Peariforme/jes-reader/main/docs/src/images/hover.png)
+
 - **Syntax highlighting** of message IDs, abend codes, return codes above 4, data set names and JCL statements.
 - **One DD at a time**: Zowe Explorer opens each DD as its own document; JES Reader analyses each one on its own, so you never need to download the whole spool.
 - **Whole spools** too: a file holding every DD of a job, one after the other (as saved by BMC AMI DevX JES Explorer), is cut into its DDs. The Outline has one entry per DD, and links go to the `JESJCL` in the same file. The output of the steps stays one block for now.
@@ -108,6 +117,8 @@ All extensions share one extension host: when links or hovers come late although
 ## Feedback
 
 Issues and suggestions: [github.com/Peariforme/jes-reader](https://github.com/Peariforme/jes-reader/issues). Please never attach a real customer sysout — describe the message pattern instead.
+
+The full documentation, including the configuration for Neovim and Helix and the use of the command line in CI, is at [peariforme.github.io/jes-reader](https://peariforme.github.io/jes-reader/).
 
 ## License
 
