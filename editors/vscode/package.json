@@ -2,7 +2,7 @@
   "name": "jes-reader",
   "displayName": "JES Reader",
   "description": "Navigable z/OS JES2 sysouts: failures in Problems, job steps in the Outline, messages colored by severity. Works with Zowe Explorer.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "peariforme",
   "icon": "images/icon.png",
   "galleryBanner": {
