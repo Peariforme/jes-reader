@@ -2,7 +2,7 @@
 
 Observation notes, extended as the corpus grows. Every statement cites the corpus file that shows it. Columns are numbered from 1, ASA column included.
 
-The sysouts are listed in [corpus/README.md](../corpus/README.md). All come from IBM Z Xplore (z/OS, JES2), downloaded with Zowe Explorer on Windows.
+The sysouts are listed in [corpus/README.md](https://github.com/Peariforme/jes-reader/blob/main/corpus/README.md). All come from IBM Z Xplore (z/OS, JES2), downloaded with Zowe Explorer on Windows.
 
 ## Retrieval through Zowe Explorer
 

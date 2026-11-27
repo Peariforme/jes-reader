@@ -48,10 +48,10 @@ Goal: a repository that builds, and a corpus of real sysouts with no customer da
 
 - [x] Get IBM Z Xplore access; check that COBOL compiles and jobs can be submitted
 - [x] Write jobs that fail on purpose: S0C7, S0C4, S806, S322, S013, JCL ERROR, data set not found, NOT CATLGD, RC 4/8/12 through IDCAMS, COBOL user abend (IGZ)
-- [x] Retrieve each sysout through Zowe Explorer. Finding: Zowe reads and downloads spools one DD at a time (`<jobid>/<step>/<DD>.txt`), with no whole-spool file by default, so the parser works one DD at a time (see [FORMAT.md](FORMAT.md))
+- [x] Retrieve each sysout through Zowe Explorer. Finding: Zowe reads and downloads spools one DD at a time (`<jobid>/<step>/<DD>.txt`), with no whole-spool file by default, so the parser works one DD at a time (see [Sysout format](../reference/sysout-format.md))
 - [x] Cargo workspace and GitHub Actions CI (fmt, clippy, tests)
 - [x] Pick the LSP library: `lsp-server`
-- [x] Keep a [FORMAT.md](FORMAT.md): ASA column, line width, DD layout, page headers, JES2 header markers
+- [x] Keep [format notes](../reference/sysout-format.md): ASA column, line width, DD layout, page headers, JES2 header markers
 
 **Exit**: at least 15 sysouts under version control and a green CI. **Status**: 13 sysouts; the last two jobs (`long.jcl`, `idcams-rc12.jcl`) are written but not submitted yet.
 
@@ -111,9 +111,9 @@ Goal: one-click install at home, and offline install on a locked-down workstatio
 
 - [x] Cross-compiled releases through GitHub Actions (Windows x64, Linux x64 and arm64, macOS x64 and arm64), published on `v*` tags
 - [x] Publication on the VS Code Marketplace (Trusted Publishing with GitHub OIDC)
-- [ ] Publication on crates.io of `jes-reader-core`, `jes-reader-lsp` and `jes-reader-cli` (Trusted Publishing; the first version is published by hand, then the `PUBLISH_CRATES` variable enables the workflow)
-- [ ] Platform-specific VSIX installed offline and tested on a Windows workstation without admin rights
-- [ ] README with an animated capture, announcement on the Open Mainframe Project Slack
+- [x] Publication on crates.io of `jes-reader-core`, `jes-reader-lsp` and `jes-reader-cli` (Trusted Publishing; the first version is published by hand, then the `PUBLISH_CRATES` variable enables the workflow)
+- [x] Platform-specific VSIX installed offline and tested on a Windows workstation without admin rights
+- [ ] Documentation site with screenshots and an animated capture, announcement on the Open Mainframe Project Slack
 
 **Exit**: an offline VSIX works on a Windows workstation without admin rights.
 
@@ -155,4 +155,3 @@ Goal: the tool reads the files that sites actually exchange, and colors what it 
 **Open questions**
 
 - JES3 in v1 or later
-- Whole-spool files: BMC AMI DevX JES Explorer produces them; what it writes between the DDs of the step output is still to be seen on a real file

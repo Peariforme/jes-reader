@@ -4,6 +4,11 @@
   "description": "Navigable z/OS JES2 sysouts: failures in Problems, job steps in the Outline, messages colored by severity. Works with Zowe Explorer.",
   "version": "0.2.0",
   "publisher": "peariforme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#111827",
+    "theme": "dark"
+  },
   "license": "(MIT OR Apache-2.0)",
   "repository": {
     "type": "git",

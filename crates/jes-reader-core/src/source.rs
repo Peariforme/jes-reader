@@ -1,6 +1,6 @@
 //! Identifies a DD from its path or name, falling back on its content.
 //!
-//! Recognized path forms (see `docs/FORMAT.md`):
+//! Recognized path forms (see `docs/src/reference/sysout-format.md`):
 //!
 //! - Zowe Explorer download: `…/<jobid>/JES2/<DD>.txt`,
 //!   `…/<jobid>/<step>/<DD>.txt`, `…/<jobid>/<procstep>/<step>/<DD>.txt`,

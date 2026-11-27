@@ -12,6 +12,6 @@ This installs the `jes-reader-lsp` binary. In VS Code, install the [JES Reader e
 { "maxReturnCode": 4, "rulesFile": "/path/to/.jesreader.toml" }
 ```
 
-See the [repository](https://github.com/Peariforme/jes-reader) for the house rules format and the list of recognized files.
+Configuration for Neovim and Helix, house rules and recognized files: see the [documentation](https://peariforme.github.io/jes-reader/guide/other-editors.html).
 
 License: MIT or Apache-2.0, at your option.

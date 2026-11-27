@@ -1,0 +1,8 @@
+/* Screenshots: a thin border so that light captures stand out on a light page. */
+.content img {
+  display: block;
+  max-width: 100%;
+  margin: 1.5em auto;
+  border: 1px solid var(--table-border-color);
+  border-radius: 6px;
+}

@@ -18,4 +18,6 @@ Options: `--max-rc <n>`, the return code above which a step is reported (default
 
 Prebuilt binaries for Windows, Linux and macOS are attached to each [GitHub release](https://github.com/Peariforme/jes-reader/releases).
 
+Documentation, with a CI example and the house rules format: [peariforme.github.io/jes-reader](https://peariforme.github.io/jes-reader/guide/cli.html).
+
 License: MIT or Apache-2.0, at your option.

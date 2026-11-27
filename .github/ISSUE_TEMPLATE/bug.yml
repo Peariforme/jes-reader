@@ -1,0 +1,51 @@
+name: Bug report
+description: Something is reported wrong, missing, or JES Reader does not work.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a real sysout from your site.** Sysouts hold data set names, user IDs and business data. Copy only the lines involved, with the names changed.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - VS Code extension
+        - Command line (jes-reader)
+        - Language server in another editor
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: What did you open?
+      options:
+        - A DD opened from Zowe Explorer
+        - A job downloaded with Zowe Explorer or the Zowe CLI
+        - A BMC AMI DevX .jes file
+        - Another whole spool in one file
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: For example "IEF287I NOT CATLGD 2 is not reported" or "the Outline is empty".
+    validations:
+      required: true
+  - type: textarea
+    id: lines
+    attributes:
+      label: Lines involved (anonymized)
+      description: The few lines of the DD that matter, with data set names and user IDs changed. Mention the DD name (JESMSGLG, JESYSMSG…).
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: JES Reader, VS Code, Zowe Explorer, operating system.
+      placeholder: JES Reader 0.2.0, VS Code 1.106, Zowe Explorer 3.3, Windows 11
+    validations:
+      required: true
