@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- An icon, and screenshots on this page.
+- A documentation site: [peariforme.github.io/jes-reader](https://peariforme.github.io/jes-reader/), with the installation on an offline workstation, the house rules reference, the command line in CI, and the configuration of other editors.
+
+No change in the analysis.
+
 ## 0.2.0
 
 **Steps and house rules**
