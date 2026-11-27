@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader"><img src="https://img.shields.io/visual-studio-marketplace/v/peariforme.jes-reader?label=VS%20Code%20Marketplace" alt="VS Code Marketplace"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=peariforme.jes-reader"><img src="https://img.shields.io/badge/VS%20Code%20Marketplace-JES%20Reader-007ACC?logo=visualstudiocode" alt="VS Code Marketplace"></a>
   <a href="https://crates.io/crates/jes-reader-cli"><img src="https://img.shields.io/crates/v/jes-reader-cli?label=crates.io" alt="crates.io"></a>
   <a href="https://github.com/Peariforme/jes-reader/actions/workflows/ci.yml"><img src="https://github.com/Peariforme/jes-reader/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License: MIT OR Apache-2.0"></a>

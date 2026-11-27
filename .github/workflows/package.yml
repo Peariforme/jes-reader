@@ -93,6 +93,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Build provenance of the release assets (gh attestation verify).
+      attestations: write
       # VS Code Marketplace Trusted Publishing: GitHub's OIDC token proves
       # this repository and workflow to the Marketplace, no stored secret.
       id-token: write
@@ -118,6 +120,16 @@ jobs:
           path: release
           merge-multiple: true
 
+      # The VSIX from the GitHub release are not signed by a store: their
+      # checksums and a GitHub-signed provenance attestation let an offline
+      # workstation check them.
+      - name: Checksums
+        working-directory: release
+        run: sha256sum * > SHA256SUMS
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/*
+
       # Re-runnable: when the release already exists (job re-run after the
       # Marketplace was set up), its assets are replaced instead.
       - name: GitHub release
@@ -142,12 +154,12 @@ jobs:
       - name: VS Code Marketplace
         if: env.PUBLISH_MARKETPLACE == 'true'
         working-directory: editors/vscode
-        run: npx vsce publish --oidc --packagePath ../../release/*.vsix
+        run: npx vsce publish --oidc --skip-duplicate --packagePath ../../release/*.vsix
 
       - name: Open VSX
         if: env.OVSX_PAT != ''
         working-directory: editors/vscode
-        run: npx ovsx publish --packagePath ../../release/*.vsix
+        run: npx ovsx publish --skip-duplicate --packagePath ../../release/*.vsix
 
   crates:
     name: crates.io

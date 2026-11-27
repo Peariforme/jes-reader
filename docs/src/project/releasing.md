@@ -11,7 +11,9 @@ The `Package` workflow builds the VSIX and CLI archives for five platforms on ev
    - to Open VSX, when the `OVSX_PAT` secret exists;
    - the three crates to crates.io, when the variable `PUBLISH_CRATES` is `true`.
 
-The jobs can be re-run: an existing release gets its assets replaced, and a crate version already on crates.io is skipped.
+The release also carries a `SHA256SUMS` file and a GitHub build-provenance attestation for every asset (see [Signing](#signing)).
+
+The jobs can be re-run: an existing release gets its assets replaced, and a version already on the Marketplace, Open VSX or crates.io is skipped.
 
 ## VS Code Marketplace
 
@@ -34,7 +36,26 @@ Publishing uses [Trusted Publishing](https://crates.io/docs/trusted-publishing) 
 
 ## Open VSX
 
-`OVSX_PAT` is an open-vsx.org token, after creating the namespace once with `npx ovsx create-namespace peariforme`.
+[Open VSX](https://open-vsx.org) is the registry used by VSCodium, Eclipse Theia, Gitpod and other VS Code forks. Open VSX has no Trusted Publishing, so publishing uses a token stored as the `OVSX_PAT` secret. Setup, once:
+
+1. Create an Eclipse account on [accounts.eclipse.org](https://accounts.eclipse.org/user/register), and fill in your GitHub username in its profile.
+2. Log in to [open-vsx.org](https://open-vsx.org) with GitHub. In *Settings → Profile*, log in with the Eclipse account, then sign the Eclipse Foundation Open VSX Publisher Agreement.
+3. In *Settings → Access Tokens*, create a token.
+4. Create the namespace, which must match `publisher` in `editors/vscode/package.json`: `npx ovsx create-namespace peariforme -p <token>`.
+5. In the repository settings, add the Actions secret `OVSX_PAT` with the token.
+6. Claim the namespace so that its extensions show as verified: open a *Claim namespace ownership* issue on [EclipseFdn/open-vsx.org](https://github.com/EclipseFdn/open-vsx.org/issues/new/choose).
+
+To publish a version released before this setup, download its VSIX from the GitHub release and run `npx ovsx publish --packagePath *.vsix -p <token>`.
+
+## Signing
+
+There is no certificate to buy or key to manage:
+
+- **VS Code Marketplace.** The Marketplace signs every VSIX it receives. VS Code checks that signature on install and refuses a package that has been altered.
+- **Open VSX.** Open VSX signs the VSIX on publication as well.
+- **VSIX from the GitHub release** (offline workstations). No store signs them. Each asset is listed in `SHA256SUMS` and has a provenance attestation signed by GitHub for this repository and workflow. To check a VSIX: `gh attestation verify jes-reader-win32-x64-X.Y.Z.vsix --repo Peariforme/jes-reader`, or compare its `sha256sum` with `SHA256SUMS`.
+
+The blue *verified publisher* check mark on the Marketplace is a different thing: it proves that the publisher owns a domain. On [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage), under the publisher's *Details*, enter a domain you own (not `github.io`) and add the DNS TXT record shown. Microsoft then reviews the request; see the [eligibility rules](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#verify-a-publisher).
 
 ## Documentation site
 
