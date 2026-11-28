@@ -3,7 +3,8 @@ name: Package
 # Platform-specific VSIX and CLI binaries on every PR and push to main
 # (downloadable artifacts). On a `v*` tag, publishing: GitHub release,
 # then VS Code Marketplace (Trusted Publishing, when the PUBLISH_MARKETPLACE
-# variable is "true") and Open VSX (when the OVSX_PAT secret exists), and
+# variable is "true") and Open VSX (Trusted Publishing, when the
+# PUBLISH_OPENVSX variable is "true"), and
 # the crates on crates.io (Trusted Publishing, when the PUBLISH_CRATES
 # variable is "true").
 
@@ -93,14 +94,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      # VS Code Marketplace Trusted Publishing: GitHub's OIDC token proves
-      # this repository and workflow to the Marketplace, no stored secret.
+      # Build provenance of the release assets (gh attestation verify).
+      attestations: write
+      # VS Code Marketplace and Open VSX Trusted Publishing: GitHub's OIDC
+      # token proves this repository and workflow, no stored secret.
       id-token: write
     env:
       # Repository variable, set to "true" once the Marketplace publisher
       # has a Trusted Publishing policy for this repository and workflow.
       PUBLISH_MARKETPLACE: ${{ vars.PUBLISH_MARKETPLACE }}
-      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      # Set to "true" once the Open VSX namespace has a trusted publisher
+      # for this repository and workflow.
+      PUBLISH_OPENVSX: ${{ vars.PUBLISH_OPENVSX }}
     steps:
       - uses: actions/checkout@v4
 
@@ -118,6 +123,16 @@ jobs:
           path: release
           merge-multiple: true
 
+      # The VSIX from the GitHub release are not signed by a store: their
+      # checksums and a GitHub-signed provenance attestation let an offline
+      # workstation check them.
+      - name: Checksums
+        working-directory: release
+        run: sha256sum * > SHA256SUMS
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/*
+
       # Re-runnable: when the release already exists (job re-run after the
       # Marketplace was set up), its assets are replaced instead.
       - name: GitHub release
@@ -131,23 +146,23 @@ jobs:
           fi
 
       - uses: actions/setup-node@v4
-        if: env.PUBLISH_MARKETPLACE == 'true' || env.OVSX_PAT != ''
+        if: env.PUBLISH_MARKETPLACE == 'true' || env.PUBLISH_OPENVSX == 'true'
         with:
           node-version: 22
       - name: Publishing tools
-        if: env.PUBLISH_MARKETPLACE == 'true' || env.OVSX_PAT != ''
+        if: env.PUBLISH_MARKETPLACE == 'true' || env.PUBLISH_OPENVSX == 'true'
         working-directory: editors/vscode
         run: npm ci
 
       - name: VS Code Marketplace
         if: env.PUBLISH_MARKETPLACE == 'true'
         working-directory: editors/vscode
-        run: npx vsce publish --oidc --packagePath ../../release/*.vsix
+        run: npx vsce publish --oidc --skip-duplicate --packagePath ../../release/*.vsix
 
       - name: Open VSX
-        if: env.OVSX_PAT != ''
+        if: env.PUBLISH_OPENVSX == 'true'
         working-directory: editors/vscode
-        run: npx ovsx publish --packagePath ../../release/*.vsix
+        run: npx ovsx publish --trusted-publishing --skip-duplicate --packagePath ../../release/*.vsix
 
   crates:
     name: crates.io
