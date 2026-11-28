@@ -188,7 +188,7 @@
     "@vscode/vsce": "~4.1.1",
     "esbuild": "^0.28.2",
     "eslint": "^10.15.0",
-    "ovsx": "^0.10.1",
+    "ovsx": "~1.4.0",
     "typescript": "~5.6.3",
     "typescript-eslint": "^8.74.0",
     "vscode-languageclient": "^9.0.1"

@@ -8,7 +8,7 @@ The `Package` workflow builds the VSIX and CLI archives for five platforms on ev
 2. Merge, then push a `vX.Y.Z` tag on `main`. The workflow rejects a tag that does not match the versions.
 3. The workflow creates the GitHub release with every VSIX and CLI archive attached, then publishes:
    - to the VS Code Marketplace, when the repository variable `PUBLISH_MARKETPLACE` is `true`;
-   - to Open VSX, when the `OVSX_PAT` secret exists;
+   - to Open VSX, when the repository variable `PUBLISH_OPENVSX` is `true`;
    - the three crates to crates.io, when the variable `PUBLISH_CRATES` is `true`.
 
 The release also carries a `SHA256SUMS` file and a GitHub build-provenance attestation for every asset (see [Signing](#signing)).
@@ -36,16 +36,16 @@ Publishing uses [Trusted Publishing](https://crates.io/docs/trusted-publishing) 
 
 ## Open VSX
 
-[Open VSX](https://open-vsx.org) is the registry used by VSCodium, Eclipse Theia, Gitpod and other VS Code forks. Open VSX has no Trusted Publishing, so publishing uses a token stored as the `OVSX_PAT` secret. Setup, once:
+[Open VSX](https://open-vsx.org) is the registry used by VSCodium, Eclipse Theia, Gitpod and other VS Code forks. Publishing uses Trusted Publishing as well (`ovsx publish --trusted-publishing`, ovsx 1.4). Setup, once:
 
 1. Create an Eclipse account on [accounts.eclipse.org](https://accounts.eclipse.org/user/register), and fill in your GitHub username in its profile.
 2. Log in to [open-vsx.org](https://open-vsx.org) with GitHub. In *Settings → Profile*, log in with the Eclipse account, then sign the Eclipse Foundation Open VSX Publisher Agreement.
-3. In *Settings → Access Tokens*, create a token.
+3. In *Settings → Access Tokens*, create a token. It is only needed until the first publish.
 4. Create the namespace, which must match `publisher` in `editors/vscode/package.json`: `npx ovsx create-namespace peariforme -p <token>`.
-5. In the repository settings, add the Actions secret `OVSX_PAT` with the token.
-6. Claim the namespace so that its extensions show as verified: open a *Claim namespace ownership* issue on [EclipseFdn/open-vsx.org](https://github.com/EclipseFdn/open-vsx.org/issues/new/choose).
-
-To publish a version released before this setup, download its VSIX from the GitHub release and run `npx ovsx publish --packagePath *.vsix -p <token>`.
+5. Claim the namespace: open an issue on [EclipseFdn/open-vsx.org](https://github.com/EclipseFdn/open-vsx.org/issues/new/choose) with the *Claim namespace ownership* template. Only an owner can add a trusted publisher, and an owned namespace shows its extensions as verified.
+6. Publish a first version by hand, which Open VSX requires a token for: download the VSIX of the latest GitHub release, then `npx ovsx publish --packagePath *.vsix -p <token>`.
+7. In the open-vsx.org settings, add a trusted publisher for the GitHub repository `Peariforme/jes-reader` and the workflow `package.yml`. Then delete the token.
+8. In the repository settings, add the Actions variable `PUBLISH_OPENVSX` = `true`.
 
 ## Signing
 
